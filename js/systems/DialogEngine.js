@@ -33,6 +33,12 @@ export default class DialogEngine {
     this.elText = root.querySelector('.dlg-text');
     this.elNext = root.querySelector('.dlg-next');
     this.elChoices = root.querySelector('.dlg-choices');
+    // 点击对话框推进（触屏 / 鼠标）；选项按钮自行处理点击，冒泡到此需忽略
+    root.querySelector('.dlg-box').addEventListener('click', (e) => {
+      if (!this.active) return;
+      if (e.target.closest('.dlg-choices')) return;
+      this._advance();
+    });
   }
 
   start(scriptId, { onDone } = {}) {

@@ -14,7 +14,9 @@ export default class TitleScene {
         <div class="t-sub">—— 修仙 · 回合制 RPG ——</div>
       </div>
       <div id="title-menu"></div>
-      <div id="title-foot">方向键移动 · Z 确认 · X 取消/菜单 · 首次游玩请先「开始新游戏」</div>`;
+      <div id="title-foot">${this.game.input.touch
+        ? '虚拟方向键移动 · A 确认 · B 取消/菜单 · 首次游玩请先「开始新游戏」'
+        : '方向键移动 · Z 确认 · X 取消/菜单 · 首次游玩请先「开始新游戏」'}</div>`;
     document.getElementById('ui-root').appendChild(root);
     this.el = root;
     this.elMenu = root.querySelector('#title-menu');

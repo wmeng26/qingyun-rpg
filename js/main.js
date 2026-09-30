@@ -1,5 +1,6 @@
 // 入口：组装 Game + UI + 场景工厂，启动主循环
 import Game from './core/Game.js';
+import TouchControls from './core/TouchControls.js';
 import UIScene from './scenes/UIScene.js';
 import BootScene from './scenes/BootScene.js';
 import MapScene from './scenes/MapScene.js';
@@ -14,6 +15,9 @@ window.game = game;
 // UI 总管
 game.ui = new UIScene(game);
 game.ui.init();
+
+// 触屏虚拟按键（非触屏设备不显示）
+if (game.input.touch) game.touch = new TouchControls(game);
 
 // 占位美术（程序化生成）
 game.assets.buildPlaceholders();

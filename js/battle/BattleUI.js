@@ -33,7 +33,7 @@ export default class BattleUI {
       <div id="cmd-panel" class="panel hidden">
         <div class="panel-title"></div>
         <div id="cmd-body"></div>
-        <div class="cmd-hint">Z/回车 确认 · X 取消</div>
+        <div class="cmd-hint">${this.game.input.touch ? '点击选项行动' : 'Z/回车 确认 · X 取消'}</div>
       </div>
       <div id="battle-result" class="panel hidden">
         <div class="panel-title"></div>

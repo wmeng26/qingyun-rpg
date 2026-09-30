@@ -180,6 +180,7 @@ export default class Game {
     this.playSec += dt;
     this.renderer.update(dt);
     if (this.dialog) this.dialog.update(dt);
+    if (this.touch) this.touch.refresh();
     this.scenes.update(dt);
   }
 

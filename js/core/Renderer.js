@@ -12,14 +12,22 @@ export default class Renderer {
     this.flashColor = '#fff';
     this.offsetX = 0;
     this.offsetY = 0;
+    // 触屏/小屏设备允许小数倍缩放：整数倍规则在手机横屏（可用高度约 1.4x）下
+    // 会把画面压回 480×270，屏幕大半留黑；?touch=1 桌面强制开启（调试用）
+    this.freeScale = new URLSearchParams(location.search).has('touch')
+      || (window.matchMedia && matchMedia('(pointer: coarse)').matches)
+      || 'ontouchstart' in window
+      || window.innerHeight < 480;
     window.addEventListener('resize', () => this.resize());
+    window.addEventListener('orientationchange', () => setTimeout(() => this.resize(), 120));
+    if (window.visualViewport) visualViewport.addEventListener('resize', () => this.resize());
     this.resize();
   }
 
   resize() {
     const w = window.innerWidth, h = window.innerHeight;
     let scale = Math.min(w / this.LOGICAL_W, h / this.LOGICAL_H);
-    if (scale >= 1) scale = Math.floor(scale); // 整数倍缩放保持像素锐利
+    if (scale >= 1 && !this.freeScale) scale = Math.floor(scale); // 桌面整数倍缩放保持像素锐利
     // 不足 1 倍（窗口比 480×270 还小）时按比例继续缩小以完整显示画面，
     // 不设下限——抬高到固定 0.5 会让画布反超窗口尺寸
     this.scale = scale;

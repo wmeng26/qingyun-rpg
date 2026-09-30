@@ -447,3 +447,81 @@
   text-shadow: 0 0 14px rgba(212,175,55,0.8);
 }
 .breakthrough-banner.fail { color: #e0968c; text-shadow: 0 0 14px rgba(208,90,78,0.6); }
+
+/* ============================================================
+   手机 / 触屏适配
+   ============================================================ */
+
+/* ---- 刘海屏安全区 + 触屏交互（body.is-touch 由 Input 按设备注入，?touch=1 可桌面强制） ---- */
+body.is-touch #hud { left: calc(8px + env(safe-area-inset-left)); top: calc(8px + env(safe-area-inset-top)); }
+body.is-touch #hud-right { right: calc(8px + env(safe-area-inset-right)); top: calc(8px + env(safe-area-inset-top)); }
+body.is-touch #toast-area { top: calc(42px + env(safe-area-inset-top)); right: calc(10px + env(safe-area-inset-right)); }
+body.is-touch #battle-log { left: calc(8px + env(safe-area-inset-left)); top: calc(8px + env(safe-area-inset-top)); }
+body.is-touch #party-cards { left: calc(8px + env(safe-area-inset-left)); bottom: calc(8px + env(safe-area-inset-bottom)); }
+body.is-touch #cmd-panel { right: calc(8px + env(safe-area-inset-right)); bottom: calc(8px + env(safe-area-inset-bottom)); }
+/* 左下/右下角让位给虚拟 D-pad 与 A/B 键 */
+body.is-touch #hud-tracker { display: none; }
+body.is-touch #hud-hint { display: none; }
+
+/* 触屏按钮：加大到舒适点击尺寸，按下给即时反馈（无 hover） */
+body.is-touch .btn { min-height: 38px; }
+body.is-touch .btn:active { background: rgba(212, 175, 55, 0.25); border-color: var(--gold); color: #ffe9a8; }
+body.is-touch #menu-tabs .tab { padding: 12px 0; }
+body.is-touch #menu-tabs .tab:active { background: rgba(212,175,55,0.1); }
+
+/* 对话：字号加大更易读 */
+body.is-touch .dlg-box { min-height: 104px; padding: 12px 16px 14px; }
+body.is-touch .dlg-text { font-size: 16px; line-height: 1.8; }
+body.is-touch .dlg-name { font-size: 15px; }
+
+/* ---- 窄屏（手机竖屏为主） ---- */
+@media (max-width: 620px) {
+  /* HUD：收缩占位 */
+  .hud-card { min-width: 118px; padding: 3px 6px; font-size: 11px; }
+  #hud-mapname { font-size: 13px; letter-spacing: 2px; }
+  #hud-tracker { max-width: 46vw; font-size: 11px; padding: 4px 7px; }
+  #hud-tracker .q-obj { font-size: 10px; }
+  .toast { max-width: 56vw; font-size: 11px; }
+
+  /* 战斗：日志收窄、卡片缩小可换行、指令面板贴右 */
+  #battle-log { width: 46vw; }
+  #battle-log .log-line { font-size: 11px; padding: 2px 6px; }
+  #party-cards { flex-wrap: wrap; max-width: 52vw; gap: 4px; }
+  .pcard { width: 104px; padding: 3px 5px; font-size: 10px; }
+  .pcard .bar-nums { font-size: 8px; }
+  #cmd-panel { min-width: 168px; }
+  .cmd-list .btn { font-size: 12px; padding: 7px 10px; }
+  .cmd-grid .btn { padding: 9px 6px; }
+  .cmd-hint { display: none; }
+
+  /* 对话 */
+  #dialog { left: 3%; right: 3%; bottom: 3%; }
+  .dlg-portrait { width: 40px; height: 40px; }
+
+  /* 主菜单：侧栏在窄屏下移到底部横排 */
+  #menu-panel { width: 96%; height: 92%; max-height: none; }
+  #menu-body { flex-direction: column; }
+  #menu-side {
+    width: 100%; border-left: none; border-top: 1px solid rgba(212,175,55,0.2);
+    flex-direction: row; flex-wrap: wrap; padding: 8px 6px;
+  }
+  #menu-side .btn { flex: 1 1 40%; text-align: center; }
+  #menu-content { padding: 8px 10px; font-size: 12px; }
+  .stat-grid { grid-template-columns: auto 1fr auto 1fr; }
+  .char-head img { width: 48px; height: 48px; }
+
+  /* 商店 / 确认框 */
+  #shop-panel { width: 94%; max-width: none; }
+  #shop-panel .goods { max-height: 46vh; }
+  #confirm-panel { max-width: 88vw; }
+  #confirm-panel .c-text { font-size: 14px; }
+
+  /* 标题 / 章节 */
+  #title-logo .t-main { font-size: 40px; letter-spacing: 10px; }
+  #title-menu .btn { font-size: 16px; padding: 12px 20px; }
+  /* 竖屏画布矮，页脚提示与菜单按钮重叠 → 隐藏（操作说明在帮助页仍有） */
+  body.is-touch #title-foot { display: none; }
+  #chapter-root .ch-title { font-size: 30px; letter-spacing: 10px; }
+  #chapter-root .ch-stats { font-size: 12px; padding: 0 16px; }
+  #chapter-root .ch-sub { font-size: 12px; letter-spacing: 2px; padding: 0 16px; }
+}

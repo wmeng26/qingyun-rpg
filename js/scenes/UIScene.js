@@ -53,7 +53,7 @@ export default class UIScene {
     this.elHint = document.createElement('div');
     this.elHint.id = 'hud-hint';
     this.elHint.classList.add('hidden');
-    this.elHint.textContent = 'Z 交互 · X 菜单';
+    this.elHint.textContent = game.input.touch ? 'A 交互 · B 菜单' : 'Z 交互 · X 菜单';
     root.appendChild(this.elHint);
 
     this.elToasts = document.createElement('div');
@@ -231,15 +231,21 @@ export default class UIScene {
 
   // ===== 帮助 =====
   openHelp(onClose) {
+    const touch = this.game.input.touch;
+    const controlLines = touch
+      ? `<div><span class="k">左下方向键</span>移动 · 按住持续走</div>
+         <div><span class="k">A 键</span>确认 · 交互 · 快进对话（也可点对话框）</div>
+         <div><span class="k">B 键</span>取消 · 打开菜单（地图中）</div>`
+      : `<div><span class="k">方向键 / WASD</span>移动 · 选择</div>
+         <div><span class="k">Z / 回车 / 空格</span>确认 · 交互 · 快进对话</div>
+         <div><span class="k">X / Esc</span>取消 · 打开菜单（地图中）</div>`;
     const root = document.createElement('div');
     root.id = 'confirm-root';
     root.innerHTML = `
       <div id="confirm-panel" class="panel" style="max-width:420px;">
         <div class="panel-title">操作说明</div>
         <div class="c-text" id="help-body">
-          <div><span class="k">方向键 / WASD</span>移动 · 选择</div>
-          <div><span class="k">Z / 回车 / 空格</span>确认 · 交互 · 快进对话</div>
-          <div><span class="k">X / Esc</span>取消 · 打开菜单（地图中）</div>
+          ${controlLines}
           <div class="dim">深草丛中会遭遇「暗雷」（随机遇敌）。</div>
           <div class="dim">菜单中可随时存档（战斗中不可）。全灭后将在青云门苏醒。</div>
           <div class="dim">境界突破：等级达标 + 对应丹药，在「角色」页尝试。</div>

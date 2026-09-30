@@ -13,6 +13,12 @@ export default class Input {
     this.game = game;
     this.held = new Set();
     this.pressed = new Set();
+    // 触屏设备检测：供虚拟按键 / 文案分支使用；URL 带 ?touch=1 可在桌面强制开启（调试用）
+    this.touch = new URLSearchParams(location.search).has('touch')
+      || (window.matchMedia && matchMedia('(pointer: coarse)').matches)
+      || navigator.maxTouchPoints > 0
+      || 'ontouchstart' in window;
+    if (this.touch) document.body.classList.add('is-touch');
 
     window.addEventListener('keydown', (e) => {
       const action = KEYMAP[e.code];
@@ -23,10 +29,7 @@ export default class Input {
       // 场景级 wasPressed 与面板级 handleKey 都必须是「按下一次 = 触发一次」，
       // 否则长按会以系统重复速率连续翻菜单／快进对话。
       if (e.repeat) return;
-      // UI 面板优先消费按键（对话框/菜单/战斗面板等）
-      const panel = game.ui && game.ui.activePanel;
-      if (panel && panel.handleKey && panel.handleKey(action, e)) return;
-      this.pressed.add(action);
+      this._press(action);
     });
     window.addEventListener('keyup', (e) => {
       const action = KEYMAP[e.code];
@@ -35,6 +38,22 @@ export default class Input {
     });
     window.addEventListener('blur', () => { this.held.clear(); this.pressed.clear(); });
   }
+
+  // 按键按下路由：UI 面板优先消费（对话框/菜单/战斗面板等），未消费则派发边沿
+  _press(action) {
+    const panel = this.game.ui && this.game.ui.activePanel;
+    if (panel && panel.handleKey && panel.handleKey(action, null)) return;
+    this.pressed.add(action);
+  }
+
+  // 触屏虚拟按键注入（TouchControls 使用），与键盘同一套路由
+  pressAction(action) {
+    if (this.held.has(action)) return;
+    this.held.add(action);
+    this._press(action);
+  }
+
+  releaseAction(action) { this.held.delete(action); }
 
   isDown(action) { return this.held.has(action); }
   wasPressed(action) { return this.pressed.has(action); }
