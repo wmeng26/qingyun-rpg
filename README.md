@@ -1,0 +1,92 @@
+# 青云仙途 · 修仙回合制 RPG
+
+东方武侠/修仙题材的 HTML5 回合制 RPG。纯前端实现，零依赖、零构建——原生 Canvas 渲染 + ES Modules + DOM/CSS 中文 UI，localStorage 三档位存档。
+
+![类型](https://img.shields.io/badge/%E5%9B%9E%E5%90%88%E5%88%B6-JRPG-gold) ![平台](https://img.shields.io/badge/%E5%B9%B3%E5%8F%B0-HTML5-blue)
+
+## 快速开始
+
+1. **双击 `serve.bat`**（需要 Python 3），浏览器会自动打开 `http://localhost:8080`
+   - 或者手动运行：`python -m http.server 8080`
+   - 也可以用 VS Code Live Server 等任意静态服务器
+2. 「开始新游戏」→ 序章 → 初入青云山
+
+> ⚠️ 不要直接双击 index.html 打开——`file://` 协议下浏览器会阻止 ES Module 加载（页面会给出引导提示）。
+
+## 操作
+
+| 按键 | 功能 |
+|---|---|
+| 方向键 / WASD | 移动 · 选择 |
+| Z / 回车 / 空格 | 确认 · 交互 · 快进对话 |
+| X / Esc | 取消 · 打开菜单（地图中） |
+
+菜单内：←/→ 切换页签，全部界面同时支持鼠标点击。
+
+## 玩法内容（第一章 ~ 第四章 · 全剧情终）
+
+- **11 张地图**：青云山下 → 青云门 → 幽冥洞 → 荒古道 → 黑风寨 → 血煞谷 → 血煞祭坛 → **寒霜渡（北境枢纽）→ 寒渊冰原 → 魔渊封印（终章）**，另有渡口雪景与冰原专用 tile 组
+- **回合制战斗**：速度决定行动顺序，普攻/功法/丹药/防御/逃跑；伤害飘字、会心、五行克制、灼烧/中毒/眩晕等状态；队伍上限 4 人（各自独立站位）
+- **27 种敌人 + 3 章节 Boss + 3 精英/小 Boss**（含终章「魔主·玄冥」80000 HP），四种 AI 行为模式
+- **境界体系（全五境贯通）**：炼气一~九层（自动）→ 筑基（筑基丹·80%）→ 金丹（金元丹·60%）→ 元婴（剧情契机）→ **化神（破境丹·50%）**，每境解锁本命功法
+- **队伍四主角**：萧逸（剑修）→ 柳如烟（医修）→ 洛清霜（刀客）→ **沈孤鸿（琴师·雷/全队增益）**
+- **任务**：主线×11 + 支线×8，事件驱动推进（击杀/交谈/收集/旗标/境界），HUD 追踪
+- **成长**：经验升级、功法学习（50+ 技能）、三槽装备（武器/防具/饰品）、背包分类使用
+- **暗雷遇敌**：深草/洞窟/山寨/血煞谷/冰原/魔渊各有独立遇敌表（8% 起步，25 步保底递增）
+- **章节结算**：第一~三章各有结算画面，第四章为**终章特殊结算**（「终章 · 完」+ 全剧情终）
+- **剧情演出**：Boss 战支持战前 `introDialog`、战后 `afterDialog`（顿悟突破、大结局均以此实现）
+- **存档**：菜单内随时存/读（战斗中禁用），localStorage 三档位，带版本校验；旧档无缝续玩后续章节
+
+## 工程结构
+
+```
+├── index.html            # 入口（含 file:// 检测与加载兜底）
+├── css/                  # main.css 画布布局 / ui.css 全套界面皮肤
+├── serve.bat             # 一键本地服务器
+├── tools/
+│   ├── validate.mjs      # 数据一致性校验（node tools/validate.mjs）
+│   ├── syntax-check.mjs  # 全模块语法/导入检查
+│   └── regression.mjs    # 无头回归测试：任务链/战斗模拟/存档往返（node tools/regression.mjs）
+├── js/
+│   ├── main.js           # 组装 Game + 场景工厂
+│   ├── core/             # Game 主循环/场景栈/输入/渲染/资源/存档/事件总线/UIPanel
+│   │   └── PlaceholderArt.js  # 程序化像素占位美术（全部资源代码生成）
+│   ├── data/             # 纯数据：balance/realms/characters/items/skills/monsters/maps/quests/dialogs
+│   ├── systems/          # Character/Cultivation/Inventory/Equipment/QuestManager/DialogEngine
+│   ├── map/              # TileMap/Player/NPC/Encounter（暗雷）
+│   ├── battle/           # BattleEngine(状态机)/Unit/Skill/StatusEffect/DamageFormula/BattleUI
+│   └── scenes/           # Boot/Title/Map/Battle/UIScene(HUD/商店/确认/章节)/MainMenu
+└── assets/               # 预留：AI 素材目录（当前全部为程序化占位美术）
+```
+
+**依赖规则**：`data`（无依赖）← `core` ← `systems`/`battle` ← `scenes` ← `main.js`；systems 之间只经 EventBus/Game 服务定位通信。战斗引擎只产出事件队列 `{type:'damage',target,value}`，由 BattleUI 消费播放，引擎可脱离 UI 运行。
+
+## 调参入口
+
+- `js/data/balance.js`：遇敌率、命中/会心/逃跑、伤害方差与软上限、经验曲线、初始状态、复活点
+- `js/data/realms.js`：境界表（等级门槛/属性系数/突破丹/成功率）
+- `js/data/items.js` / `skills.js` / `monsters.js`：全部内容数值
+- `js/data/maps.js`：字符画地图 + 传送门/NPC/宝箱/Boss 触发 + 遇敌表
+
+改完可运行 `node tools/validate.mjs` 校验引用完整性。
+
+## 替换正式美术（预留工作流）
+
+所有画面资源走 `Assets` 的 key 寻址，当前由 `PlaceholderArt.js` 程序化生成。替换时：
+
+1. 把 PNG 放入 `assets/images/...`（行走图 32×32 帧、战斗精灵 48×48、地块 32×32、图标 24×24、头像 32×32）
+2. 在 `main.js` 里调用 `game.assets.loadManifest({ 'char_hero': 'assets/images/hero.png', ... })`（加载失败自动保留占位图）
+3. 代码零改动
+
+## 开发调试
+
+- 控制台可用 `window.game` 直接访问游戏实例（如 `game.party[0].gainExp(1000)`）
+- 数据校验：`node tools/validate.mjs`
+- 语法检查：`node --experimental-vm-modules tools/syntax-check.mjs`
+- 回归测试：`node tools/regression.mjs`（四章任务链 / 五境突破 / 入队技能回填 / 各章 Boss 共 900+ 局战斗模拟 / 存档往返，共 92 项断言）
+
+## 已实测路径
+
+标题 → 序章 → 地图移动 → 暗雷战斗（升级/自动突破炼气层）→ 菜单（属性/装备/突破筑基）→ 传送青云门 → 主线 1 接取/交付 → 柳如烟入队（双人战斗）→ 主线 2（境界校验）→ 幽冥洞解锁 → Boss 战 → 主线 3 → 「第一章 · 完」结算 → 主线 4（搜剿探子）→ 西山古道开启 → 荒古道（货郎情报/洛清霜入队·三人战斗）→ 黑风寨 → 黑风王 Boss 战 → 主线 5 → 「第二章 · 完」结算 → 主线 6（血煞教徒）→ 血煞谷开启 → 采药人情报/血煞左使 → 主线 7（金丹突破门槛）→ 祭坛禁制开启 → 血煞教主 Boss 战 → 战后顿悟（元婴突破）→ 主线 8 → 「第三章 · 完」结算 → **主线 9（渡口之围/沈孤鸿入队·四人战斗）→ 寒渊冰原开启 → 渊魔将 → 主线 10（化神突破门槛）→ 魔渊封印开启 → 魔主·玄冥终战 → 大结局「归途」→ 主线 11 → 「终章 · 完」全剧情终结算** → 存档/读档 → 商店购买。
+
+> 全部四章路径均已用无头回归（92 项断言，含各章节 Boss 各 300 局战斗模拟）与浏览器实跑双重验证。

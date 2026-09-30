@@ -1,0 +1,12 @@
+# 本地测试产物（浏览器冒烟截图）
+.smoke/
+
+# 零依赖项目，防误入
+node_modules/
+
+# 编辑器 / 系统文件
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+Desktop.ini

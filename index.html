@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>青云仙途 · 修仙回合制RPG</title>
+<link rel="stylesheet" href="css/main.css">
+<link rel="stylesheet" href="css/ui.css">
+</head>
+<body>
+<div id="stage">
+  <div id="game-wrap">
+    <canvas id="game-canvas" width="480" height="270"></canvas>
+    <div id="ui-root"></div>
+  </div>
+</div>
+
+<!-- file:// 协议警告（ES Module 无法在 file:// 下加载） -->
+<div id="protocol-warning" class="hidden">
+  <div class="panel warn-panel">
+    <h2>⚠ 无法启动游戏</h2>
+    <p>检测到你正在以 <b>file://</b> 协议直接打开本页面，浏览器会阻止 ES Module 加载。</p>
+    <p>请双击项目目录下的 <b>serve.bat</b> 启动本地服务器，然后在浏览器访问
+      <b>http://localhost:8080</b></p>
+    <p class="dim">（或自行运行 <code>python -m http.server 8080</code>）</p>
+  </div>
+</div>
+
+<div id="boot-error" class="hidden">
+  <div class="panel warn-panel">
+    <h2>⚠ 游戏加载失败</h2>
+    <p>资源或脚本加载超时。</p>
+    <p>若直接双击打开了 index.html，请改用 <b>serve.bat</b> 启动。</p>
+    <p class="dim">详见 README.md</p>
+  </div>
+</div>
+
+<script>
+  // file:// 协议检测
+  if (location.protocol === 'file:') {
+    document.getElementById('protocol-warning').classList.remove('hidden');
+  }
+  // 模块加载失败兜底（3 秒内未完成引导则提示）
+  window.__BOOTED = false;
+  setTimeout(function () {
+    if (!window.__BOOTED) {
+      document.getElementById('boot-error').classList.remove('hidden');
+    }
+  }, 3000);
+</script>
+<script type="module" src="js/main.js"></script>
+</body>
+</html>
