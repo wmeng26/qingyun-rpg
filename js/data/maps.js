@@ -10,6 +10,115 @@ export const BATTLES = {
   },
 };
 
+// ---- 轮回古塔（9 层试炼，程序化生成层块） ----
+// 每层 12 行：顶部上行传送门 / 中部遭遇区 / 底部下行传送门；
+// 第 3、6、9 层有守层之敌的咽喉行（两侧封墙，只留中央两格）。
+function buildTowerMap() {
+  const ZONES = ['a', 'b', 'c', 'd', 'e', 'g', 'h', 'i']; // 第1~8层遭遇分区（第9层无暗雷）
+  const GUARDS = { 3: 'tower_f3_cleared', 6: 'tower_f6_cleared', 9: 'tower_f9_cleared' };
+  const rows = [];
+  for (let n = 1; n <= 9; n++) {
+    const z = n <= 8 ? ZONES[n - 1] : 'j';
+    const zoneRow = (pillars) =>
+      'C' + (pillars ? z.repeat(4) + 'r' + z.repeat(6) + 'r' + z.repeat(4) : z.repeat(16)) + 'C';
+    rows.push(n < 9 ? 'CCCCCCCCssCCCCCCCC' : 'C'.repeat(18));          // 顶部上行门
+    for (let i = 1; i <= 8; i++) rows.push(zoneRow(i === 4 || i === 7));
+    rows.push(GUARDS[n] ? 'CCCCCCCCjjCCCCCCCC' : zoneRow(false));      // 咽喉行
+    rows.push('C' + 'j'.repeat(16) + 'C');                             // 落脚行
+    rows.push('CCCCCCCCssCCCCCCCC');                                   // 底部下行门
+  }
+
+  const portals = [];
+  for (let n = 1; n <= 8; n++) {
+    for (const x of [8, 9]) {
+      const p = { x, y: (n - 1) * 12, to: 'map_lunhui', toX: x, toY: n * 12 + 10, label: `轮回塔 · ${n + 1}层` };
+      if (GUARDS[n]) { p.requiresFlag = GUARDS[n]; p.lockedMsg = '上方禁制未开——先击败守层之敌。'; }
+      portals.push(p);
+    }
+  }
+  for (let n = 1; n <= 9; n++) {
+    for (const x of [8, 9]) {
+      if (n === 1) portals.push({ x, y: 11, to: 'map_qingyunmen', toX: 2, toY: 13, label: '出塔' });
+      else portals.push({ x, y: n * 12 - 1, to: 'map_lunhui', toX: x, toY: (n - 2) * 12 + 10, label: `轮回塔 · ${n - 1}层` });
+    }
+  }
+
+  const guardEvent = (n, mobs, victoryMsg, introDialog) => ({
+    type: 'battle', x: 8, y: (n - 1) * 12 + 9, flag: GUARDS[n],
+    battle: { mobs, boss: true, canFlee: false, victoryMsg, ...(introDialog ? { introDialog } : {}) },
+  });
+
+  return {
+    id: 'map_lunhui', name: '轮回古塔', width: 18, height: rows.length, bg: 'bg_cave', music: 'cave',
+    legend: {
+      'C': { tile: 'cavewall', solid: true, enc: null },
+      'j': { tile: 'cavefloor', solid: false, enc: null },
+      's': { tile: 'stairs', solid: false, enc: null },
+      'r': { tile: 'cavewall', solid: true, enc: null },
+      'a': { tile: 'cavefloor', solid: false, enc: 'tw1' },
+      'b': { tile: 'cavefloor', solid: false, enc: 'tw2' },
+      'c': { tile: 'cavefloor', solid: false, enc: 'tw3' },
+      'd': { tile: 'cavefloor', solid: false, enc: 'tw4' },
+      'e': { tile: 'cavefloor', solid: false, enc: 'tw5' },
+      'g': { tile: 'cavefloor', solid: false, enc: 'tw6' },
+      'h': { tile: 'cavefloor', solid: false, enc: 'tw7' },
+      'i': { tile: 'cavefloor', solid: false, enc: 'tw8' },
+    },
+    tiles: rows,
+    encounters: {
+      tw1: [
+        { mobs: ['mob_shagui'], w: 4 }, { mobs: ['mob_xuenv'], w: 4 },
+        { mobs: ['mob_shagui', 'mob_xuenv'], w: 1 },
+      ],
+      tw2: [
+        { mobs: ['mob_xuenv'], w: 3 }, { mobs: ['mob_hushan'], w: 3 },
+        { mobs: ['mob_xueshatu', 'mob_xueshatu'], w: 2 }, { mobs: ['mob_hushan', 'mob_shagui'], w: 1 },
+      ],
+      tw3: [
+        { mobs: ['mob_hushan'], w: 3 }, { mobs: ['mob_xieshi'], w: 2 },
+        { mobs: ['mob_hufa'], w: 2 }, { mobs: ['mob_xuenv', 'mob_xuenv'], w: 1 },
+      ],
+      tw4: [
+        { mobs: ['mob_xuejiao'], w: 3 }, { mobs: ['mob_bingkui'], w: 2 },
+        { mobs: ['mob_hushan', 'mob_hushan'], w: 2 }, { mobs: ['mob_xuejiao', 'mob_xueshatu'], w: 1 },
+      ],
+      tw5: [
+        { mobs: ['mob_xuejiao'], w: 3 }, { mobs: ['mob_yuanmo'], w: 2 },
+        { mobs: ['mob_bingkui'], w: 2 }, { mobs: ['boss_youming'], w: 1 },
+      ],
+      tw6: [
+        { mobs: ['mob_yuanmo'], w: 3 }, { mobs: ['mob_shaling'], w: 3 },
+        { mobs: ['mob_yuanmo', 'mob_yuanmo'], w: 1 },
+      ],
+      tw7: [
+        { mobs: ['mob_shaling'], w: 3 }, { mobs: ['mob_yuanmo'], w: 2 },
+        { mobs: ['mob_shaling', 'mob_shaling'], w: 2 },
+        { mobs: ['mob_bingkui', 'mob_yuanmo'], w: 1 }, { mobs: ['mob_xuekui'], w: 1 },
+      ],
+      tw8: [
+        { mobs: ['mob_shaling'], w: 3 }, { mobs: ['mob_xuekui'], w: 2 },
+        { mobs: ['mob_yuanmo', 'mob_shaling'], w: 2 },
+        { mobs: ['mob_chisha'], w: 1 }, { mobs: ['mob_yuanmojiang'], w: 1 },
+      ],
+    },
+    portals,
+    npcs: [],
+    events: [
+      { type: 'chest', x: 13, y: 2, items: [{ id: 'pill_guyuan', count: 2 }] },
+      { type: 'chest', x: 4, y: 26, items: [{ id: 'pill_tianyuan', count: 1 }] },
+      { type: 'chest', x: 13, y: 62, gold: 3000, items: [{ id: 'pill_xuling', count: 1 }] },
+      { type: 'chest', x: 8, y: 97, items: [{ id: 'ling_xukong', count: 1 }, { id: 'pill_tianyuan', count: 2 }] },
+      { type: 'chest', x: 9, y: 97, gold: 8000 },
+      { ...guardEvent(3, ['mob_zuoshi'], '幻象崩碎——塔身深处传来一声悠远钟鸣。'), },
+      { ...guardEvent(3, ['mob_zuoshi'], '幻象崩碎——塔身深处传来一声悠远钟鸣。'), x: 9 },
+      { ...guardEvent(6, ['boss_xueshazhu'], '血煞教主的幻象溃散成齑粉，禁制应声而开。', 'dlg_tower_illusion') },
+      { ...guardEvent(6, ['boss_xueshazhu'], '血煞教主的幻象溃散成齑粉，禁制应声而开。', 'dlg_tower_illusion'), x: 9 },
+      { ...guardEvent(9, ['mob_takui'], '守塔傀儡轰然崩解，塔顶的百年封尘散开了……', 'dlg_takui_intro') },
+      { ...guardEvent(9, ['mob_takui'], '守塔傀儡轰然崩解，塔顶的百年封尘散开了……', 'dlg_takui_intro'), x: 9 },
+    ],
+  };
+}
+
 
 export default {
   map_shanxia: {
@@ -131,9 +240,12 @@ export default {
     portals: [
       { x: 12, y: 19, to: 'map_shanxia', toX: 14, toY: 1, label: '青云山下' },
       { x: 13, y: 19, to: 'map_shanxia', toX: 15, toY: 1, label: '青云山下' },
+      { x: 2, y: 12, to: 'map_lunhui', toX: 8, toY: 10, label: '轮回古塔', requiresFlag: 'quest_main_9_done', lockedMsg: '古塔塔门紧闭，石缝间隐有灵光流转——仿佛在等待什么人。' },
+      { x: 23, y: 9, to: 'map_chishaku', toX: 3, toY: 17, label: '赤煞窟', requiresFlag: 'quest_main_11_done', lockedMsg: '西面的古窟幽幽，煞气隐现——其中凶险未明。' },
     ],
     npcs: [
       { id: 'npc_zhangmen', name: '掌门·玄阳子', x: 12, y: 7, dir: 'down', sprite: 'npc_zhangmen', dialog: 'dlg_zhangmen' },
+      { id: 'npc_guchen', name: '守塔人·古尘', x: 4, y: 14, dir: 'right', sprite: 'npc_guchen', dialog: 'dlg_guchen' },
       { id: 'npc_liu', name: '柳如烟', x: 20, y: 10, dir: 'left', sprite: 'npc_liu', dialog: 'dlg_liu' },
       { id: 'npc_shangren', name: '杂货商·钱掌柜', x: 5, y: 10, dir: 'right', sprite: 'npc_shangren', dialog: 'dlg_shangren' },
       { id: 'npc_dizi', name: '门派弟子', x: 8, y: 14, dir: 'down', sprite: 'npc_dizi', dialog: 'dlg_dizi' },
@@ -587,7 +699,7 @@ export default {
       'C': { tile: 'cavewall', solid: true, enc: null },
       'f': { tile: 'cavefloor', solid: false, enc: 'cave' },
       'g': { tile: 'cavefloor', solid: false, enc: null },
-      'r': { tile: 'rock', solid: true, enc: null },
+      'r': { tile: 'cavewall', solid: true, enc: null },
       'p': { tile: 'path', solid: false, enc: null },
     },
     tiles: [
@@ -635,4 +747,110 @@ export default {
       { type: 'battle', x: 13, y: 4, flag: 'boss_xuanming_defeated', battle: { mobs: ['boss_xuanming'], boss: true, canFlee: false, introDialog: 'dlg_xuanming_intro', afterDialog: 'dlg_ending', victoryMsg: '魔主玄冥的咆哮响彻渊底，千年的黑暗开始崩塌……' } },
     ],
   },
+
+  // ---- 第五章：血煞之上 ----
+  map_chishaku: {
+    id: 'map_chishaku', name: '赤煞窟', width: 26, height: 20, bg: 'bg_cave', music: 'cult',
+    legend: {
+      'C': { tile: 'cavewall', solid: true, enc: null },
+      'f': { tile: 'cavefloor', solid: false, enc: 'cult' },
+      'g': { tile: 'cavefloor', solid: false, enc: null },
+      'j': { tile: 'cavefloor', solid: false, enc: null },
+      'r': { tile: 'cavewall', solid: true, enc: null },
+      'p': { tile: 'path', solid: false, enc: null },
+    },
+    tiles: [
+      'CCCCCCCCCCCCCCCCCCCCCCCCCC',
+      'CCffffffffffffffffffffffCC',
+      'CCffjffffffCCCCfffffffffCC',
+      'CCfffffffffCCCCfffffffffCC',
+      'CCfffffffffCCCCfffffffffCC',
+      'CCfffffffffCCCCfffffffffCC',
+      'CCfffffffffCCCCfffffffffCC',
+      'CCfffffffffCCCCfffffffffCC',
+      'CCffffffCCCCCCCCffffffffCC',
+      'CCffffffCCCCCCCCffffffffCC',
+      'CCffffffCCCCCCCCffffffffCC',
+      'CCffffffCCCCCCCCffffffffCC',
+      'CCfffffffffCCCCfffffffffCC',
+      'CCfffffffffCCCCfffffffffCC',
+      'CCfffffffffCCCCfffffffffCC',
+      'CCfffffffffCCCCfffffffffCC',
+      'CCffffffffffffffffffffffCC',
+      'CCgggggffffffffffffffgggCC',
+      'CCgggggfffffffffffffggggCC',
+      'CCCCCCCCCCCCCCCCCCCCCCCCCC',
+    ],
+    encounters: {
+      cult: [
+        { mobs: ['mob_chisha'], w: 3 }, { mobs: ['mob_chiyu'], w: 3 },
+        { mobs: ['mob_chisha', 'mob_chiyu'], w: 1 }, { mobs: ['mob_chiyu', 'mob_chiyu'], w: 1 },
+        { mobs: ['mob_chihun'], w: 1 },
+      ],
+    },
+    portals: [
+      { x: 3, y: 18, to: 'map_qingyunmen', toX: 23, toY: 10, label: '青云门' },
+      { x: 21, y: 1, to: 'map_shatian', toX: 11, toY: 15, label: '煞天幻境', requiresFlag: 'quest_main_13_done', lockedMsg: '幻境之门纹丝不动——似乎缺少三枚赤魂晶的共鸣。' },
+      { x: 22, y: 1, to: 'map_shatian', toX: 12, toY: 15, label: '煞天幻境', requiresFlag: 'quest_main_13_done', lockedMsg: '幻境之门纹丝不动——似乎缺少三枚赤魂晶的共鸣。' },
+    ],
+    npcs: [
+      { id: 'npc_qiuju', name: '囚徒·鲁铸', x: 5, y: 17, dir: 'down', sprite: 'npc_qiuju', dialog: 'dlg_qiuju' },
+    ],
+    events: [
+      { type: 'chest', x: 2, y: 1, items: [{ id: 'jing_chihun', count: 1 }, { id: 'pill_tianyuan', count: 1 }] },
+      { type: 'chest', x: 23, y: 17, gold: 3000, items: [{ id: 'pill_jiuzhuan', count: 3 }] },
+      { type: 'battle', x: 4, y: 2, flag: 'chihun_a_defeated', battle: { mobs: ['mob_chihun'], boss: true, canFlee: false, victoryMsg: '赤魂使者溃散成一捧血色晶屑……' } },
+      { type: 'battle', x: 20, y: 13, flag: 'chihun_b_defeated', battle: { mobs: ['mob_chihun'], boss: true, canFlee: false, victoryMsg: '赤魂使者溃散成一捧血色晶屑……' } },
+    ],
+  },
+
+  map_shatian: {
+    id: 'map_shatian', name: '煞天幻境', width: 24, height: 18, bg: 'bg_blood', music: 'apex',
+    legend: {
+      'C': { tile: 'cavewall', solid: true, enc: null },
+      'f': { tile: 'cavefloor', solid: false, enc: 'cult' },
+      'g': { tile: 'cavefloor', solid: false, enc: null },
+      'j': { tile: 'cavefloor', solid: false, enc: null },
+      'r': { tile: 'cavewall', solid: true, enc: null },
+    },
+    tiles: [
+      'CCCCCCCCCCCCCCCCCCCCCCCC',
+      'CCggggggggggggggggggggCC',
+      'CCggggggggggggggggggggCC',
+      'CCCCCCCCCCCjjCCCCCCCCCCC',
+      'CCfffrfffffffffrffffffCC',
+      'CCffffffffffffffffffffCC',
+      'CCfffrfffffffffrffffffCC',
+      'CCffffffffffffffffffffCC',
+      'CCfffrfffffffffrffffffCC',
+      'CCffffffffffffffffffffCC',
+      'CCfffrfffffffffrffffffCC',
+      'CCffffffffffffffffffffCC',
+      'CCfffrfffffffffrffffffCC',
+      'CCffffffffffffffffffffCC',
+      'CCfffrfffffffffrffffffCC',
+      'CCffffffffffffffffffffCC',
+      'CCfffffffffjjfffffffffCC',
+      'CCCCCCCCCCCCCCCCCCCCCCCC',
+    ],
+    encounters: {
+      cult: [
+        { mobs: ['mob_chisha'], w: 2 }, { mobs: ['mob_chiyu'], w: 2 },
+        { mobs: ['mob_chisha', 'mob_chiyu'], w: 2 }, { mobs: ['mob_chiyu', 'mob_chiyu'], w: 1 },
+      ],
+    },
+    portals: [
+      { x: 11, y: 16, to: 'map_chishaku', toX: 22, toY: 2, label: '赤煞窟' },
+      { x: 12, y: 16, to: 'map_chishaku', toX: 22, toY: 2, label: '赤煞窟' },
+    ],
+    npcs: [],
+    events: [
+      { type: 'chest', x: 4, y: 1, gold: 5000, items: [{ id: 'pill_tianyuan', count: 2 }] },
+      { type: 'chest', x: 19, y: 1, items: [{ id: 'pill_tianyuan', count: 2 }] },
+      { type: 'battle', x: 11, y: 3, flag: 'boss_chiyuan_defeated', battle: { mobs: ['boss_chiyuan'], boss: true, canFlee: false, introDialog: 'dlg_chiyuan_intro', afterDialog: 'dlg_trueend', victoryMsg: '赤渊的咆哮渐渐低哑——千年血祭，至此终焉。' } },
+      { type: 'battle', x: 12, y: 3, flag: 'boss_chiyuan_defeated', battle: { mobs: ['boss_chiyuan'], boss: true, canFlee: false, introDialog: 'dlg_chiyuan_intro', afterDialog: 'dlg_trueend', victoryMsg: '赤渊的咆哮渐渐低哑——千年血祭，至此终焉。' } },
+    ],
+  },
+
+  map_lunhui: buildTowerMap(),
 };

@@ -1153,6 +1153,42 @@ function bgCave() {
   return c;
 }
 
+// ---- 第五章：血色幻境背景 ----
+function bgBlood() {
+  const [c, ctx] = makeCanvas(480, 270);
+  const g = ctx.createLinearGradient(0, 0, 0, 270);
+  g.addColorStop(0, '#1a0a0e'); g.addColorStop(0.6, '#3a1218'); g.addColorStop(1, '#200a10');
+  ctx.fillStyle = g; ctx.fillRect(0, 0, 480, 270);
+  const rnd = mulberry32(505);
+  // 血色巨柱
+  for (let i = 0; i < 7; i++) {
+    const x = 20 + i * 68 + rnd() * 20, w = 18 + rnd() * 14, h = 90 + rnd() * 70;
+    ctx.fillStyle = '#2c1016';
+    ctx.fillRect(x, 268 - h, w, h);
+    ctx.fillStyle = '#3c161e';
+    ctx.fillRect(x + 3, 268 - h, 3, h);
+  }
+  // 悬浮血晶
+  for (let i = 0; i < 14; i++) {
+    const x = (rnd() * 470) | 0, y = 30 + ((rnd() * 140) | 0), s = 2 + ((rnd() * 4) | 0);
+    ctx.fillStyle = 'rgba(200,50,60,0.55)';
+    ctx.fillRect(x, y, s, s + 2);
+  }
+  // 血雾地面
+  ctx.fillStyle = '#2e1016'; ctx.fillRect(0, 200, 480, 70);
+  ctx.fillStyle = '#40151c'; ctx.fillRect(0, 200, 480, 5);
+  for (let i = 0; i < 60; i++) {
+    ctx.fillStyle = rnd() > 0.5 ? '#4a1a22' : '#341016';
+    ctx.fillRect((rnd() * 478) | 0, 210 + ((rnd() * 56) | 0), 5, 2);
+  }
+  // 天际血月
+  ctx.fillStyle = 'rgba(220,70,80,0.5)';
+  ctx.beginPath(); ctx.arc(400, 46, 26, 0, Math.PI * 2); ctx.fill();
+  ctx.fillStyle = 'rgba(240,120,120,0.35)';
+  ctx.beginPath(); ctx.arc(396, 42, 10, 0, Math.PI * 2); ctx.fill();
+  return c;
+}
+
 function bgSnow() {
   const [c, ctx] = makeCanvas(480, 270);
   const g = ctx.createLinearGradient(0, 0, 0, 270);
@@ -1314,6 +1350,16 @@ export default {
     assets.put('mob_shaling', battleShaling());
     assets.put('mob_yuanmojiang', battleYuanmojiang());
     assets.put('boss_xuanming', battleBossXuanming());
+    // 第五章
+    assets.put('mob_chisha', battleChisha());
+    assets.put('mob_chiyu', battleChiyu());
+    assets.put('mob_chihun', battleChihun());
+    assets.put('mob_xuekui', battleXuekui());
+    assets.put('mob_takui', battleTakui());
+    assets.put('boss_chiyuan', battleBossChiyuan());
+    // 守塔人与囚徒（第五章 NPC）
+    assets.put('npc_guchen', charSheet({ hair: '#d8d4c8', skin: '#c8a078', robe: '#4a5044', robeDark: '#383e34', trim: '#a8a080', pants: '#34382e' }));
+    assets.put('npc_qiuju', charSheet({ hair: '#2a2a30', skin: '#d0a888', robe: '#6e5a48', robeDark: '#54443a', trim: '#8a7a5a', pants: '#443a30' }));
 
     // --- 头像 ---
     for (const [k, fn] of Object.entries(PORTRAITS)) assets.put(k, portrait('#1c1812', fn));
@@ -1329,9 +1375,98 @@ export default {
     assets.put('bg_outdoor', bgOutdoor());
     assets.put('bg_cave', bgCave());
     assets.put('bg_snow', bgSnow());
+    assets.put('bg_blood', bgBlood());
     assets.put('bg_title', bgTitle());
   },
 };
+
+// ---- 第五章：血煞之上 ----
+function battleChisha() {
+  const [c, ctx] = makeCanvas(48, 48);
+  const P = grid2(ctx, 0, 0);
+  const R = '#6e1c1c', RD = '#521313', G = '#e05a3a';
+  P(8, 2, 8, 5, R); P(8, 2, 8, 1, '#8a2c24');            // 赤兜帽
+  P(10, 5, 4, 3, '#160c0c');
+  P(10, 6, 1, 1, '#ffb03a'); P(13, 6, 1, 1, '#ffb03a');  // 灼热之眼
+  P(7, 8, 10, 11, R); P(7, 8, 10, 2, RD);
+  P(9, 12, 6, 1, '#3a0e0e');
+  P(5, 19, 14, 4, RD); P(4, 21, 16, 2, RD);
+  P(3, 9, 4, 2, R);
+  P(1, 5, 4, 4, G); P(2, 4, 2, 6, G);                    // 血焰法球
+  P(2, 6, 2, 2, '#ffc86a');
+  P(5, 23, 14, 1, 'rgba(0,0,0,0.35)');
+  return c;
+}
+
+function battleChiyu() {
+  const [c, ctx] = makeCanvas(48, 48);
+  const P = grid2(ctx, 0, 0);
+  const B = '#6e2c1a', W = '#a8442a', F = '#e0703a';
+  P(10, 8, 6, 5, B); P(11, 6, 1, 2, B); P(15, 6, 1, 2, B); // 躯干与耳
+  P(11, 9, 1, 1, '#ffd23a'); P(14, 9, 1, 1, '#ffd23a');    // 黄眼
+  P(12, 11, 2, 1, '#3a1408');
+  P(2, 6, 8, 4, W); P(1, 10, 7, 3, B);                     // 左翼
+  P(16, 6, 8, 4, W); P(18, 10, 7, 3, B);                   // 右翼
+  P(3, 5, 3, 2, F); P(19, 4, 3, 2, F);                     // 翼尖火羽
+  P(10, 13, 2, 3, B); P(14, 13, 2, 3, B);
+  P(9, 16, 2, 2, F); P(16, 15, 2, 2, F);                   // 爪焰
+  P(6, 21, 14, 1, 'rgba(0,0,0,0.35)');
+  return c;
+}
+
+function battleChihun() {
+  const [c, ctx] = makeCanvas(48, 48);
+  const P = grid2(ctx, 0, 0);
+  const R = '#4a1420', RD = '#340d16', G = '#e04a5a';
+  P(8, 2, 8, 6, R); P(8, 2, 8, 1, '#661e2c');
+  P(10, 5, 4, 3, '#0c0508');
+  P(10, 6, 1, 1, G); P(13, 6, 1, 1, G);
+  P(7, 8, 10, 10, R); P(7, 8, 10, 2, RD);
+  P(5, 18, 14, 5, RD); P(3, 20, 18, 3, RD);              // 雾状下摆
+  P(6, 23, 3, 1, '#240810'); P(15, 23, 3, 1, '#240810');
+  P(3, 10, 3, 2, R); P(18, 8, 3, 2, R);
+  P(19, 4, 4, 4, G); P(20, 3, 2, 6, G);                  // 赤魂晶
+  P(20, 5, 2, 2, '#ffb0a8');
+  P(5, 23, 14, 1, 'rgba(0,0,0,0.35)');
+  return c;
+}
+
+function battlePuppetP(main, dark, glow, accent) {
+  const [c, ctx] = makeCanvas(48, 48);
+  const P = grid2(ctx, 0, 0);
+  P(7, 2, 10, 6, main); P(7, 2, 10, 1, glow);            // 巨首
+  P(9, 4, 2, 2, dark); P(13, 4, 2, 2, dark);             // 眼窝
+  P(9, 4, 1, 1, accent); P(13, 4, 1, 1, accent);         // 凶光
+  P(8, 8, 2, 2, dark); P(14, 8, 2, 2, dark);             // 颚钉
+  P(6, 10, 12, 10, main); P(6, 10, 12, 2, glow);         // 厚躯
+  P(8, 14, 8, 1, dark);
+  P(3, 10, 3, 7, dark); P(18, 10, 3, 7, dark);           // 粗臂
+  P(2, 17, 4, 3, main); P(18, 17, 4, 3, main);           // 巨拳
+  P(9, 20, 3, 5, dark); P(13, 20, 3, 4, dark);           // 短腿
+  P(5, 25, 15, 1, 'rgba(0,0,0,0.4)');
+  return c;
+}
+function battleXuekui() { return battlePuppetP('#5a2020', '#2c0c0c', '#8a3a30', '#ff5a4a'); }
+function battleTakui() { return battlePuppetP('#4e5258', '#2c2e34', '#6e747c', '#c8d4e0'); }
+
+function battleBossChiyuan() {
+  const [c, ctx] = makeCanvas(48, 48);
+  const P = grid2(ctx, 0, 0);
+  const R = '#5c1418', RD = '#3c0c10', M = '#d8c0b0', G = '#ff4646';
+  P(8, 0, 2, 3, RD); P(14, 0, 2, 3, RD);                 // 双角
+  P(7, 3, 10, 5, R);
+  P(9, 5, 6, 5, M); P(9, 5, 6, 1, '#b8a090');
+  P(10, 7, 2, 1, G); P(13, 7, 2, 1, G);                  // 血瞳
+  P(11, 9, 2, 1, '#7a1c1c');
+  P(5, 9, 14, 4, R); P(5, 9, 14, 1, '#8a2c30');
+  P(6, 13, 12, 9, R);
+  P(4, 18, 16, 6, RD); P(3, 21, 18, 4, RD);
+  P(6, 13, 1, 9, '#8a2c30'); P(17, 13, 1, 9, '#8a2c30');
+  P(10, 15, 4, 1, '#c8a84c');
+  P(1, 12, 3, 2, G); P(20, 10, 3, 2, G);                 // 缠绕血气
+  P(3, 23, 2, 3, '#7a1c2c'); P(19, 22, 2, 4, '#7a1c2c'); P(10, 24, 3, 2, '#4a1018');
+  return c;
+}
 
 function tile(size, painter) {
   const [c, ctx] = makeCanvas(size, size);

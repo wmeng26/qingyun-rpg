@@ -120,13 +120,48 @@ export default {
 
   quest_main_11: {
     id: 'quest_main_11', name: '魔主玄冥', type: 'main', giver: 'npc_cunzhang',
-    requires: 'quest_main_10', next: null,
+    requires: 'quest_main_10', next: 'quest_main_12',
     intro: '魔渊封印已开。千年前的一切恩怨，都在渊底做个了断。',
     objectives: [
       { type: 'flag', flag: 'boss_xuanming_defeated', text: '击败魔主玄冥' },
       { type: 'talk', target: 'npc_cunzhang', text: '回报村正', final: true },
     ],
     rewards: { exp: 15000, gold: 5000, items: [{ id: 'sword_zhanxing', count: 1 }, { id: 'armor_xuanming', count: 1 }], action: 'chapterEnd', chapter: 4 },
+  },
+
+  // ---- 第五章：血煞之上（后传） ----
+  quest_main_12: {
+    id: 'quest_main_12', name: '赤煞余孽', type: 'main', giver: 'npc_zhangmen',
+    requires: 'quest_main_11', next: 'quest_main_13',
+    intro: '庆功酒尚温，密报已至——血煞残党在西南古窟集结，侍奉着「血煞之上」。',
+    objectives: [
+      { type: 'kill', target: 'mob_chisha', count: 4, text: '剿灭赤煞教士' },
+      { type: 'talk', target: 'npc_zhangmen', text: '回禀掌门', final: true },
+    ],
+    rewards: { exp: 12000, gold: 3000, items: [{ id: 'pill_xuling', count: 1 }] },
+  },
+
+  quest_main_13: {
+    id: 'quest_main_13', name: '赤魂三晶', type: 'main', giver: 'npc_zhangmen',
+    requires: 'quest_main_12', next: 'quest_main_14',
+    intro: '窟中古碑有载：三枚赤魂晶共鸣，可开启通往煞天幻境的门。而破门之人，须有炼虚之力。',
+    objectives: [
+      { type: 'item', target: 'jing_chihun', count: 3, text: '收集赤魂晶' },
+      { type: 'realm', value: 'lianxu', text: '突破至炼虚期' },
+      { type: 'talk', target: 'npc_zhangmen', text: '回禀掌门', final: true },
+    ],
+    rewards: { exp: 18000, gold: 4000, items: [{ id: 'pill_xuling', count: 2 }, { id: 'pill_tianyuan', count: 2 }] },
+  },
+
+  quest_main_14: {
+    id: 'quest_main_14', name: '赤渊终战', type: 'main', giver: 'npc_zhangmen',
+    requires: 'quest_main_13', next: null,
+    intro: '幻境之门已开。千年血祭背后的真凶——血煞之上·赤渊，就在门后等你。',
+    objectives: [
+      { type: 'flag', flag: 'boss_chiyuan_defeated', text: '击败血煞之上·赤渊' },
+      { type: 'talk', target: 'npc_zhangmen', text: '回禀掌门', final: true },
+    ],
+    rewards: { exp: 30000, gold: 8000, items: [{ id: 'sword_tianwen', count: 1 }, { id: 'armor_chixia', count: 1 }], action: 'chapterEnd', chapter: 5 },
   },
 
   quest_side_1: {
@@ -216,5 +251,27 @@ export default {
       { type: 'talk', target: 'npc_shen', text: '交给沈孤鸿', final: true },
     ],
     rewards: { exp: 4000, gold: 500, items: [{ id: 'qin_jiaowei', count: 1 }] },
+  },
+
+  quest_side_9: {
+    id: 'quest_side_9', name: '轮回试炼', type: 'side', giver: 'npc_guchen',
+    requires: 'quest_main_9', next: null,
+    intro: '守塔人古尘守着青云山后这座古塔：「塔中幻境重演旧敌，九层之上，有物相赠。」',
+    objectives: [
+      { type: 'flag', flag: 'tower_f9_cleared', text: '登顶轮回塔，胜过守塔傀儡' },
+      { type: 'talk', target: 'npc_guchen', text: '告知古尘', final: true },
+    ],
+    rewards: { exp: 10000, gold: 3000, items: [{ id: 'ling_xukong', count: 1 }, { id: 'pill_tianyuan', count: 3 }] },
+  },
+
+  quest_side_10: {
+    id: 'quest_side_10', name: '翎羽铸锋', type: 'side', giver: 'npc_qiuju',
+    requires: 'quest_main_12', next: null,
+    intro: '被困窟中的铸剑师鲁铸想要赤焰蝠的火翎：「三根赤焰翎，我助你淬一口问天的剑。」',
+    objectives: [
+      { type: 'item', target: 'chi_ling', count: 3, text: '收集赤焰翎' },
+      { type: 'talk', target: 'npc_qiuju', text: '交给鲁铸', final: true },
+    ],
+    rewards: { exp: 6000, gold: 1200, items: [{ id: 'pill_tianyuan', count: 2 }, { id: 'pill_xuling', count: 1 }] },
   },
 };

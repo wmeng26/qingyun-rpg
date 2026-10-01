@@ -45,7 +45,14 @@ export default class Game {
 
     this.audio = initAudio();
 
-    this.bus.on('enemyKilled', () => this.kills++);
+    // 妖物图鉴：遭遇过（seen）+ 累计击杀（killsByMob），随存档持久化
+    this.seenMobs = new Set();
+    this.killsByMob = {};
+
+    this.bus.on('enemyKilled', ({ mobId }) => {
+      this.kills++;
+      this.killsByMob[mobId] = (this.killsByMob[mobId] || 0) + 1;
+    });
     // 全局奖励类音效（战斗结算的升级音在 BattleUI 播，避免与结算画面重叠）
     this.bus.on('levelUp', () => sfx.play('levelup'));
     this.bus.on('breakthrough', () => sfx.play('breakthrough'));
@@ -62,6 +69,8 @@ export default class Game {
     this.gold = BALANCE.start.gold;
     this.kills = 0;
     this.playSec = 0;
+    this.seenMobs = new Set();
+    this.killsByMob = {};
     this.inventory.deserialize({});
     for (const it of BALANCE.start.items) this.inventory.add(it.id, it.count);
     this.dialog.start('dlg_prologue', {
@@ -81,6 +90,8 @@ export default class Game {
     this.gold = d.gold || 0;
     this.kills = d.kills || 0;
     this.playSec = d.playSec || 0;
+    this.seenMobs = new Set(d.seen || []);
+    this.killsByMob = d.killsByMob || {};
     const pos = d.pos || BALANCE.start.pos;
     this.enterMap(d.mapId || BALANCE.start.mapId, pos.x, pos.y, pos.dir || 'down');
   }
@@ -98,6 +109,8 @@ export default class Game {
       party: this.party.map(c => c.serialize()),
       inventory: this.inventory.serialize(),
       quests: this.quests ? this.quests.serialize() : {},
+      seen: [...this.seenMobs],
+      killsByMob: this.killsByMob,
     };
   }
 
@@ -110,6 +123,7 @@ export default class Game {
   startBattle(cfg) {
     if (this.inBattle) return;
     this.inBattle = true;
+    for (const id of cfg.mobs) this.seenMobs.add(id); // 图鉴：遭遇记录
     this.ui.showHUD(false);
     const mapDef = this.mapId ? MAPS[this.mapId] : null;
     const scene = this.makeBattleScene({

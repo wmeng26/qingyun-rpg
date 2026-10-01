@@ -9,11 +9,11 @@ const mod = (p) => import(pathToFileURL(path.join(root, 'js', p)).href);
 const [
   { default: EventBus }, { default: Inventory }, { default: Equipment },
   { Character }, { default: Cultivation }, { default: QuestManager }, { default: BattleEngine },
-  { default: QUESTS }, { default: ITEMS }, { default: SKILLS },
+  { default: QUESTS }, { default: ITEMS }, { default: SKILLS }, { default: MAPS },
 ] = await Promise.all([
   mod('core/EventBus.js'), mod('systems/Inventory.js'), mod('systems/Equipment.js'),
   mod('systems/Character.js'), mod('systems/Cultivation.js'), mod('systems/QuestManager.js'), mod('battle/BattleEngine.js'),
-  mod('data/quests.js'), mod('data/items.js'), mod('data/skills.js'),
+  mod('data/quests.js'), mod('data/items.js'), mod('data/skills.js'), mod('data/maps.js'),
 ]);
 
 let passed = 0, failed = 0;
@@ -30,6 +30,8 @@ function makeGame() {
     flags: new Set(),
     gold: 0,
     kills: 0,
+    seenMobs: new Set(),
+    killsByMob: {},
     chapterEnds: [],
     addGold(n) { this.gold = Math.max(0, this.gold + n); },
     obtainItem(id, count = 1, silent = false) {
@@ -48,6 +50,11 @@ function makeGame() {
     },
     ui: { toast() {}, chapterEnd(ch) { g.chapterEnds.push(ch); } },
   };
+  // 与 Game 构造器同款的图鉴追踪绑定（enemyKilled 载荷 {mobId}）
+  g.bus.on('enemyKilled', ({ mobId }) => {
+    g.kills++;
+    g.killsByMob[mobId] = (g.killsByMob[mobId] || 0) + 1;
+  });
   g.inventory = new Inventory(g);
   g.equipment = new Equipment(g);
   g.party = [new Character('hero')];
@@ -328,9 +335,9 @@ section('剧情突破 storyBreakthrough');
   const st = hero.stats();
   ok(Object.values(st).every(v => Number.isFinite(v) && v > 0), '元婴属性链有限');
   ok(hero.hp === st.maxHp, '突破后全恢复');
-  // 满境界再调用应安全返回 null（化神为当前最高境界）
-  hero.realmId = 'huashen';
-  ok(g.storyBreakthrough() === null, '满境界（化神）时 storyBreakthrough 返回 null');
+  // 满境界再调用应安全返回 null（炼虚为当前最高境界）
+  hero.realmId = 'lianxu';
+  ok(g.storyBreakthrough() === null, '满境界（炼虚）时 storyBreakthrough 返回 null');
   ok(before === 'jindan', '前置状态未受影响');
 }
 
@@ -639,6 +646,197 @@ section('音频模块（无 AudioContext 降级 + FakeContext 调度）');
     delete globalThis.AudioContext;
     A.sfx.music(null);
   }
+}
+
+// ============ 15. 第五章任务链（后传·血煞之上） ============
+section('第五章任务链');
+{
+  const g = makeGame();
+  const q = g.quests;
+  for (let i = 1; i <= 11; i++) q.get(`quest_main_${i}`).state = 'completed';
+  q.refreshAvailability();
+  ok(q.get('quest_main_12').state === 'available', '主线12 在主线11完成后可接取');
+
+  q.accept('quest_main_12');
+  for (let i = 0; i < 4; i++) q.notifyKill('mob_chisha');
+  ok(q.get('quest_main_12').state === 'ready', '击杀赤煞教士×4 后可交付');
+  q.complete('quest_main_12');
+  ok(g.inventory.count('pill_xuling') === 1, '主线12 奖励炼虚丹到账');
+  ok(q.get('quest_main_13').state === 'available', '主线13 解锁');
+
+  q.accept('quest_main_13');
+  ok(q.get('quest_main_13').state === 'active', '主线13 已接取');
+  g.obtainItem('jing_chihun', 3, true);
+  g.setFlag('chihun_a_defeated');
+  ok(!q.get('quest_main_13').state.match(/ready/), '仅有晶未炼虚尚不可交付');
+  g.party[0].realmId = 'lianxu';
+  g.party[0].syncSkills();
+  g.bus.emit('breakthrough', { char: g.party[0], realm: 'lianxu' });
+  ok(q.get('quest_main_13').state === 'ready', '三晶+炼虚突破后可交付');
+  q.complete('quest_main_13');
+  ok(g.inventory.count('pill_xuling') === 3, '主线13 奖励炼虚丹补足至3');
+  ok(q.get('quest_main_14').state === 'available', '主线14 解锁');
+
+  q.accept('quest_main_14');
+  g.setFlag('boss_chiyuan_defeated');
+  ok(q.get('quest_main_14').state === 'ready', '击败赤渊后可交付');
+  q.complete('quest_main_14');
+  ok(g.inventory.count('sword_tianwen') === 1 && g.inventory.count('armor_chixia') === 1, '主线14 天问剑/赤霞袍到账');
+  await new Promise(r => setTimeout(r, 700));
+  ok(g.chapterEnds.length === 1 && g.chapterEnds[0] === 5, '触发第五章结算（chapterEnd(5)）');
+
+  // 支线9/10
+  const g2 = makeGame();
+  const q2 = g2.quests;
+  for (let i = 1; i <= 9; i++) q2.get(`quest_main_${i}`).state = 'completed';
+  q2.refreshAvailability();
+  ok(q2.get('quest_side_9').state === 'available', '支线9（轮回试炼）在主线9后可接取');
+  q2.accept('quest_side_9');
+  g2.setFlag('tower_f9_cleared');
+  ok(q2.get('quest_side_9').state === 'ready', '登顶后可交付');
+  q2.complete('quest_side_9');
+  ok(g2.inventory.count('ling_xukong') === 1, '支线9 奖励虚空佩到账');
+
+  // 支线10 依赖主线12（翎羽铸锋的铸剑师在赤煞窟）
+  for (let i = 10; i <= 12; i++) q2.get(`quest_main_${i}`).state = 'completed';
+  q2.refreshAvailability();
+  ok(q2.get('quest_side_10').state === 'available', '支线10 在主线12后可接取');
+  q2.accept('quest_side_10');
+  g2.obtainItem('chi_ling', 3, true);
+  ok(q2.get('quest_side_10').state === 'ready', '支线10 三根赤焰翎集齐可交付');
+  q2.complete('quest_side_10');
+  ok(g2.inventory.count('chi_ling') === 0, '支线10 交付扣除赤焰翎');
+  ok(g2.inventory.count('pill_tianyuan') === 5, '支线10 天元丹到账（3+2 累计）');
+}
+
+// ============ 16. 炼虚境 + 图鉴追踪 ============
+section('炼虚境与图鉴');
+{
+  const g = makeGame();
+  const hero = g.party[0];
+  hero.level = 55; hero.realmId = 'lianxu'; hero.syncSkills();
+  ok(hero.skills.includes('skill_wenjian'), '主角炼虚学会「天问一剑」');
+  const liu = new Character('liu'); liu.level = 55; liu.realmId = 'lianxu'; liu.syncSkills();
+  const luo = new Character('luo'); luo.level = 55; luo.realmId = 'lianxu'; luo.syncSkills();
+  const shen = new Character('shen'); shen.level = 55; shen.realmId = 'lianxu'; shen.syncSkills();
+  ok(liu.skills.includes('skill_zaohua'), '柳如烟学会「造化回天」');
+  ok(luo.skills.includes('skill_shuangjue'), '洛清霜学会「霜天绝斩」');
+  ok(shen.skills.includes('skill_dayin'), '沈孤鸿学会「大音希声」');
+  const st = hero.stats();
+  ok(Object.values(st).every(v => Number.isFinite(v) && v > 0), `炼虚属性链有限（atk=${st.atk}）`);
+  ok(Cultivation.nextRealmDef(hero) === null, '炼虚为当前最高境界');
+
+  // 图鉴：击杀追踪（镜像 Game 构造器的 enemyKilled 绑定）
+  const eng = new BattleEngine({ game: g, mobs: ['mob_chisha', 'mob_chisha'], canFlee: false });
+  let outcome = null, guard = 0;
+  while (!outcome && guard++ < 200) {
+    eng.beginTurn();
+    while (eng.currentCommander()) {
+      const u = eng.currentCommander();
+      eng.setCommand(u, { kind: 'attack', targets: [eng.aliveEnemies()[0]] });
+      eng.popCommander();
+    }
+    outcome = eng.resolveTurn().outcome;
+  }
+  eng.applyVictory();
+  ok(g.killsByMob['mob_chisha'] === 2, `图鉴击杀计数（mob_chisha ×${g.killsByMob['mob_chisha']}）`);
+  ok(g.kills === 2, '总击杀同步');
+}
+
+// ============ 17. 轮回塔结构 ============
+section('轮回古塔结构');
+{
+  const tower = MAPS.map_lunhui;
+  ok(tower.tiles.length === 108 && tower.tiles.every(r => r.length === 18), '塔身 9层×12行、宽18 全部一致');
+  ok(tower.legend['a'] && tower.legend['a'].enc === 'tw1' && tower.legend['i'].enc === 'tw8', '遭遇分区图例齐全');
+  const walkable = (x, y) => {
+    const l = tower.legend[tower.tiles[y] && tower.tiles[y][x]];
+    return l && !l.solid;
+  };
+  ok(walkable(8, 10), '入塔落点（8,10）可行走');
+  for (let n = 1; n <= 8; n++) ok(walkable(8, (n - 1) * 12) && walkable(9, (n - 1) * 12), `第${n}层上行门可行走`);
+  for (let n = 1; n <= 9; n++) ok(walkable(8, n * 12 - 1) && walkable(9, n * 12 - 1), `第${n}层下行门可行走`);
+  ok(walkable(8, 33) && walkable(9, 33), '第3层守层咽喉可行走');
+  ok(tower.portals.length === 34, `传送门 34 座（实际 ${tower.portals.length}）`);
+  const ups = tower.portals.filter(p => p.requiresFlag);
+  ok(ups.length === 4 && ups.every(p => ['tower_f3_cleared', 'tower_f6_cleared'].includes(p.requiresFlag)),
+    '第3/6层上行门有守层旗标禁制');
+  const chests = tower.events.filter(e => e.type === 'chest');
+  ok(chests.some(e => (e.items || []).some(it => it.id === 'ling_xukong')), '塔顶藏有虚空佩');
+  const guards = tower.events.filter(e => e.type === 'battle');
+  ok(guards.length === 6 && new Set(guards.map(e => e.flag)).size === 3, '3 个守层战（双侧触发格）');
+  const mobIds = new Set(Object.values(tower.encounters).flat().map(r => r.mobs).flat());
+  ok([...mobIds].every(id => typeof id === 'string'), '遭遇表引用完整（validate 已校验怪物存在性）');
+}
+
+// ============ 18. 炼虚四人 Boss 战（赤渊，无头 300 局） ============
+section('赤渊终战 300 局（炼虚四人）');
+{
+  let wins = 0, losses = 0, totalTurns = 0, errs = 0;
+  for (let run = 0; run < 300; run++) {
+    try {
+      const g = makeGame();
+      const hero = g.party[0];
+      hero.level = 55; hero.realmId = 'lianxu'; hero.syncSkills();
+      hero.equipment.weapon = 'sword_tianwen';
+      hero.equipment.armor = 'armor_chixia';
+      hero.equipment.accessory = 'ling_xukong';
+      const liu = new Character('liu'); const luo = new Character('luo'); const shen = new Character('shen');
+      for (const c of [liu, luo, shen]) { c.level = 55; c.realmId = 'lianxu'; c.syncSkills(); }
+      liu.equipment.weapon = 'sword_zhanxing'; liu.equipment.armor = 'armor_chixia'; liu.equipment.accessory = 'ling_xukong';
+      luo.equipment.weapon = 'dao_nujiang'; luo.equipment.armor = 'armor_xuanming'; luo.equipment.accessory = 'yu_longhun';
+      shen.equipment.weapon = 'qin_jiaowei'; shen.equipment.accessory = 'yu_longhun';
+      g.party.push(liu, luo, shen);
+      for (const c of g.party) c.fullHeal();
+
+      const eng = new BattleEngine({ game: g, mobs: ['boss_chiyuan'], boss: true, canFlee: false, winFlag: 'boss_chiyuan_defeated' });
+      let outcome = null, guard = 0;
+      while (!outcome && guard++ < 300) {
+        eng.beginTurn();
+        while (eng.currentCommander()) {
+          const u = eng.currentCommander();
+          eng.setCommand(u, partyCommand(u, eng));
+          eng.popCommander();
+        }
+        const r = eng.resolveTurn();
+        outcome = r.outcome;
+      }
+      totalTurns += eng.turn - 1;
+      if (outcome === 'victory') wins++;
+      else losses++;
+    } catch (e) { errs++; console.error('  异常:', e.message); }
+  }
+  ok(errs === 0, `无异常（异常 ${errs} 局）`);
+  ok(losses === 0, `300 局全胜（胜 ${wins} / 负 ${losses}）`);
+  console.log(`  平均回合数: ${(totalTurns / 300).toFixed(1)}`);
+  ok(totalTurns / 300 < 40, '平均回合数 < 40');
+
+  // 守塔傀儡抽查 50 局（炼虚单人+伙伴）
+  let tWins = 0, tErrs = 0;
+  for (let run = 0; run < 50; run++) {
+    try {
+      const g = makeGame();
+      const hero = g.party[0];
+      hero.level = 55; hero.realmId = 'lianxu'; hero.syncSkills();
+      const liu = new Character('liu');
+      liu.level = 55; liu.realmId = 'lianxu'; liu.syncSkills();
+      g.party.push(liu);
+      for (const c of g.party) c.fullHeal();
+      const eng = new BattleEngine({ game: g, mobs: ['mob_takui'], boss: true, canFlee: false });
+      let outcome = null, guard = 0;
+      while (!outcome && guard++ < 300) {
+        eng.beginTurn();
+        while (eng.currentCommander()) {
+          const u = eng.currentCommander();
+          eng.setCommand(u, partyCommand(u, eng));
+          eng.popCommander();
+        }
+        outcome = eng.resolveTurn().outcome;
+      }
+      if (outcome === 'victory') tWins++;
+    } catch (e) { tErrs++; }
+  }
+  ok(tErrs === 0 && tWins >= 48, `守塔傀儡抽查 50 局无异常且基本全胜（胜 ${tWins}，异常 ${tErrs}）`);
 }
 
 console.log(`\n========== 结果: ${passed} 通过 / ${failed} 失败 ==========`);

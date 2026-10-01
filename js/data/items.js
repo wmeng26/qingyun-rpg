@@ -47,6 +47,16 @@ export default {
     desc: '九转炼制的救急丹药，气血全复并祛除一切异常。',
     effect: { hpPct: 1.0, cureAll: true }, target: 'one_ally',
   },
+  pill_xuling: {
+    id: 'pill_xuling', name: '炼虚丹', type: 'consumable', price: 20000, icon: 'icon_pill_rainbow',
+    desc: '冲击炼虚期所需的辅药（突破时消耗，成功率45%）。',
+    effect: { breakthrough: true }, target: 'one_ally',
+  },
+  pill_tianyuan: {
+    id: 'pill_tianyuan', name: '天元丹', type: 'consumable', price: 6000, icon: 'icon_pill_gold',
+    desc: '传说中的绝品丹药，气血灵力尽复、百毒不侵（对倒地的同伴亦有回天之效）。',
+    effect: { hpPct: 1.0, mpPct: 1.0, cureAll: true }, target: 'one_ally',
+  },
 
   // ---- 材料（可出售） ----
   fang_wolf: {
@@ -80,6 +90,14 @@ export default {
   mo_hun: {
     id: 'mo_hun', name: '魔魂碎片', type: 'material', price: 220, icon: 'icon_mohun',
     desc: '渊魔溃散后残留的魔魂结晶，封印重铸所需之法器材料。',
+  },
+  jing_chihun: {
+    id: 'jing_chihun', name: '赤魂晶', type: 'material', price: 1200, icon: 'icon_xuezhu',
+    desc: '赤魂使者溃散后凝成的血色晶石，三晶共鸣可开启幻境之门。',
+  },
+  chi_ling: {
+    id: 'chi_ling', name: '赤焰翎', type: 'material', price: 150, icon: 'icon_fur',
+    desc: '赤焰蝠翼上的火羽，是铸剑师梦寐以求的淬火之材。',
   },
 
   // ---- 装备：武器 ----
@@ -120,6 +138,14 @@ export default {
     id: 'armor_xuanming', name: '玄冥甲', type: 'equipment', slot: 'armor', price: 8500, icon: 'icon_armor5',
     desc: '以渊魔之鳞缀成，寒暑不侵，魔煞不近。', bonus: { def: 38, mdef: 14, maxHp: 90 },
   },
+  sword_tianwen: {
+    id: 'sword_tianwen', name: '天问剑', type: 'equipment', slot: 'weapon', price: 16000, icon: 'icon_sword5',
+    desc: '以赤渊残韵淬炼的长剑，剑鸣如问天。', bonus: { atk: 46, spd: 6 },
+  },
+  armor_chixia: {
+    id: 'armor_chixia', name: '赤霞袍', type: 'equipment', slot: 'armor', price: 15000, icon: 'icon_armor5',
+    desc: '赤霞织就的法袍，煞气不侵。', bonus: { def: 42, mdef: 18, maxHp: 120 },
+  },
   qin_jiaowei: {
     id: 'qin_jiaowei', name: '焦尾琴', type: 'equipment', slot: 'weapon', price: 7000, icon: 'icon_qin',
     desc: '沈孤鸿的故琴，琴音可裂金石。', bonus: { matk: 30, maxMp: 30 },
@@ -156,6 +182,11 @@ export default {
   yu_longhun: {
     id: 'yu_longhun', name: '龙魂玉', type: 'equipment', slot: 'accessory', price: 6000, icon: 'icon_longyu',
     desc: '古龙残魂所栖，佩者神魂如铁。', bonus: { mdef: 22, maxMp: 60 },
+  },
+  ling_xukong: {
+    id: 'ling_xukong', name: '虚空佩', type: 'equipment', slot: 'accessory', price: 20000, icon: 'icon_jade',
+    desc: '轮回塔顶的古老玉佩，虚空中凝练的道韵，诸般属性皆有其益。',
+    bonus: { atk: 8, def: 8, matk: 8, mdef: 8, spd: 8, maxHp: 60, maxMp: 30 },
   },
 
   // ---- 任务物品 ----

@@ -11,15 +11,17 @@ const SHOP_GOODS = [
   'pill_dahuan', 'sword_hanshuang', 'armor_silver', 'amulet_yulin',
   'pill_jiuzhuan', 'sword_zhanlu', 'armor_longlin', 'amulet_huhun',
   'pill_guyuan', 'pill_huashen', 'sword_zhanxing', 'armor_xuanming', 'yu_longhun', 'qin_jiaowei',
+  'pill_xuling', 'pill_tianyuan', 'sword_tianwen', 'armor_chixia', 'ling_xukong',
 ];
 
 // 各章结算文案
-const CHAPTER_CN = ['一', '二', '三', '四'];
+const CHAPTER_CN = ['一', '二', '三', '四', '五'];
 const CHAPTER_SUBS = {
   1: '青云山重归太平，而江湖路才刚刚开始……',
   2: '黑风寨已平，然密信之上，「血煞教」三字触目惊心……',
   3: '百年魔教一朝倾覆，元婴初成——而「血煞之上」的影子，才刚刚显现……',
-  4: '魔主既灭，封印重铸。千年血债清偿，天下自此太平。——全剧情终，感谢游玩！',
+  4: '魔主既灭，封印重铸。千年血债清偿，天下自此太平。\n然庆功宴上，一封新的密报正快马赶来……',
+  5: '赤渊既灭，千年血祭终成灰烬。仙途无尽，大道未央。\n——全剧情终（真结局），感谢游玩！',
 };
 
 export default class UIScene {
@@ -284,7 +286,7 @@ export default class UIScene {
     const mins = Math.floor(g.playSec / 60);
     const root = document.createElement('div');
     root.id = 'chapter-root';
-    const isFinal = chapter >= 4;
+    const isFinal = chapter >= 5;
     root.innerHTML = `
       <div class="ch-title">${isFinal ? '终章' : `第${CHAPTER_CN[chapter - 1] || chapter}章`} · 完</div>
       <div class="ch-sub">${CHAPTER_SUBS[chapter] || '江湖路远，未完待续……'}</div>

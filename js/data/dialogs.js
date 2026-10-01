@@ -24,6 +24,16 @@ export default {
       root: {
         speaker: '掌门·玄阳子', portrait: 'face_zhangmen', text: '',
         branch: [
+          { cond: { quest: { id: 'quest_main_14', state: 'ready' } }, next: 'turnin14' },
+          { cond: { quest: { id: 'quest_main_14', state: 'active' } }, next: 'progress14' },
+          { cond: { quest: { id: 'quest_main_14', state: 'available' } }, next: 'offer14' },
+          { cond: { quest: { id: 'quest_main_13', state: 'ready' } }, next: 'turnin13' },
+          { cond: { quest: { id: 'quest_main_13', state: 'active' } }, next: 'progress13' },
+          { cond: { quest: { id: 'quest_main_13', state: 'available' } }, next: 'offer13' },
+          { cond: { quest: { id: 'quest_main_12', state: 'ready' } }, next: 'turnin12' },
+          { cond: { quest: { id: 'quest_main_12', state: 'active' } }, next: 'progress12' },
+          { cond: { quest: { id: 'quest_main_12', state: 'available' } }, next: 'offer12' },
+          { cond: { quest: { id: 'quest_main_14', state: 'completed' } }, next: 'post_ch5' },
           { cond: { quest: { id: 'quest_main_8', state: 'completed' } }, next: 'north_hint' },
           { cond: { quest: { id: 'quest_main_8', state: 'ready' } }, next: 'turnin8' },
           { cond: { quest: { id: 'quest_main_8', state: 'active' } }, next: 'progress8' },
@@ -55,6 +65,79 @@ export default {
       north_hint: {
         speaker: '掌门·玄阳子', portrait: 'face_zhangmen',
         text: '魔主之名，老道也只在祖师的残卷里见过一字半句……\n北面寒霜渡的求援信，已经到了三次。萧逸，带着你的同伴们——去北边吧。',
+        next: null,
+      },
+      // ---- 第五章：血煞之上 ----
+      offer12: {
+        speaker: '掌门·玄阳子', portrait: 'face_zhangmen',
+        text: '萧逸，庆功酒怕是要凉一凉了。\n北境传来的密报：血煞教并未根绝——残党正往西南古窟集结，誓要迎回一个名讳。老道查遍禁书，只在夹页里寻到四个字——「血煞之上」。',
+        choices: [
+          { text: '魔主既灭，余孽何惧！', next: 'offer12b', actions: [{ do: 'startQuest', id: 'quest_main_12' }] },
+          { text: '容我先准备一下。', next: null },
+        ],
+      },
+      offer12b: {
+        speaker: '掌门·玄阳子', portrait: 'face_zhangmen',
+        text: '后山已为人开路，直通赤煞窟。窟中赤衣祭酒以血为祭——剿灭四人，夺其血符。\n切记：此番对手，是潜心千年之辈。粮草丹药，务必带足。',
+        next: null,
+      },
+      progress12: {
+        speaker: '掌门·玄阳子', portrait: 'face_zhangmen',
+        text: '赤煞窟中赤袍祭酒仍在血祭——多加搜剿，莫放走一人。',
+        next: null,
+      },
+      turnin12: {
+        speaker: '掌门·玄阳子', portrait: 'face_zhangmen',
+        text: '血符上竟刻着同一篇祭文……赤魂晶、幻境之门——原来血煞教千年香火，供的从来不是魔主玄冥。',
+        actions: [{ do: 'completeQuest', id: 'quest_main_12' }],
+        next: 'offer13',
+      },
+      offer13: {
+        speaker: '掌门·玄阳子', portrait: 'face_zhangmen',
+        text: '窟中古碑有载：集齐三枚赤魂晶，可开「煞天幻境」之门。\n而门后之人，恐怕远在魔主之上——欲入幻境，你须再破一境。炼虚丹在此，去会一会那些「赤魂使者」吧。',
+        choices: [
+          { text: '弟子领命！', next: 'offer13b', actions: [{ do: 'startQuest', id: 'quest_main_13' }] },
+          { text: '容我些时日。', next: null },
+        ],
+      },
+      offer13b: {
+        speaker: '掌门·玄阳子', portrait: 'face_zhangmen',
+        text: '窟中两位赤魂使者各怀一晶，另一位……或藏于更深处。三晶集齐，丹成炼虚，方可叩门。\n（在「角色」页以炼虚丹冲击炼虚期。）',
+        next: null,
+      },
+      progress13: {
+        speaker: '掌门·玄阳子', portrait: 'face_zhangmen',
+        text: '赤魂晶尚未集齐，炼虚之境也未可懈怠——窟中赤焰蝠身上或有余晶。',
+        next: null,
+      },
+      turnin13: {
+        speaker: '掌门·玄阳子', portrait: 'face_zhangmen',
+        text: '三晶共鸣，炼虚天成——好！好！好！\n窟门已应声而开。门后便是煞天幻境，千年血祭的真凶就在彼处。此去……老道不送了，送你一句祖师遗言：莫信眼前。',
+        actions: [{ do: 'completeQuest', id: 'quest_main_13' }],
+        next: 'offer14',
+      },
+      offer14: {
+        speaker: '掌门·玄阳子', portrait: 'face_zhangmen',
+        text: '幻境之门已开，退路只有一条——向前。\n带上天问剑、赤霞袍，带着你的同伴。去终结这段千年的血债吧，萧逸。',
+        choices: [
+          { text: '弟子此去，不斩赤渊，誓不回山！', next: null, actions: [{ do: 'startQuest', id: 'quest_main_14' }] },
+          { text: '容我先整备行装。', next: null },
+        ],
+      },
+      progress14: {
+        speaker: '掌门·玄阳子', portrait: 'face_zhangmen',
+        text: '幻境之门就在窟顶。莫信眼前所见——去吧。',
+        next: null,
+      },
+      turnin14: {
+        speaker: '掌门·玄阳子', portrait: 'face_zhangmen',
+        text: '（老道接过血符，久久无言，终是长揖及地。）\n千年血祭，一朝而清。萧逸——自今日起，你的名字，可入仙史了。',
+        actions: [{ do: 'completeQuest', id: 'quest_main_14' }],
+        next: null,
+      },
+      post_ch5: {
+        speaker: '掌门·玄阳子', portrait: 'face_zhangmen',
+        text: '血煞既清，天下升平。\n后山轮回塔中幻境重演，守塔人古尘仍在等你——仙途无尽，剑不可钝。',
         next: null,
       },
       offer6: {
@@ -1138,6 +1221,189 @@ export default {
       n6: {
         speaker: '萧逸', portrait: 'face_hero',
         text: '（少年从青云山走来，一路斩妖除魔，终成天下景仰的化神剑修。）\n「走吧——回家。」',
+        next: null,
+      },
+    },
+  },
+
+  // ---- 第五章：血煞之上 ----
+  dlg_guchen: {
+    entry: 'root',
+    nodes: {
+      root: {
+        speaker: '守塔人·古尘', portrait: '', text: '',
+        branch: [
+          { cond: { quest: { id: 'quest_side_9', state: 'ready' } }, next: 'turnin9' },
+          { cond: { quest: { id: 'quest_side_9', state: 'active' } }, next: 'progress9' },
+          { cond: { quest: { id: 'quest_side_9', state: 'available' } }, next: 'offer9' },
+          { cond: { quest: { id: 'quest_side_9', state: 'completed' } }, next: 'praise' },
+          { cond: { quest: { id: 'quest_main_9', state: 'completed' } }, next: 'idle' },
+        ],
+        next: 'locked',
+      },
+      locked: {
+        speaker: '守塔人·古尘', portrait: '',
+        text: '（守塔人眯着眼打量你，摇了摇头）塔门只为渡过北境生死之人而开。\n「北边的债了了，再来敲这扇门。」',
+        next: null,
+      },
+      offer9: {
+        speaker: '守塔人·古尘', portrait: '',
+        text: '（守塔人推开塔门的石闩）「贫道古尘，守此塔一甲子。塔中幻境，重演旧敌——九层，一层凶过一层。」\n「登顶者，塔顶之物相赠。敢去么？」',
+        choices: [
+          { text: '九层便九层！', next: 'offer9b', actions: [{ do: 'startQuest', id: 'quest_side_9' }] },
+          { text: '改日再来。', next: null },
+        ],
+      },
+      offer9b: {
+        speaker: '守塔人·古尘', portrait: '',
+        text: '「塔中不得还童，出塔的石门就在每层脚下。记住——幻境里的敌人，死过一次了，不会再怕。」',
+        next: null,
+      },
+      progress9: {
+        speaker: '守塔人·古尘', portrait: '',
+        text: '「塔顶的傀儡，是当年铸塔祖师以整座山的石魂所塑。莫要轻敌。」',
+        next: null,
+      },
+      turnin9: {
+        speaker: '守塔人·古尘', portrait: '',
+        text: '（守塔人抚掌而笑）「一甲子了……总算等到一个登顶的人。」\n「此佩名虚空，乃铸塔祖师遗物——从今日起，它是你的了。」',
+        actions: [{ do: 'completeQuest', id: 'quest_side_9' }],
+        next: null,
+      },
+      praise: {
+        speaker: '守塔人·古尘', portrait: '',
+        text: '「塔还是那座塔，登塔的人，已经不是当年的人了。」\n（古尘微笑着，慢慢闭上了眼睛。）',
+        next: null,
+      },
+      idle: {
+        speaker: '守塔人·古尘', portrait: '',
+        text: '「塔门已为你开。九层幻境，旧敌重演——敢登么？」',
+        choices: [
+          { text: '登塔！', next: null, actions: [{ do: 'startQuest', id: 'quest_side_9' }] },
+          { text: '改日再来。', next: null },
+        ],
+      },
+    },
+  },
+
+  dlg_qiuju: {
+    entry: 'root',
+    nodes: {
+      root: {
+        speaker: '囚徒·鲁铸', portrait: '', text: '',
+        branch: [
+          { cond: { quest: { id: 'quest_side_10', state: 'ready' } }, next: 'turnin10' },
+          { cond: { quest: { id: 'quest_side_10', state: 'active' } }, next: 'progress10' },
+          { cond: { quest: { id: 'quest_side_10', state: 'available' } }, next: 'offer10' },
+          { cond: { quest: { id: 'quest_side_10', state: 'completed' } }, next: 'thanks' },
+        ],
+        next: 'captive',
+      },
+      captive: {
+        speaker: '囚徒·鲁铸', portrait: '',
+        text: '（窟角蜷着一个衣衫褴褛的汉子，腕上铁链锈迹斑斑）\n「……活人？是活人！小老儿鲁铸，原是山下铸剑匠，被这些赤衣邪徒掳来烧火炼丹……」',
+        next: null,
+      },
+      offer10: {
+        speaker: '囚徒·鲁铸', portrait: '',
+        text: '「恩人在上！窟中赤焰蝠翼上的火翎，是铸剑人梦寐以求的淬火之材。」\n「若得三根，小老儿助你淬一口问天的剑——祖上传的手艺，绝不有辱剑名！」',
+        choices: [
+          { text: '三根火翎，包在我身上。', next: 'offer10b', actions: [{ do: 'startQuest', id: 'quest_side_10' }] },
+          { text: '先躲好，莫声张。', next: null },
+        ],
+      },
+      offer10b: {
+        speaker: '囚徒·鲁铸', portrait: '',
+        text: '「赤焰蝠怕寒怕水，诸位刀客的霜气最克它们——猎吧，猎吧！」',
+        next: null,
+      },
+      progress10: {
+        speaker: '囚徒·鲁铸', portrait: '',
+        text: '「还差些火翎……它们就在窟中飞，火上浇油似的红。」',
+        next: null,
+      },
+      turnin10: {
+        speaker: '囚徒·鲁铸', portrait: '',
+        text: '（鲁铸以血符引火，将火翎一层层淬入剑脊，剑身竟透出赤金之色）\n「成了！好剑气……恩人，这几枚丹药你收好——是我在丹房偷学的方子，救命用的！」',
+        actions: [{ do: 'completeQuest', id: 'quest_side_10' }],
+        next: null,
+      },
+      thanks: {
+        speaker: '囚徒·鲁铸', portrait: '',
+        text: '「等窟里清净了，小老儿就回山下重开炉灶——第一口剑，必以恩人姓名为铭！」',
+        next: null,
+      },
+    },
+  },
+
+  dlg_tower_illusion: {
+    entry: 'n1',
+    nodes: {
+      n1: {
+        speaker: '', text: '（石阶尽头，血雾骤起——一个熟悉的身影自雾中走出，眉目狰狞如旧。）', next: 'n2' },
+      n2: {
+        speaker: '？？？', text: '「血煞千年……香火不绝……」\n（是幻象，还是回声？唯有拔剑，方知真假。）', next: null },
+    },
+  },
+
+  dlg_takui_intro: {
+    entry: 'n1',
+    nodes: {
+      n1: {
+        speaker: '', text: '（塔顶尘埃簌簌而落——盘踞千年的石傀缓缓抬起头，石眼中的灵光如炬。）', next: 'n2' },
+      n2: {
+        speaker: '守塔傀儡', text: '「九层……已毕。往后……是第十层。」\n（它抬起石拳——原来塔顶的试炼，是它本身。）', next: null },
+    },
+  },
+
+  dlg_chiyuan_intro: {
+    entry: 'n1',
+    nodes: {
+      n1: {
+        speaker: '', text: '（幻境之门在身后合拢。眼前是一片血色的天——血月悬顶，赤柱擎天，天地间静得只剩心跳。）', next: 'n2' },
+      n2: {
+        speaker: '', text: '（血雾深处，缓缓立起一道影。祂的身形与凡人无异，可祂睁眼的刹那，整片幻境的血都在沸腾。）', next: 'n3' },
+      n3: {
+        speaker: '血煞之上·赤渊', portrait: 'face_xuesha',
+        text: '「玄冥败了？……也好。千年的棋子，总有磨损的一日。」\n「小家伙，你可知你脚下的幻境，是用多少修士的血养出来的？——你是第一万三千个走进来的。」',
+        next: 'n4',
+      },
+      n4: {
+        speaker: '萧逸', portrait: 'face_hero',
+        text: '「血煞教是你放的线，魔主是你养的刀，北境的百年血债，也是你递的刀。」\n「今日我不问你修了多少年——我只问：你的血，够不够偿？」',
+        next: 'n5',
+      },
+      n5: {
+        speaker: '血煞之上·赤渊', portrait: 'face_xuesha',
+        text: '「……有趣。那就让我看看——是千年血祭养出的我硬，还是你这万中无一的天问硬。」\n（祂抬手，整片血色天空倾轧而下——）',
+        next: null,
+      },
+    },
+  },
+
+  dlg_trueend: {
+    entry: 'n1',
+    nodes: {
+      n1: {
+        speaker: '', text: '（赤渊溃散的刹那，血色的天空如镜面寸寸碎裂——\n碎镜之后，是漫天星河。）', next: 'n2' },
+      n2: {
+        speaker: '柳如烟', portrait: 'face_liu',
+        text: '（她望着星河，轻声）「原来……煞天幻境的出口，就是天上。」',
+        next: 'n3',
+      },
+      n3: {
+        speaker: '洛清霜', portrait: 'face_luo',
+        text: '（她收刀入鞘，刀上霜气未散）「千年血债，今日收账完毕。……都愣着做什么，回家。」',
+        next: 'n4',
+      },
+      n4: {
+        speaker: '沈孤鸿', portrait: 'face_shen',
+        text: '（他端坐碎镜之上，拨响了最后一弦）「此曲无题——千年恩怨尽处，一声希声。」',
+        next: 'n5',
+      },
+      n5: {
+        speaker: '萧逸', portrait: 'face_hero',
+        text: '（萧逸提剑而立，血符在掌心化为齑粉，随星河落下。）\n「魔也好，神也好——欠这世道的，一笔都不能少。」\n「走吧。回去喝茶。」',
         next: null,
       },
     },

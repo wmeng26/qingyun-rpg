@@ -1,6 +1,7 @@
-// 主菜单：角色 / 背包 / 任务 / 存档 / 系统
+// 主菜单：角色 / 背包 / 任务 / 图鉴 / 存档 / 系统
 import ITEMS from '../data/items.js';
 import SKILLS from '../data/skills.js';
+import MONSTERS from '../data/monsters.js';
 import Cultivation from '../systems/Cultivation.js';
 import { PanelNav } from '../core/UIPanel.js';
 import { sfx } from '../core/Audio.js';
@@ -10,6 +11,7 @@ const TABS = [
   { id: 'char', name: '角色' },
   { id: 'item', name: '背包' },
   { id: 'quest', name: '任务' },
+  { id: 'book', name: '图鉴' },
   { id: 'save', name: '存档' },
   { id: 'sys', name: '系统' },
 ];
@@ -94,6 +96,7 @@ export default class MainMenu {
     if (this.tab === 'char') this._renderChar();
     else if (this.tab === 'item') this._renderItems();
     else if (this.tab === 'quest') this._renderQuests();
+    else if (this.tab === 'book') this._renderBook();
     else if (this.tab === 'save') this._renderSave();
     else this._renderSys();
     this.nav.attachHover();
@@ -387,6 +390,38 @@ export default class MainMenu {
       this.elContent.appendChild(box);
     }
     if (!any) this.elContent.innerHTML = '<div class="inv-empty">暂无任务……去青云门找掌门吧。</div>';
+    this.nav.setItems([]);
+  }
+
+  // ---- 图鉴 ----
+  _renderBook() {
+    const g = this.game;
+    const ELEMENT_CN = { fire: '火', water: '水', ice: '冰', thunder: '雷', dark: '阴', holy: '阳', none: '' };
+    const all = Object.values(MONSTERS).filter(m => m && m.id).sort((a, b) => a.level - b.level);
+    const seenCount = all.filter(m => g.seenMobs.has(m.id) || g.killsByMob[m.id]).length;
+    const head = document.createElement('div');
+    head.className = 'sec-title';
+    head.style.marginBottom = '8px';
+    head.textContent = `妖物图鉴 · 已遭遇 ${seenCount}/${all.length} · 累计除妖 ${g.kills}`;
+    this.elContent.appendChild(head);
+    for (const m of all) {
+      const kills = g.killsByMob[m.id] || 0;
+      const seen = g.seenMobs.has(m.id) || kills > 0;
+      const box = document.createElement('div');
+      box.className = 'quest-item';
+      const el = m.element && m.element !== 'none' ? ` · ${ELEMENT_CN[m.element] || m.element}系` : '';
+      if (!seen) {
+        box.innerHTML = `
+          <div class="q-title"><span>？？？</span><span class="q-state">未遭遇</span></div>
+          <div class="q-obj" style="color:#5a5040;">Lv?? · 尚未照面的妖物。</div>`;
+      } else {
+        const bossTag = m.boss ? '<span class="q-state">首领</span>' : '';
+        box.innerHTML = `
+          <div class="q-title"><span>Lv${m.level} ${m.name}${el}</span><span class="q-state">${kills ? `击杀 ×${kills}` : '已遭遇'}</span>${bossTag}</div>
+          <div class="q-obj" style="color:#a89878;">${m.desc || ''}</div>`;
+      }
+      this.elContent.appendChild(box);
+    }
     this.nav.setItems([]);
   }
 

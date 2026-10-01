@@ -84,6 +84,12 @@ export default {
     learnRealm: 'huashen',
     desc: '一剑既出，天门为开。',
   },
+  skill_wenjian: {
+    id: 'skill_wenjian', owner: 'hero', name: '天问一剑', kind: 'active', mpCost: 72,
+    target: 'one_enemy', phys: true, power: 3.6, accuracy: 0.95,
+    learnRealm: 'lianxu',
+    desc: '炼虚合道，以剑问天——天人共答。',
+  },
 
   // ============ 柳如烟（医修·符咒） ============
   skill_jishi: {
@@ -135,6 +141,12 @@ export default {
     learnRealm: 'huashen',
     desc: '医道化神，回春之力泽被全队。',
   },
+  skill_zaohua: {
+    id: 'skill_zaohua', owner: 'liu', name: '造化回天', kind: 'active', mpCost: 70,
+    target: 'all_allies', heal: true, power: 2.4, accuracy: 1.0,
+    learnRealm: 'lianxu',
+    desc: '参造化、夺天机，回天之力润泽全队。',
+  },
 
   // ============ 洛清霜（刀客·冰） ============
   skill_hansha: {
@@ -172,6 +184,12 @@ export default {
     target: 'all_enemies', power: 2.2, accuracy: 0.95, element: 'ice',
     learnRealm: 'huashen',
     desc: '霜华自九霄而落，冻结山河。',
+  },
+  skill_shuangjue: {
+    id: 'skill_shuangjue', owner: 'luo', name: '霜天绝斩', kind: 'active', mpCost: 68,
+    target: 'all_enemies', phys: true, power: 2.5, accuracy: 0.9, element: 'ice',
+    learnRealm: 'lianxu',
+    desc: '刀出霜天裂，一斩万籁绝。',
   },
 
   // ============ 沈孤鸿（琴师·雷/增益） ============
@@ -216,6 +234,12 @@ export default {
     target: 'all_enemies', power: 2.3, accuracy: 0.95, element: 'thunder',
     learnRealm: 'huashen',
     desc: '琴音化龙，震彻九霄。',
+  },
+  skill_dayin: {
+    id: 'skill_dayin', owner: 'shen', name: '大音希声', kind: 'active', mpCost: 72,
+    target: 'all_enemies', power: 2.7, accuracy: 0.95, element: 'thunder',
+    learnRealm: 'lianxu',
+    desc: '大音希声，大象无形——无声一响，万籁俱灭。',
   },
 
   // ============ 敌人技能 ============
