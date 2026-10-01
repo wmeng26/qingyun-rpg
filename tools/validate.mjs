@@ -5,12 +5,15 @@ import { fileURLToPath, pathToFileURL } from 'node:url';
 
 const root = path.dirname(path.dirname(fileURLToPath(import.meta.url)));
 const data = (f) => import(pathToFileURL(path.join(root, 'js', 'data', f)).href);
+const core = (f) => import(pathToFileURL(path.join(root, 'js', 'core', f)).href);
 
-const [maps, quests, dialogs, items, skills, monsters, realms, characters] =
-  (await Promise.all([
+const [maps, quests, dialogs, items, skills, monsters, realms, characters, audioMod] =
+  await Promise.all([
     data('maps.js'), data('quests.js'), data('dialogs.js'), data('items.js'),
     data('skills.js'), data('monsters.js'), data('realms.js'), data('characters.js'),
-  ])).map(m => m.default);
+    core('Audio.js'),
+  ]).then(arrs => arrs.map(m => m.default !== undefined ? m.default : m));
+const { SONG_NAMES } = audioMod;
 
 const errors = [];
 const warnings = [];
@@ -56,6 +59,7 @@ for (const map of Object.values(maps)) {
   for (const zone of Object.values(encounters || {})) {
     for (const row of zone) for (const m of row.mobs) if (!monsters[m]) err(`${id}: 遇敌怪物不存在 ${m}`);
   }
+  if (map.music && !SONG_NAMES.includes(map.music)) err(`${id}: BGM 曲目不存在 ${map.music}`);
 }
 
 // 任务引用
@@ -104,6 +108,27 @@ for (const s of defsOf(skills)) {
 const realmIds = realms.realms.map(r => r.id);
 for (const s of Object.values(skills)) {
   if (s.learnRealm && !realmIds.includes(s.learnRealm)) err(`技能 ${s.id}: learnRealm 不存在 ${s.learnRealm}`);
+}
+
+// 音频曲库完整性：音符数值合法、曲目结构齐全、BGM 名与地图引用一致
+{
+  const { SONGS, SFX_NAMES } = audioMod;
+  for (const [sid, song] of Object.entries(SONGS)) {
+    if (!(song.bpm > 0)) err(`曲目 ${sid}: bpm 非法`);
+    if (!(song.loopBeats > 0)) err(`曲目 ${sid}: loopBeats 非法`);
+    if (!Array.isArray(song.tracks) || !song.tracks.length) err(`曲目 ${sid}: 无音轨`);
+    for (const tr of song.tracks) {
+      if (!['sine', 'square', 'triangle', 'sawtooth'].includes(tr.wave)) err(`曲目 ${sid}: 音色非法 ${tr.wave}`);
+      for (const [b, m, d] of tr.notes) {
+        if (!(b >= 0) || !(m >= 21 && m <= 108) || !(d > 0)) err(`曲目 ${sid}: 音符非法 [${b},${m},${d}]`);
+      }
+    }
+    for (const [b, k] of song.drums || []) {
+      if (!['kick', 'snare', 'hat'].includes(k)) err(`曲目 ${sid}: 鼓型非法 ${k}`);
+      if (!(b >= 0)) err(`曲目 ${sid}: 鼓点位置非法 ${b}`);
+    }
+  }
+  if (!SFX_NAMES.length) err('音效表为空');
 }
 
 // 商店物品价格

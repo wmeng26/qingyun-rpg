@@ -1,6 +1,7 @@
 // 对话引擎：DOM 对话框，逐字打印、立绘、选项分支、脚本指令
 import DIALOGS from '../data/dialogs.js';
 import { BATTLES } from '../data/maps.js';
+import { sfx } from '../core/Audio.js';
 
 const TYPE_SPEED = 34; // 字/秒
 
@@ -37,6 +38,7 @@ export default class DialogEngine {
     root.querySelector('.dlg-box').addEventListener('click', (e) => {
       if (!this.active) return;
       if (e.target.closest('.dlg-choices')) return;
+      sfx.play('advance');
       this._advance();
     });
   }
@@ -107,6 +109,7 @@ export default class DialogEngine {
     // 逐字
     this._fullText = node.text || '';
     this._typed = 0;
+    this._lastBlip = 0;
     this.elText.textContent = '';
     this.elNext.classList.add('hidden');
     this.elChoices.innerHTML = '';
@@ -125,8 +128,8 @@ export default class DialogEngine {
       const b = document.createElement('button');
       b.className = 'btn';
       b.textContent = c.text;
-      b.addEventListener('mouseenter', () => { this._navIdx = i; this._refreshChoices(); });
-      b.addEventListener('click', () => { this._navIdx = i; this._pickChoice(); });
+      b.addEventListener('mouseenter', () => { if (this._navIdx !== i) sfx.play('cursor'); this._navIdx = i; this._refreshChoices(); });
+      b.addEventListener('click', () => { this._navIdx = i; sfx.play('confirm'); this._pickChoice(); });
       this.elChoices.appendChild(b);
     });
     this._navIdx = 0;
@@ -172,6 +175,9 @@ export default class DialogEngine {
     if (this.typing) {
       this._typed += dt * TYPE_SPEED;
       if (this._typed >= this._fullText.length) this._typed = this._fullText.length;
+      // 打字机音：每 3 字一声，音量很低
+      const idx = Math.floor(this._typed);
+      if (idx - this._lastBlip >= 3) { this._lastBlip = idx; sfx.play('text'); }
       this._renderText();
     }
   }
@@ -179,13 +185,13 @@ export default class DialogEngine {
   handleKey(action) {
     if (!this.active) return false;
     if (this._choicesShown) {
-      if (action === 'up') { this._navIdx = (this._navIdx + this._choiceDefs.length - 1) % this._choiceDefs.length; this._refreshChoices(); return true; }
-      if (action === 'down') { this._navIdx = (this._navIdx + 1) % this._choiceDefs.length; this._refreshChoices(); return true; }
-      if (action === 'confirm') { this._pickChoice(); return true; }
-      if (action === 'cancel') { this.close(); return true; }
+      if (action === 'up') { this._navIdx = (this._navIdx + this._choiceDefs.length - 1) % this._choiceDefs.length; sfx.play('cursor'); this._refreshChoices(); return true; }
+      if (action === 'down') { this._navIdx = (this._navIdx + 1) % this._choiceDefs.length; sfx.play('cursor'); this._refreshChoices(); return true; }
+      if (action === 'confirm') { sfx.play('confirm'); this._pickChoice(); return true; }
+      if (action === 'cancel') { sfx.play('cancel'); this.close(); return true; }
       return true; // 吞掉其它键
     }
-    if (action === 'confirm' || action === 'cancel') { this._advance(); return true; }
+    if (action === 'confirm' || action === 'cancel') { sfx.play('advance'); this._advance(); return true; }
     return true; // 对话期间吞掉方向键
   }
 

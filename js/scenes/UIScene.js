@@ -2,6 +2,7 @@
 import ITEMS from '../data/items.js';
 import MainMenu from './MainMenu.js';
 import { PanelNav } from '../core/UIPanel.js';
+import { sfx } from '../core/Audio.js';
 
 const SHOP_GOODS = [
   'pill_huixue', 'pill_lingli', 'pill_jiedu',
@@ -174,6 +175,7 @@ export default class UIScene {
             if (g.gold < def.price) return;
             g.addGold(-def.price);
             g.obtainItem(id, 1);
+            sfx.play('gold');
             g.ui.toast(`买下了「${def.name}」`);
             rerender();
           },
@@ -293,7 +295,14 @@ export default class UIScene {
       </div>
       <button class="btn ch-ok">继续游历</button>`;
     this.root.appendChild(root);
-    const close = () => { root.remove(); this.popPanel(obj); };
+    sfx.music(isFinal ? 'ending' : 'chapter');
+    const close = () => {
+      root.remove();
+      this.popPanel(obj);
+      // 结算关闭后回到当前地图的 BGM
+      const ms = this.game.mapScene;
+      sfx.music(ms && ms.def ? (ms.def.music || 'map') : 'map');
+    };
     root.querySelector('.ch-ok').addEventListener('click', close);
     const obj = {
       handleKey: (a) => {

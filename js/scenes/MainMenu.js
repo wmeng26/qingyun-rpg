@@ -3,6 +3,7 @@ import ITEMS from '../data/items.js';
 import SKILLS from '../data/skills.js';
 import Cultivation from '../systems/Cultivation.js';
 import { PanelNav } from '../core/UIPanel.js';
+import { sfx } from '../core/Audio.js';
 import TitleScene from './TitleScene.js';
 
 const TABS = [
@@ -67,10 +68,11 @@ export default class MainMenu {
       const idx = TABS.findIndex(t => t.id === this.tab);
       const next = (idx + (action === 'right' ? 1 : TABS.length - 1)) % TABS.length;
       this.tab = TABS[next].id;
+      sfx.play('cursor');
       this.render();
       return true;
     }
-    if (action === 'cancel') { this.close(); return true; }
+    if (action === 'cancel') { sfx.play('cancel'); this.close(); return true; }
     if (this.nav) return this.nav.handleKey(action);
     return true;
   }
@@ -83,7 +85,7 @@ export default class MainMenu {
       const d = document.createElement('div');
       d.className = 'tab' + (t.id === this.tab ? ' active' : '');
       d.textContent = t.name;
-      d.addEventListener('click', () => { this.tab = t.id; this.render(); });
+      d.addEventListener('click', () => { this.tab = t.id; sfx.play('cursor'); this.render(); });
       this.elTabs.appendChild(d);
     }
     this.elGold.textContent = `金钱 ${this.game.gold} 文`;
@@ -443,6 +445,9 @@ export default class MainMenu {
   _renderSys() {
     const box = document.createElement('div');
     box.style.cssText = 'display:flex;flex-direction:column;gap:8px;max-width:260px;margin:10px auto;';
+    // 音量档位（关/低/中/高），独立于存档持久化在 localStorage
+    this._btn(`音乐音量：${sfx.musicVolName()}`, () => { sfx.cycleMusicVol(); sfx.play('confirm'); this.render(); });
+    this._btn(`音效音量：${sfx.sfxVolName()}`, () => { sfx.cycleSfxVol(); sfx.play('confirm'); this.render(); });
     const b1 = this._btn('操作说明', () => this.game.ui.openHelp());
     const b2 = this._btn('返回标题画面', () => {
       this.game.ui.confirm('返回标题？（未存档的进度将丢失）', () => {

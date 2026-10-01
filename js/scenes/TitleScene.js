@@ -1,10 +1,12 @@
 // 标题场景：新游戏 / 读取存档 / 操作说明
 import { PanelNav } from '../core/UIPanel.js';
+import { sfx } from '../core/Audio.js';
 
 export default class TitleScene {
   enter() {
     const game = this.game;
     game.ui.showHUD(false);
+    sfx.music('title'); // 解锁前只记录意图，首次手势后自动起播
 
     const root = document.createElement('div');
     root.id = 'title-ui';

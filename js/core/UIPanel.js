@@ -1,4 +1,6 @@
 // 面板键盘导航助手：为 DOM 按钮列表提供 JRPG 式方向键 + 确认/取消
+import { sfx } from './Audio.js';
+
 export class PanelNav {
   constructor({ onCancel = null, vertical = true } = {}) {
     this.items = [];
@@ -28,6 +30,7 @@ export class PanelNav {
   move(d) {
     if (!this.items.length) return;
     this.idx = (this.idx + d + this.items.length) % this.items.length;
+    sfx.play('cursor');
     this.refresh();
   }
 
@@ -41,11 +44,11 @@ export class PanelNav {
     }
     if (action === 'confirm') {
       const cur = this.current();
-      if (cur) { cur.onSelect(); return true; }
+      if (cur) { sfx.play('confirm'); cur.onSelect(); return true; }
       return false;
     }
     if (action === 'cancel') {
-      if (this.onCancel) { this.onCancel(); return true; }
+      if (this.onCancel) { sfx.play('cancel'); this.onCancel(); return true; }
     }
     return false;
   }
@@ -53,8 +56,12 @@ export class PanelNav {
   attachHover() {
     // 鼠标悬停同步焦点，点击即触发
     this.items.forEach((it, i) => {
-      it.el.addEventListener('mouseenter', () => { this.idx = i; this.refresh(); });
-      it.el.addEventListener('click', () => { this.idx = i; it.onSelect(); });
+      it.el.addEventListener('mouseenter', () => {
+        if (this.idx !== i) sfx.play('cursor');
+        this.idx = i;
+        this.refresh();
+      });
+      it.el.addEventListener('click', () => { this.idx = i; sfx.play('confirm'); it.onSelect(); });
     });
   }
 }

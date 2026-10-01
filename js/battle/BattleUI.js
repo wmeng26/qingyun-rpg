@@ -1,6 +1,7 @@
 // 战斗 UI：DOM 指令面板 + 事件队列播放（伤害飘字/闪白/震屏由 Renderer 呈现）
 import SKILLS from '../data/skills.js';
 import { PanelNav } from '../core/UIPanel.js';
+import { sfx } from '../core/Audio.js';
 
 const EVENT_WAIT = {
   turn: 0.3, msg: 0.5, dmg: 0.55, miss: 0.5, heal: 0.6, mpheal: 0.5,
@@ -132,6 +133,7 @@ export default class BattleUI {
         this.startLunge(e.actor);
         this.timers.push({ t: 0.16, fn: () => {
           this.flash(e.target);
+          sfx.play(e.crit ? 'crit' : 'attack');
           const col = e.crit ? '#ffb347' : e.eff === 'strong' ? '#ff9080' : e.eff === 'weak' ? '#9fb8c8' : '#ffffff';
           this._floater(e.target, `-${e.value}`, col, e.crit ? 14 : 11);
           if (e.crit || e.value > e.target.maxHp() * 0.15) this.game.renderer.shakeFor(0.2);
@@ -145,37 +147,44 @@ export default class BattleUI {
       case 'miss':
         this.startLunge(e.actor);
         this.timers.push({ t: 0.16, fn: () => {
+          sfx.play('miss');
           this._floater(e.target, 'MISS', '#b8b8b8', 10);
           this.log(`${e.actor.displayName} 的攻击被 ${e.target.displayName} 避开了！`);
         } });
         break;
       case 'heal':
+        sfx.play('heal');
         this._floater(e.target, `+${e.value}`, '#9ed37f', 12);
         this.log(`${e.target.displayName} 恢复了 ${e.value} 点气血`);
         break;
       case 'mpheal':
+        sfx.play('mpheal');
         this._floater(e.target, `+${e.value}灵力`, '#8fc3e8', 10);
         break;
       case 'cure':
-        if (e.cured) this._floater(e.target, '异常解除', '#e8d44c', 10);
+        if (e.cured) { sfx.play('buff'); this._floater(e.target, '异常解除', '#e8d44c', 10); }
         break;
       case 'status': {
         const def = SKILLS[e.statusId];
         if (e.applied) {
+          sfx.play(def && def.isDebuff ? 'debuff' : 'buff');
           this._floater(e.target, def ? def.name : '状态', def && def.isDebuff ? '#e0968c' : '#a8d08c', 10);
           this.log(`${e.target.displayName} 陷入了「${def ? def.name : e.statusId}」`);
         } else {
+          sfx.play('resist');
           this._floater(e.target, '抵抗', '#b8b8b8', 10);
           this.log(`${e.target.displayName} 抵抗住了…`);
         }
         break;
       }
       case 'dot':
+        sfx.play('dot');
         this.flash(e.target);
         this._floater(e.target, `-${e.value}`, '#c89ae8', 11);
         this.log(`${e.target.displayName} 受到「${e.statusName}」伤害 ${e.value}`);
         break;
       case 'die':
+        sfx.play('die');
         e.target._fadeT = 0.5;
         this.log(`${e.target.displayName} 倒下了！`);
         break;
@@ -347,6 +356,7 @@ export default class BattleUI {
     const finish = () => {
       if (done) return;
       done = true;
+      sfx.play('confirm');
       this.elResult.querySelector('.res-ok').onclick = null;  // 断开鼠标路径
       this.elResult.classList.add('hidden');
       eng.finish();
@@ -354,7 +364,10 @@ export default class BattleUI {
     };
     this.elResult.querySelector('.res-ok').onclick = finish;
 
+    // 结算画面停掉战斗 BGM，播胜负 jingle；回到地图后由 MapScene.onResume 接回地图曲
+    sfx.music(null);
     if (outcome === 'victory') {
+      sfx.play('victory');
       const r = eng.applyVictory();
       this.elResultTitle.textContent = '—— 战斗胜利 ——';
       const rows = [];
@@ -368,10 +381,14 @@ export default class BattleUI {
         for (const sk of res.newSkills) rows.push(`<div class="lvup">★ ${char.name} 学会「${sk.name}」</div>`);
       }
       this.elResultBody.innerHTML = rows.join('');
+      if (r.levelUps.length) sfx.play('levelup');
+      if (r.levelUps.some(({ res }) => res.realmUps.length)) sfx.play('breakthrough');
     } else if (outcome === 'fled') {
+      sfx.play('flee');
       this.elResultTitle.textContent = '—— 逃跑成功 ——';
       this.elResultBody.innerHTML = '<div style="color:#a89878;">你狼狈地脱离了战斗……</div>';
     } else {
+      sfx.play('defeat');
       this.elResultTitle.textContent = '—— 队伍覆灭 ——';
       this.elResultBody.innerHTML = '<div style="color:#e0968c;">眼前一黑，不省人事……</div>';
     }

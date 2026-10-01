@@ -4,6 +4,7 @@ import TileMap from '../map/TileMap.js';
 import Player from '../map/Player.js';
 import NPC from '../map/NPC.js';
 import Encounter from '../map/Encounter.js';
+import { sfx } from '../core/Audio.js';
 
 const VIEW_W = 480, VIEW_H = 270;
 const DIR_VEC = { up: [0, -1], down: [0, 1], left: [-1, 0], right: [1, 0] };
@@ -31,6 +32,12 @@ export default class MapScene {
     g.playerPos = { ...this.startPos };
     g.ui.setMapName(this.def.name);
     g.ui.showHUD(true);
+    sfx.music(this.def.music || 'map');
+  }
+
+  // 战斗场景弹出回到地图时接回地图 BGM（战斗结算画面已停曲）
+  onResume() {
+    sfx.music(this.def.music || 'map');
   }
 
   exit() {
@@ -84,6 +91,7 @@ export default class MapScene {
       if (portal.requiresFlag && !g.flags.has(portal.requiresFlag)) {
         g.ui.toast(portal.lockedMsg || '此路尚未开启');
       } else {
+        sfx.play('teleport');
         this.fadeDir = 1;
         this.pendingPortal = portal;
         return;
@@ -98,6 +106,7 @@ export default class MapScene {
     const zone = this.tileMap.encZone(x, y);
     const mobs = this.encounter.onStep(x, y, zone);
     if (mobs) {
+      sfx.play('encounter');
       g.startBattle({ mobs, bg: this.def.bg });
     }
   }
@@ -108,6 +117,7 @@ export default class MapScene {
       const flag = `chest_${this.mapId}_${ev.x}_${ev.y}`;
       if (g.flags.has(flag)) return false;
       g.setFlag(flag);
+      sfx.play('chest');
       if (ev.gold) {
         g.addGold(ev.gold);
         g.ui.toast(`获得 ${ev.gold} 文钱`);

@@ -5,6 +5,7 @@ import Assets from './Assets.js';
 import Renderer from './Renderer.js';
 import SceneManager from './SceneManager.js';
 import SaveManager from './SaveManager.js';
+import { initAudio, sfx } from './Audio.js';
 import BALANCE from '../data/balance.js';
 import MAPS from '../data/maps.js';
 import ITEMS from '../data/items.js';
@@ -42,7 +43,14 @@ export default class Game {
     this.playerPos = null;
     this.ui = null; // main.js 注入（UIScene）
 
+    this.audio = initAudio();
+
     this.bus.on('enemyKilled', () => this.kills++);
+    // 全局奖励类音效（战斗结算的升级音在 BattleUI 播，避免与结算画面重叠）
+    this.bus.on('levelUp', () => sfx.play('levelup'));
+    this.bus.on('breakthrough', () => sfx.play('breakthrough'));
+    this.bus.on('joinAlly', () => sfx.play('ally'));
+    this.bus.on('questCompleted', () => sfx.play('quest'));
   }
 
   // ===== 新游戏 / 读档 =====
@@ -164,7 +172,10 @@ export default class Game {
 
   obtainItem(id, count = 1, silent = false) {
     this.inventory.add(id, count);
-    if (!silent) this.ui.toast(`获得 ${this.itemName(id)} ×${count}`);
+    if (!silent) {
+      sfx.play('item');
+      this.ui.toast(`获得 ${this.itemName(id)} ×${count}`);
+    }
   }
 
   itemName(id) { return (ITEMS[id] && ITEMS[id].name) || id; }

@@ -143,7 +143,7 @@ export default {
   },
 
   map_youming: {
-    id: 'map_youming', name: '幽冥洞', width: 24, height: 18, bg: 'bg_cave',
+    id: 'map_youming', name: '幽冥洞', width: 24, height: 18, bg: 'bg_cave', music: 'cave',
     legend: {
       'C': { tile: 'cavewall', solid: true, enc: null },
       'f': { tile: 'cavefloor', solid: false, enc: 'cave' },
@@ -407,7 +407,7 @@ export default {
   },
 
   map_jitan: {
-    id: 'map_jitan', name: '血煞祭坛', width: 26, height: 20, bg: 'bg_cave',
+    id: 'map_jitan', name: '血煞祭坛', width: 26, height: 20, bg: 'bg_cave', music: 'cave',
     legend: {
       'C': { tile: 'cavewall', solid: true, enc: null },
       'f': { tile: 'cavefloor', solid: false, enc: 'cave' },
@@ -462,7 +462,7 @@ export default {
   },
 
   map_hanshidu: {
-    id: 'map_hanshidu', name: '寒霜渡', width: 26, height: 18, bg: 'bg_outdoor',
+    id: 'map_hanshidu', name: '寒霜渡', width: 26, height: 18, bg: 'bg_outdoor', music: 'ice',
     legend: {
       '.': { tile: 'snow', solid: false, enc: null },
       'i': { tile: 'ice', solid: false, enc: null },
@@ -516,7 +516,7 @@ export default {
   },
 
   map_bingyuan: {
-    id: 'map_bingyuan', name: '寒渊冰原', width: 30, height: 22, bg: 'bg_snow',
+    id: 'map_bingyuan', name: '寒渊冰原', width: 30, height: 22, bg: 'bg_snow', music: 'ice',
     legend: {
       '.': { tile: 'snow', solid: false, enc: null },
       't': { tile: 'snowgrass', solid: false, enc: 'low' },
@@ -582,7 +582,7 @@ export default {
   },
 
   map_moyuan: {
-    id: 'map_moyuan', name: '魔渊封印', width: 26, height: 20, bg: 'bg_cave',
+    id: 'map_moyuan', name: '魔渊封印', width: 26, height: 20, bg: 'bg_cave', music: 'cave',
     legend: {
       'C': { tile: 'cavewall', solid: true, enc: null },
       'f': { tile: 'cavefloor', solid: false, enc: 'cave' },

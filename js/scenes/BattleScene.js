@@ -1,6 +1,7 @@
 // 战斗场景：画布渲染战斗背景/单位/血条，DOM 战斗 UI 叠加
 import BattleEngine from '../battle/BattleEngine.js';
 import BattleUI from '../battle/BattleUI.js';
+import { sfx } from '../core/Audio.js';
 
 const PARTY_POS = {
   1: [[350, 130]],
@@ -30,6 +31,7 @@ export default class BattleScene {
     this.ui = new BattleUI(g, this.engine, (o) => this._finish(o));
     this._layout();
     g.ui.pushPanel(this.ui);
+    sfx.music(this.cfg.boss ? 'boss' : 'battle');
     const names = this.engine.enemyUnits.map(u => u.displayName).join('、');
     const intro = this.cfg.boss ? `${names} 挡在面前！` : `${names} 袭来！`;
     this.ui.play([{ type: 'msg', text: intro }], null);

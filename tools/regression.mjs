@@ -555,5 +555,91 @@ section('化神四人 Boss 战 300 局');
   ok(jErrs === 0 && jWins >= 48, `渊魔将抽查 50 局无异常且基本全胜（胜 ${jWins}，异常 ${jErrs}）`);
 }
 
+// ============ 14. 程序化音频模块 ============
+section('音频模块（无 AudioContext 降级 + FakeContext 调度）');
+{
+  const A = await mod('core/Audio.js');
+  const { SONGS } = A;
+
+  // 曲库完整性：结构齐全、音符落在循环内、音域合法
+  const songIds = Object.keys(SONGS);
+  ok(songIds.length >= 8, `曲库齐全（${songIds.length} 首：${songIds.join('/')}）`);
+  ok(['title', 'map', 'cave', 'ice', 'battle', 'boss', 'chapter', 'ending'].every(k => SONGS[k]), '八首曲目命名符合场景约定');
+  let badNotes = 0;
+  for (const song of Object.values(SONGS)) {
+    if (!(song.bpm > 0) || !(song.loopBeats > 0) || !song.tracks?.length) { badNotes++; continue; }
+    for (const tr of song.tracks) {
+      for (const [b, m, d] of tr.notes) {
+        if (!(b >= 0 && b < song.loopBeats) || !(m >= 21 && m <= 108) || !(d > 0)) badNotes++;
+      }
+    }
+  }
+  ok(badNotes === 0, `曲谱音符全部合法（非法 ${badNotes} 个）`);
+
+  // 1) 无 AudioContext 环境：initAudio/sfx 全套调用必须零抛错
+  const eng = A.initAudio();
+  let threw = false;
+  try {
+    for (const n of ['cursor', 'confirm', 'cancel', 'attack', 'victory', 'defeat']) A.sfx.play(n);
+    A.sfx.music('map');       // 记录意图，不抛错
+    A.sfx.cycleMusicVol();
+    A.sfx.cycleSfxVol();
+    A.sfx.music(null);
+    A.sfx.musicVolName(); A.sfx.sfxVolName();
+  } catch (e) { threw = true; console.error('  降级路径异常:', e.message); }
+  ok(!threw && eng.ctx === null, '无 AudioContext 环境下全部 API no-op 不抛错');
+
+  // 2) FakeContext：解锁后 SFX 合成与 BGM 音序器真正驱动节点
+  let oscCount = 0, srcCount = 0;
+  const fakeNode = () => ({
+    connect() {}, disconnect() {}, start() {}, stop() {},
+    gain: { value: 1, setValueAtTime() {}, linearRampToValueAtTime() {}, exponentialRampToValueAtTime() {} },
+    frequency: { value: 0, setValueAtTime() {}, exponentialRampToValueAtTime() {} },
+    pan: { value: 0 }, type: '',
+  });
+  const fakeCtx = {
+    currentTime: 0, sampleRate: 48000, state: 'running', destination: fakeNode(),
+    resume: async () => {}, suspend: async () => {},
+    createGain: fakeNode,
+    createBiquadFilter: fakeNode,
+    createStereoPanner: fakeNode,
+    createDynamicsCompressor: fakeNode,
+    createOscillator() { oscCount++; return fakeNode(); },
+    createBufferSource() { srcCount++; return fakeNode(); },
+    createBuffer: () => ({ getChannelData: () => new Float32Array(48000) }),
+  };
+  globalThis.AudioContext = function () { return fakeCtx; };
+  try {
+    eng.unlock();
+    ok(eng.ctx === fakeCtx, 'unlock 后引擎持有 AudioContext');
+    oscCount = srcCount = 0;
+    A.sfx.play('attack');
+    A.sfx.play('victory');
+    ok(oscCount >= 5 && srcCount >= 1, `SFX 合成驱动振荡器/噪声（osc=${oscCount} noise=${srcCount}）`);
+
+    A.sfx.music('battle');
+    eng.musicPlayer._schedule(); // 显式推进一格（绕开真实 setInterval 时延）
+    ok(oscCount > 5, `BGM 音序器向 FakeContext 排入音符（累计 osc=${oscCount}）`);
+    const idBefore = eng.musicPlayer.songId;
+    A.sfx.music('battle'); // 同曲重复调用不重排
+    ok(eng.musicPlayer.songId === idBefore, '同曲目重复 music() 不重启');
+
+    fakeCtx.currentTime += 2;
+    const oscBefore = oscCount;
+    eng.musicPlayer._schedule();
+    ok(oscCount > oscBefore, '时间推进后 lookahead 持续补排音符');
+
+    A.sfx.music(null);
+    ok(eng.musicPlayer._timer === null && eng.musicPlayer._playing === false, 'music(null) 停止调度器');
+
+    eng.settings.music = 2; // 固定起点，档位断言才确定
+    const v0 = A.sfx.cycleMusicVol();
+    ok(v0 === 3 && A.sfx.musicVolName() === '高', '音量档位循环（中→高），名称同步');
+  } finally {
+    delete globalThis.AudioContext;
+    A.sfx.music(null);
+  }
+}
+
 console.log(`\n========== 结果: ${passed} 通过 / ${failed} 失败 ==========`);
 process.exit(failed ? 1 : 0);
