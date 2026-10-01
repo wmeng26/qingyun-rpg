@@ -1,10 +1,9 @@
 @echo off
-chcp 65001 >nul
-title é’äº‘ä»™é€” - æœ¬åœ°æœåŠ¡å™¨
+title ÇàÔÆÏÉÍ¾ - ±¾µØ·şÎñÆ÷
 cd /d "%~dp0"
 echo ================================================
-echo    é’äº‘ä»™é€” - ä¿®ä»™å›åˆåˆ¶ RPG
-echo    æœ¬åœ°æœåŠ¡å™¨å¯åŠ¨ä¸­: http://localhost:8080
+echo    ÇàÔÆÏÉÍ¾ - ĞŞÏÉ»ØºÏÖÆ RPG
+echo    ±¾µØ·şÎñÆ÷Æô¶¯ÖĞ: http://localhost:8080
 echo ================================================
 where python >nul 2>nul
 if %errorlevel%==0 (
@@ -18,6 +17,6 @@ if %errorlevel%==0 (
     py -3 -m http.server 8080
     goto :eof
 )
-echo [!] æœªæ‰¾åˆ° Pythonï¼Œè¯·å…ˆå®‰è£… Python 3: https://www.python.org/downloads/
-echo     æˆ–ä½¿ç”¨å…¶ä»–é™æ€æœåŠ¡å™¨(å¦‚ VS Code Live Server)æ‰“å¼€æœ¬ç›®å½•ã€‚
+echo [!] Î´ÕÒµ½ Python£¬ÇëÏÈ°²×° Python 3: https://www.python.org/downloads/
+echo     »òÊ¹ÓÃÆäËû¾²Ì¬·şÎñÆ÷(Èç VS Code Live Server)´ò¿ª±¾Ä¿Â¼¡£
 pause
