@@ -17,6 +17,9 @@ html, body {
 
 #stage {
   width: 100%; height: 100%;
+  /* 移动端 100% 可能等于「最大视口」（工具栏占位时可见区域更小），首帧用 dvh 兜底，
+     Renderer.resize 会以实测可见视口精确覆写 */
+  height: 100dvh;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -62,6 +65,14 @@ html, body {
 /* ================= 触屏虚拟按键 ================= */
 /* 仅 body.is-touch 下存在（JS 按设备注入）；mode 控制显隐 */
 #touch-controls { display: none; }
+/* 显式禁掉长按选中/呼出菜单：部分安卓浏览器不认 html 级的 user-select 传播，
+   长按按键会弹出选择/「网页内查找」菜单 */
+#touch-controls,
+#touch-controls * {
+  user-select: none;
+  -webkit-user-select: none;
+  -webkit-touch-callout: none;
+}
 body.is-touch #touch-controls[data-mode="full"],
 body.is-touch #touch-controls[data-mode="ab"] { display: block; }
 body.is-touch #touch-controls[data-mode="ab"] #dpad { display: none; }

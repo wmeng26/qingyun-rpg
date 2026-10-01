@@ -18,7 +18,12 @@ export default class Input {
       || (window.matchMedia && matchMedia('(pointer: coarse)').matches)
       || navigator.maxTouchPoints > 0
       || 'ontouchstart' in window;
-    if (this.touch) document.body.classList.add('is-touch');
+    if (this.touch) {
+      document.body.classList.add('is-touch');
+      // 触屏下全局屏蔽长按菜单：部分安卓浏览器长按页面会弹「网页内查找」等菜单，
+      // 游戏内没有任何依赖浏览器长按菜单的场景（桌面右键不受影响）
+      document.addEventListener('contextmenu', (e) => e.preventDefault());
+    }
 
     window.addEventListener('keydown', (e) => {
       const action = KEYMAP[e.code];

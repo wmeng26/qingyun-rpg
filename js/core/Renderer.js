@@ -19,13 +19,23 @@ export default class Renderer {
       || 'ontouchstart' in window
       || window.innerHeight < 480;
     window.addEventListener('resize', () => this.resize());
-    window.addEventListener('orientationchange', () => setTimeout(() => this.resize(), 120));
+    window.addEventListener('orientationchange', () => {
+      // iOS 旋转后 innerWidth/innerHeight 要几百毫秒才稳定，多补几次
+      setTimeout(() => this.resize(), 120);
+      setTimeout(() => this.resize(), 450);
+    });
     if (window.visualViewport) visualViewport.addEventListener('resize', () => this.resize());
     this.resize();
   }
 
   resize() {
-    const w = window.innerWidth, h = window.innerHeight;
+    // 可视视口优先：移动端浏览器工具栏展开时 innerHeight / CSS 100% 取到的是
+    // 「最大视口」（工具栏收起时的高度），以此布局画布底部会被工具栏盖住（画面显示不全）；
+    // visualViewport 才是实际可见区域。双指缩放时（iOS 不理会 user-scalable=no）回退布局视口
+    const vv = window.visualViewport;
+    const visible = vv && Math.abs((vv.scale ?? 1) - 1) <= 0.01;
+    const w = visible ? vv.width : window.innerWidth;
+    const h = visible ? vv.height : window.innerHeight;
     let scale = Math.min(w / this.LOGICAL_W, h / this.LOGICAL_H);
     if (scale >= 1 && !this.freeScale) scale = Math.floor(scale); // 桌面整数倍缩放保持像素锐利
     // 不足 1 倍（窗口比 480×270 还小）时按比例继续缩小以完整显示画面，
@@ -35,6 +45,11 @@ export default class Renderer {
     const dh = Math.round(this.LOGICAL_H * scale);
     this.canvas.style.width = dw + 'px';
     this.canvas.style.height = dh + 'px';
+    // 舞台同步为可见区域尺寸：CSS 的 100%/100vh 在移动端可能等于最大视口，
+    // flex 居中会把画布推出可见范围；用 JS 实测值覆写最可靠
+    const stage = document.getElementById('stage');
+    stage.style.width = w + 'px';
+    stage.style.height = h + 'px';
     const wrap = document.getElementById('game-wrap');
     wrap.style.width = dw + 'px';
     wrap.style.height = dh + 'px';

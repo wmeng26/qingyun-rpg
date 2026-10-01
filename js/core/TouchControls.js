@@ -28,6 +28,8 @@ export default class TouchControls {
       </div>`;
     document.getElementById('stage').appendChild(root);
     this.el = root;
+    // 长按按键会触发浏览器长按菜单（部分安卓浏览器表现为「页面内查找」），整个控件区一律屏蔽
+    root.addEventListener('contextmenu', (e) => e.preventDefault());
     this.elDpad = root.querySelector('#dpad');
     this.elBtns = [...root.querySelectorAll('.dp[data-dir]')];
 
@@ -57,7 +59,6 @@ export default class TouchControls {
       b.addEventListener('pointerup', off);
       b.addEventListener('pointercancel', off);
       b.addEventListener('pointerleave', off);
-      b.addEventListener('contextmenu', (e) => e.preventDefault());
     }
   }
 
