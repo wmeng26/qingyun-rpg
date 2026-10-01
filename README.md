@@ -1,6 +1,6 @@
 # 青云仙途 · 修仙回合制 RPG
 
-东方武侠/修仙题材的 HTML5 回合制 RPG。纯前端实现，零依赖、零构建——原生 Canvas 渲染 + ES Modules + DOM/CSS 中文 UI，localStorage 三档位存档。
+东方武侠/修仙题材的 HTML5 回合制 RPG。纯前端实现，零依赖、零构建——原生 Canvas 渲染 + ES Modules + DOM/CSS 中文 UI，localStorage 三档位存档；美术与音乐音效均为程序化代码生成（Canvas 像素图 + WebAudio 合成），无需任何素材文件。
 
 ![类型](https://img.shields.io/badge/%E5%9B%9E%E5%90%88%E5%88%B6-JRPG-gold) ![平台](https://img.shields.io/badge/%E5%B9%B3%E5%8F%B0-HTML5-blue)
 
@@ -22,6 +22,16 @@
 | X / Esc | 取消 · 打开菜单（地图中） |
 
 菜单内：←/→ 切换页签，全部界面同时支持鼠标点击。
+
+## 音频
+
+WebAudio 程序化合成，全部代码生成、零素材：
+
+- **8 首 BGM**（五声音阶宫/羽调式）：标题、地图、洞窟/魔渊、冰原、普通战斗、Boss 战、章节结算、终章结局，随场景/地图自动切换
+- **30+ 种音效**：菜单光标/确认/取消、对话打字机与推进、攻击/会心/落空/施法/治疗/状态/倒下、升级/突破钟声、任务/获得物品/金币、开宝箱、遇敌警报、传送、胜负 jingle 等
+- 浏览器自动播放策略：首次按键/点击/触摸自动解锁出声；锁屏或切后台自动挂起
+- 菜单「系统」页可调**音乐/音效音量**（关/低/中/高），独立于存档持久化在 localStorage
+- 无 AudioContext 环境（老浏览器/无头测试）自动降级为静音，不影响游戏运行
 
 ## 手机 / 触屏
 
@@ -45,6 +55,7 @@
 - **暗雷遇敌**：深草/洞窟/山寨/血煞谷/冰原/魔渊各有独立遇敌表（8% 起步，25 步保底递增）
 - **章节结算**：第一~三章各有结算画面，第四章为**终章特殊结算**（「终章 · 完」+ 全剧情终）
 - **剧情演出**：Boss 战支持战前 `introDialog`、战后 `afterDialog`（顿悟突破、大结局均以此实现）
+- **音频**：8 首 BGM 随场景/地图切换 + 30 余种合成音效（详见「音频」一节）
 - **存档**：菜单内随时存/读（战斗中禁用），localStorage 三档位，带版本校验；旧档无缝续玩后续章节
 
 ## 工程结构
@@ -59,7 +70,7 @@
 │   └── regression.mjs    # 无头回归测试：任务链/战斗模拟/存档往返（node tools/regression.mjs）
 ├── js/
 │   ├── main.js           # 组装 Game + 场景工厂
-│   ├── core/             # Game 主循环/场景栈/输入/渲染/资源/存档/事件总线/UIPanel
+│   ├── core/             # Game 主循环/场景栈/输入/渲染/资源/存档/事件总线/UIPanel/Audio(程序化音频)
 │   │   └── PlaceholderArt.js  # 程序化像素占位美术（全部资源代码生成）
 │   ├── data/             # 纯数据：balance/realms/characters/items/skills/monsters/maps/quests/dialogs
 │   ├── systems/          # Character/Cultivation/Inventory/Equipment/QuestManager/DialogEngine
@@ -76,9 +87,9 @@
 - `js/data/balance.js`：遇敌率、命中/会心/逃跑、伤害方差与软上限、经验曲线、初始状态、复活点
 - `js/data/realms.js`：境界表（等级门槛/属性系数/突破丹/成功率）
 - `js/data/items.js` / `skills.js` / `monsters.js`：全部内容数值
-- `js/data/maps.js`：字符画地图 + 传送门/NPC/宝箱/Boss 触发 + 遇敌表
+- `js/data/maps.js`：字符画地图 + 传送门/NPC/宝箱/Boss 触发 + 遇敌表 + `music` BGM 选曲（缺省 `map`）
 
-改完可运行 `node tools/validate.mjs` 校验引用完整性。
+改完可运行 `node tools/validate.mjs` 校验引用完整性（含地图 `music` 字段与 BGM 曲库完整性）。
 
 ## 替换正式美术（预留工作流）
 
@@ -93,10 +104,10 @@
 - 控制台可用 `window.game` 直接访问游戏实例（如 `game.party[0].gainExp(1000)`）
 - 数据校验：`node tools/validate.mjs`
 - 语法检查：`node --experimental-vm-modules tools/syntax-check.mjs`
-- 回归测试：`node tools/regression.mjs`（四章任务链 / 五境突破 / 入队技能回填 / 各章 Boss 共 900+ 局战斗模拟 / 存档往返，共 92 项断言）
+- 回归测试：`node tools/regression.mjs`（四章任务链 / 五境突破 / 入队技能回填 / 各章 Boss 共 900+ 局战斗模拟 / 存档往返 / 音频模块降级与音序器调度，共 103 项断言）
 
 ## 已实测路径
 
 标题 → 序章 → 地图移动 → 暗雷战斗（升级/自动突破炼气层）→ 菜单（属性/装备/突破筑基）→ 传送青云门 → 主线 1 接取/交付 → 柳如烟入队（双人战斗）→ 主线 2（境界校验）→ 幽冥洞解锁 → Boss 战 → 主线 3 → 「第一章 · 完」结算 → 主线 4（搜剿探子）→ 西山古道开启 → 荒古道（货郎情报/洛清霜入队·三人战斗）→ 黑风寨 → 黑风王 Boss 战 → 主线 5 → 「第二章 · 完」结算 → 主线 6（血煞教徒）→ 血煞谷开启 → 采药人情报/血煞左使 → 主线 7（金丹突破门槛）→ 祭坛禁制开启 → 血煞教主 Boss 战 → 战后顿悟（元婴突破）→ 主线 8 → 「第三章 · 完」结算 → **主线 9（渡口之围/沈孤鸿入队·四人战斗）→ 寒渊冰原开启 → 渊魔将 → 主线 10（化神突破门槛）→ 魔渊封印开启 → 魔主·玄冥终战 → 大结局「归途」→ 主线 11 → 「终章 · 完」全剧情终结算** → 存档/读档 → 商店购买。
 
-> 全部四章路径均已用无头回归（92 项断言，含各章节 Boss 各 300 局战斗模拟）与浏览器实跑双重验证。
+> 全部四章路径均已用无头回归（103 项断言，含各章节 Boss 各 300 局战斗模拟）与浏览器实跑双重验证；音频链路（解锁/BGM 切换/音效触发/音量持久化）由 Playwright 冒烟脚本 `.smoke/audio_smoke.py` 实测（22 项断言）。

@@ -446,8 +446,8 @@ export default class MainMenu {
     const box = document.createElement('div');
     box.style.cssText = 'display:flex;flex-direction:column;gap:8px;max-width:260px;margin:10px auto;';
     // 音量档位（关/低/中/高），独立于存档持久化在 localStorage
-    this._btn(`音乐音量：${sfx.musicVolName()}`, () => { sfx.cycleMusicVol(); sfx.play('confirm'); this.render(); });
-    this._btn(`音效音量：${sfx.sfxVolName()}`, () => { sfx.cycleSfxVol(); sfx.play('confirm'); this.render(); });
+    box.appendChild(this._btn(`音乐音量：${sfx.musicVolName()}`, () => { sfx.cycleMusicVol(); sfx.play('confirm'); this.render(); }));
+    box.appendChild(this._btn(`音效音量：${sfx.sfxVolName()}`, () => { sfx.cycleSfxVol(); sfx.play('confirm'); this.render(); }));
     const b1 = this._btn('操作说明', () => this.game.ui.openHelp());
     const b2 = this._btn('返回标题画面', () => {
       this.game.ui.confirm('返回标题？（未存档的进度将丢失）', () => {

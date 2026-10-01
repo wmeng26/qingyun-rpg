@@ -291,7 +291,15 @@ class MusicPlayer {
     this.spb = 60 / song.bpm;
     this.loopDur = song.loopBeats * this.spb;
     this.t0 = ctx.currentTime + 0.06;
-    this.loopN = 0;
+    // 展平为循环内事件表（按时间排序），指针逐事件推进
+    this.events = [];
+    for (const tr of song.tracks) {
+      for (const [b, m, d] of tr.notes) this.events.push({ t: b * this.spb, tr, m, d });
+    }
+    for (const [b, k] of song.drums || []) this.events.push({ t: b * this.spb, drum: k });
+    this.events.sort((a, b) => a.t - b.t);
+    this.i = 0;
+    this.loopBase = this.t0;
     this._playing = true;
     this._schedule();
     this._timer = setInterval(() => this._schedule(), 50);
@@ -299,29 +307,25 @@ class MusicPlayer {
 
   _schedule() {
     if (!this._playing || !this.eng.ctx) return;
-    const horizon = this.eng.ctx.currentTime + 0.2;
-    while (this.t0 + this.loopN * this.loopDur < horizon) {
-      this._scheduleLoop(this.t0 + this.loopN * this.loopDur);
-      this.loopN++;
-    }
-  }
-
-  _scheduleLoop(base) {
-    const ctx = this.eng.ctx, spb = this.spb;
-    for (const tr of this.song.tracks) {
-      for (const [b, m, d] of tr.notes) {
-        const t = base + b * spb;
-        if (t < ctx.currentTime - 0.02) continue;
-        this.eng.tone({
-          freq: hz(m), dur: Math.max(0.06, d * spb * 0.94), wave: tr.wave, vol: tr.vol,
-          when: t - ctx.currentTime, attack: tr.attack, release: tr.release, bus: 'music',
+    const ctx = this.eng.ctx;
+    const horizon = ctx.currentTime + 0.2;
+    while (true) {
+      if (this.i >= this.events.length) { // 本循环排完 → 下一循环
+        this.loopBase += this.loopDur;
+        this.i = 0;
+      }
+      const ev = this.events[this.i];
+      const t = this.loopBase + ev.t;
+      if (t >= horizon) return;          // 视界外：等下一轮扫描
+      if (t >= ctx.currentTime - 0.02) { // 已过去的（后台标签页限流导致）跳过
+        if (ev.drum) this.eng.drum(ev.drum, t - ctx.currentTime);
+        else this.eng.tone({
+          freq: hz(ev.m), dur: Math.max(0.06, ev.d * this.spb * 0.94), wave: ev.tr.wave,
+          vol: ev.tr.vol, when: t - ctx.currentTime, attack: ev.tr.attack,
+          release: ev.tr.release, bus: 'music',
         });
       }
-    }
-    for (const [b, k] of this.song.drums || []) {
-      const t = base + b * spb;
-      if (t < ctx.currentTime - 0.02) continue;
-      this.eng.drum(k, t - ctx.currentTime);
+      this.i++;
     }
   }
 }
