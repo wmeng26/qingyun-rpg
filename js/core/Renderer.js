@@ -53,6 +53,22 @@ export default class Renderer {
     const wrap = document.getElementById('game-wrap');
     wrap.style.width = dw + 'px';
     wrap.style.height = dh + 'px';
+    // UI 层定位：横屏与画布显示区精确重合（原为 game-wrap 子元素，坐标不变）；
+    // 竖屏画布 16:9 只剩一条中带，UI 铺满可视视口，否则标题菜单等会被裁切
+    const ui = document.getElementById('ui-root');
+    if (ui) {
+      if (h > w) {
+        ui.style.left = '0px';
+        ui.style.top = '0px';
+        ui.style.width = w + 'px';
+        ui.style.height = h + 'px';
+      } else {
+        ui.style.left = Math.round((w - dw) / 2) + 'px';
+        ui.style.top = Math.round((h - dh) / 2) + 'px';
+        ui.style.width = dw + 'px';
+        ui.style.height = dh + 'px';
+      }
+    }
   }
 
   shakeFor(time) { this.shake = Math.max(this.shake, time); }

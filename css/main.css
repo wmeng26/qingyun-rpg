@@ -38,7 +38,8 @@ html, body {
   background: #000;
 }
 
-/* UI 覆盖层：与画布显示区域重合 */
+/* UI 覆盖层：#stage 直接子元素。横屏时由 Renderer.resize 对齐画布显示区；
+   竖屏时铺满可视视口（inset:0 为 JS 接管前的兜底） */
 #ui-root {
   position: absolute;
   inset: 0;

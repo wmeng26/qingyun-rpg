@@ -16,8 +16,10 @@
 <div id="stage">
   <div id="game-wrap">
     <canvas id="game-canvas" width="480" height="270"></canvas>
-    <div id="ui-root"></div>
   </div>
+  <!-- UI 层与画布同为 #stage 直接子元素：横屏时由 Renderer 对齐画布区域，
+       竖屏时铺满可视视口（画布 16:9 在竖屏只剩一条中带，UI 若被限 inside 会裁掉内容） -->
+  <div id="ui-root"></div>
 </div>
 <div id="rotate-hint">建议横屏游玩，体验更佳</div>
 
