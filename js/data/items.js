@@ -63,6 +63,10 @@ export default {
     id: 'fang_wolf', name: '狼牙', type: 'material', price: 20, icon: 'icon_fang',
     desc: '锋利的野狼獠牙，药铺商会收购。',
   },
+  hou_niang: {
+    id: 'hou_niang', name: '猴儿酿', type: 'material', price: 60, icon: 'icon_wine',
+    desc: '猴群私酿的百果酒，坛口泥封上还带着爪痕，是泡药酒的好引子。',
+  },
   hu_mao: {
     id: 'hu_mao', name: '灵狐毛', type: 'material', price: 35, icon: 'icon_fur',
     desc: '带着温热灵气的狐毛。',

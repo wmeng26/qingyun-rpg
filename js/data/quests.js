@@ -274,4 +274,15 @@ export default {
     ],
     rewards: { exp: 6000, gold: 1200, items: [{ id: 'pill_tianyuan', count: 2 }, { id: 'pill_xuling', count: 1 }] },
   },
+
+  quest_side_11: {
+    id: 'quest_side_11', name: '药妪的酒引', type: 'side', giver: 'npc_yaogu',
+    requires: null, next: null,
+    intro: '落霞林的采药妪要猴儿酿泡药酒：「林中妖猴抢了我的酒坛，如今倒自己酿起酒来了——替我讨两坛回来。」',
+    objectives: [
+      { type: 'item', target: 'hou_niang', count: 2, text: '收集猴儿酿' },
+      { type: 'talk', target: 'npc_yaogu', text: '交给采药妪', final: true },
+    ],
+    rewards: { exp: 300, gold: 280, items: [{ id: 'pill_lingli', count: 2 }, { id: 'pill_huixue', count: 3 }] },
+  },
 };

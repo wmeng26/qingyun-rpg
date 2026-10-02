@@ -558,7 +558,67 @@ export default {
       },
       n2: {
         speaker: '老猎户', portrait: 'face_hunter',
-        text: '东边山崖后头那个洞……邪气重得很。听老朽一句劝，没筑基别进去。',
+        text: '山道东边有条岔道通落霞林，林子里猴蜂野猪都有，深处的熊罴和树精不好惹——想练本事，去那儿比守着山道强。',
+        next: 'n3',
+      },
+      n3: {
+        speaker: '老猎户', portrait: 'face_hunter',
+        text: '过了落霞林再往南是惊鸿涧，涧里家伙更硬，没个十来级的本事别去。林子口秦婆的药酒方子倒是救过老朽一命，得空替她跑跑腿。',
+        next: null,
+      },
+    },
+  },
+
+  dlg_yaogu: {
+    entry: 'root',
+    nodes: {
+      root: {
+        speaker: '采药妪·秦婆', portrait: 'face_yaonong', text: '',
+        branch: [
+          { cond: { quest: { id: 'quest_side_11', state: 'ready' } }, next: 'turnin' },
+          { cond: { quest: { id: 'quest_side_11', state: 'active' } }, next: 'progress' },
+          { cond: { quest: { id: 'quest_side_11', state: 'available' } }, next: 'offer' },
+        ],
+        next: 'hello',
+      },
+      hello: {
+        speaker: '采药妪·秦婆', portrait: 'face_yaonong',
+        text: '老婆子守着这片林子采药。这些年妖物越来越多，采个药都得挑日头没落的时候……',
+        next: null,
+      },
+      offer: {
+        speaker: '采药妪·秦婆', portrait: 'face_yaonong',
+        text: '林中妖猴前些日子抢了我的酒坛，如今倒自己酿起酒来了——那猴儿酿是泡药酒的引子，缺它不得。\n替我讨两坛回来，药钱分你。',
+        choices: [
+          { text: '老人家放心，交给我。', next: null, actions: [{ do: 'startQuest', id: 'quest_side_11' }] },
+          { text: '我还有事在身。', next: 'hello' },
+        ],
+      },
+      progress: {
+        speaker: '采药妪·秦婆', portrait: 'face_yaonong',
+        text: '妖猴爪子快，可架不住酒香。深草里的猴群最会藏酒，多转几圈总有。',
+        next: null,
+      },
+      turnin: {
+        speaker: '采药妪·秦婆', portrait: 'face_yaonong',
+        text: '好酒！坛口泥封都还香着呢。这些丹药你拿去——往后常来林里坐坐。',
+        actions: [{ do: 'completeQuest', id: 'quest_side_11' }],
+        next: null,
+      },
+    },
+  },
+
+  dlg_xiangke: {
+    entry: 'n1',
+    nodes: {
+      n1: {
+        speaker: '迷路香客', portrait: 'face_huolang',
+        text: '这位侠士……我从北边上山进香，不想涧里雾大迷了路。这涧里的水猴子会拽人下水，披石壳的兽刀剑不入，你可千万当心。',
+        next: 'n2',
+      },
+      n2: {
+        speaker: '迷路香客', portrait: 'face_huolang',
+        text: '东北边石崖上有个山洞，里头隐约有灵光……唔，供没供着山神我是不敢进去看的。你要有胆，里头兴许有好东西。',
         next: null,
       },
     },

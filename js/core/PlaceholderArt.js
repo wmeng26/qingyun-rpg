@@ -377,6 +377,145 @@ function battleGuihuo() {
   return c;
 }
 
+// ---- 前期拓展：落霞林 / 惊鸿涧 ----
+function battleHou() {
+  const [c, ctx] = makeCanvas(48, 48);
+  const P = grid2(ctx, 0, 0);
+  const F = '#8a6238', D = '#6a4a28', S = '#d8b090';
+  P(7, 10, 9, 8, F); P(7, 10, 9, 2, D);              // 弓背躯干
+  P(8, 17, 2, 4, D); P(13, 17, 2, 4, D);             // 后腿
+  P(4, 11, 3, 2, F); P(4, 13, 2, 2, S);              // 前臂
+  P(15, 11, 3, 2, F); P(17, 13, 2, 2, S);
+  P(8, 4, 7, 6, F); P(9, 6, 5, 4, S);                // 头+脸
+  P(6, 3, 2, 3, D); P(15, 3, 2, 3, D);               // 耳
+  P(10, 7, 1, 1, '#1a1a1a'); P(13, 7, 1, 1, '#1a1a1a');
+  P(11, 9, 2, 1, '#8a4a3a');
+  P(17, 8, 2, 2, F); P(19, 6, 2, 2, F); P(20, 4, 2, 2, F); P(21, 2, 2, 2, D); // 翘尾
+  P(5, 21, 14, 1, 'rgba(0,0,0,0.35)');
+  return c;
+}
+
+function battleZhufeng() {
+  const [c, ctx] = makeCanvas(48, 48);
+  const P = grid2(ctx, 0, 0);
+  const Y = '#d8b03a', K = '#3a3222', W = 'rgba(210,230,240,0.75)';
+  P(9, 3, 7, 4, W); P(13, 4, 6, 3, W);               // 双翼
+  P(5, 9, 11, 7, Y);                                  // 腹
+  P(7, 9, 2, 7, K); P(11, 9, 2, 7, K); P(14, 9, 2, 7, K);
+  P(3, 11, 2, 3, K);                                  // 尾针
+  P(15, 8, 5, 5, K); P(16, 6, 3, 2, K);              // 头
+  P(17, 10, 1, 1, '#e04030'); P(19, 10, 1, 1, '#e04030');
+  P(8, 16, 1, 4, K); P(12, 16, 1, 4, K); P(16, 15, 1, 4, K);
+  P(5, 21, 14, 1, 'rgba(0,0,0,0.35)');
+  return c;
+}
+
+function battleYezhu() {
+  const [c, ctx] = makeCanvas(48, 48);
+  const P = grid2(ctx, 0, 0);
+  const B = '#6a4a34', D = '#4e3624', S = '#c88a7a';
+  P(4, 9, 13, 8, B); P(4, 9, 13, 2, D);              // 躯干
+  P(5, 8, 12, 1, D);                                  // 背鬃
+  P(16, 8, 6, 7, B); P(16, 8, 6, 1, D);              // 头
+  P(21, 11, 3, 4, S); P(22, 12, 1, 2, '#8a5a4a');    // 猪鼻
+  P(17, 10, 1, 1, '#1a1a1a');
+  P(20, 15, 2, 1, '#efe6d0'); P(17, 15, 2, 1, '#efe6d0'); // 獠牙
+  P(5, 17, 2, 4, D); P(9, 17, 2, 4, D); P(13, 17, 2, 4, D); P(15, 17, 2, 4, D);
+  P(5, 21, 15, 1, 'rgba(0,0,0,0.35)');
+  return c;
+}
+
+function battleHeixiong() {
+  const [c, ctx] = makeCanvas(48, 48);
+  const P = grid2(ctx, 0, 0);
+  const F = '#3a3230', D = '#282220', M = '#8a6a4a';
+  P(4, 8, 14, 10, F); P(4, 8, 14, 2, D);             // 厚躯
+  P(14, 5, 7, 6, F);                                  // 头
+  P(14, 3, 2, 2, D); P(19, 3, 2, 2, D);              // 耳
+  P(18, 8, 3, 3, M);                                  // 口鼻
+  P(15, 7, 1, 1, '#e04030'); P(17, 7, 1, 1, '#e04030');
+  P(2, 9, 3, 8, F); P(19, 9, 3, 2, F); P(19, 11, 3, 2, M); // 前肢+爪
+  P(5, 18, 3, 4, D); P(12, 18, 3, 4, D);
+  P(4, 22, 16, 1, 'rgba(0,0,0,0.35)');
+  return c;
+}
+
+function battleShuyao() {
+  const [c, ctx] = makeCanvas(48, 48);
+  const P = grid2(ctx, 0, 0);
+  const L = '#4a8a3a', D = '#35682a', T = '#6a4a2a', TD = '#4e3620';
+  P(5, 1, 12, 5, D); P(4, 4, 15, 6, L); P(6, 3, 10, 4, L); // 树冠
+  P(7, 5, 4, 2, '#5a9a46'); P(13, 6, 4, 2, '#5a9a46');
+  P(9, 10, 7, 11, T); P(9, 10, 7, 2, TD);            // 树干
+  P(10, 12, 5, 4, '#2a1a10');                         // 树洞
+  P(11, 13, 1, 1, '#e8d44c'); P(13, 13, 1, 1, '#e8d44c');
+  P(8, 14, 1, 4, TD); P(16, 13, 1, 5, TD);           // 伸枝
+  P(8, 21, 3, 2, TD); P(14, 21, 3, 2, TD);           // 根
+  P(5, 22, 15, 1, 'rgba(0,0,0,0.35)');
+  return c;
+}
+
+function battleShanxiao() {
+  const [c, ctx] = makeCanvas(48, 48);
+  const P = grid2(ctx, 0, 0);
+  const F = '#5a5060', D = '#443c4a', S = '#3a7a5a';
+  P(8, 9, 9, 10, F); P(8, 9, 9, 2, D);               // 躯干
+  P(9, 2, 8, 7, F); P(10, 4, 6, 4, S);               // 头+青脸
+  P(4, 4, 2, 3, D); P(19, 4, 2, 3, D);
+  P(11, 5, 1, 1, '#e04030'); P(14, 5, 1, 1, '#e04030');
+  P(12, 7, 2, 1, '#efe6d0');                          // 獠牙
+  P(3, 10, 3, 11, F); P(3, 20, 3, 2, S);             // 长臂垂地
+  P(19, 10, 3, 11, F); P(19, 20, 3, 2, S);
+  P(10, 19, 2, 4, D); P(14, 19, 2, 4, D);
+  P(4, 22, 16, 1, 'rgba(0,0,0,0.35)');
+  return c;
+}
+
+function battleCangdiao() {
+  const [c, ctx] = makeCanvas(48, 48);
+  const P = grid2(ctx, 0, 0);
+  const B = '#5a6a7a', D = '#414c58', W = '#d8dce2', K = '#d08030';
+  P(1, 5, 9, 3, D); P(2, 6, 7, 2, B);                // 左翼
+  P(14, 5, 9, 3, D); P(15, 6, 7, 2, B);              // 右翼
+  P(8, 9, 8, 8, B); P(8, 9, 8, 2, D);                // 躯干
+  P(14, 6, 5, 5, W);                                  // 白头
+  P(18, 8, 3, 2, K);                                  // 喙
+  P(16, 7, 1, 1, '#1a1a1a');
+  P(7, 17, 8, 2, D); P(6, 18, 3, 3, D);              // 尾羽
+  P(9, 17, 2, 4, K); P(13, 17, 2, 4, K);             // 爪
+  P(5, 22, 14, 1, 'rgba(0,0,0,0.35)');
+  return c;
+}
+
+function battleYanjia() {
+  const [c, ctx] = makeCanvas(48, 48);
+  const P = grid2(ctx, 0, 0);
+  const S = '#7a7a72', D = '#5a5a54', HL = '#94948a', S2 = '#8a8a80';
+  P(4, 6, 15, 11, S); P(4, 6, 15, 2, HL);            // 岩壳
+  P(6, 9, 4, 2, D); P(12, 9, 4, 2, D); P(9, 13, 5, 2, D);
+  P(3, 9, 2, 5, D); P(18, 9, 2, 5, D);               // 壳刺
+  P(18, 11, 6, 6, S2); P(21, 13, 1, 1, '#1a1a1a');   // 头
+  P(22, 15, 2, 1, '#4e3624');
+  P(6, 17, 3, 5, D); P(13, 17, 3, 5, D);             // 粗腿
+  P(4, 22, 17, 1, 'rgba(0,0,0,0.35)');
+  return c;
+}
+
+function battleShuigui() {
+  const [c, ctx] = makeCanvas(48, 48);
+  const P = grid2(ctx, 0, 0);
+  const B = '#4a8a8a', D = '#356868', I = '#c8f0e8';
+  P(8, 4, 8, 6, B); P(9, 6, 6, 4, D);                // 头
+  P(10, 6, 1, 2, I); P(13, 6, 1, 2, I);              // 白瞳
+  P(7, 10, 10, 8, B); P(7, 10, 10, 2, D);            // 躯干
+  P(4, 11, 3, 7, B); P(4, 17, 2, 3, D);              // 滴水长臂
+  P(17, 11, 3, 7, B); P(18, 17, 2, 3, D);
+  P(9, 18, 3, 3, D); P(13, 18, 3, 2, B);             // 下身消散
+  P(11, 21, 2, 2, D);
+  P(4, 22, 16, 1, 'rgba(90,170,210,0.5)');           // 水痕
+  return c;
+}
+
 function battleBoss() {
   const [c, ctx] = makeCanvas(48, 48);
   const P = grid2(ctx, 0, 0);
@@ -1071,6 +1210,13 @@ const ICONS = {
     P(9, 5, 3, 3, '#a8e0b0'); P(11, 9, 2, 4, '#7ac088');
     P(10, 7, 4, 1, '#2a5a3a'); P(12, 9, 1, 5, '#2a5a3a');   // 龙纹
   }),
+  icon_wine: () => makeIcon(P => {
+    P(10, 2, 4, 2, '#6a4a28'); P(9, 4, 6, 3, '#a4713a'); P(7, 7, 10, 9, '#a4713a');
+    P(8, 16, 8, 2, '#8a5e30'); P(11, 18, 2, 2, '#6a4a28');
+    P(9, 8, 2, 6, '#c08a50');                               // 高光
+    P(6, 11, 12, 1, '#5f4326'); P(9, 4, 6, 1, '#5f4326');   // 箍绳
+    P(10, 12, 4, 3, '#e8dcc0'); P(11, 13, 2, 1, '#8a5e30'); // 封泥
+  }),
 };
 
 // ================= 宝箱 16×16 =================
@@ -1329,6 +1475,16 @@ export default {
     assets.put('mob_tanzi', battleBandit({ robe: '#4a4448', robeD: '#383336', band: '#8a6a2a', hair: '#1e1e22' }));
     assets.put('mob_shikui', battleShikui());
     assets.put('mob_guihuo', battleGuihuo());
+    // 前期拓展：落霞林 / 惊鸿涧
+    assets.put('mob_hou', battleHou());
+    assets.put('mob_zhufeng', battleZhufeng());
+    assets.put('mob_yezhu', battleYezhu());
+    assets.put('mob_heixiong', battleHeixiong());
+    assets.put('mob_shuyao', battleShuyao());
+    assets.put('mob_shanxiao', battleShanxiao());
+    assets.put('mob_cangdiao', battleCangdiao());
+    assets.put('mob_yanjia', battleYanjia());
+    assets.put('mob_shuigui', battleShuigui());
     assets.put('boss_youming', battleBoss());
     assets.put('mob_feizei', battleFeizei());
     assets.put('mob_langwang', battleLangwang());
@@ -1360,6 +1516,8 @@ export default {
     // 守塔人与囚徒（第五章 NPC）
     assets.put('npc_guchen', charSheet({ hair: '#d8d4c8', skin: '#c8a078', robe: '#4a5044', robeDark: '#383e34', trim: '#a8a080', pants: '#34382e' }));
     assets.put('npc_qiuju', charSheet({ hair: '#2a2a30', skin: '#d0a888', robe: '#6e5a48', robeDark: '#54443a', trim: '#8a7a5a', pants: '#443a30' }));
+    assets.put('npc_yaogu', charSheet({ hair: '#d8d4c8', skin: '#d0a888', robe: '#7a6a52', robeDark: '#5f523e', trim: '#8a9a6a', pants: '#4a4438' }));
+    assets.put('npc_xiangke', charSheet({ hair: '#2a2a30', skin: '#e0b090', robe: '#9a8a5a', robeDark: '#7a6c44', trim: '#c8b28a', pants: '#5a523e' }));
 
     // --- 头像 ---
     for (const [k, fn] of Object.entries(PORTRAITS)) assets.put(k, portrait('#1c1812', fn));
