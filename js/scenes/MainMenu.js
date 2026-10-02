@@ -2,6 +2,7 @@
 import ITEMS from '../data/items.js';
 import SKILLS from '../data/skills.js';
 import MONSTERS from '../data/monsters.js';
+import MAPS from '../data/maps.js';
 import Cultivation from '../systems/Cultivation.js';
 import { PanelNav } from '../core/UIPanel.js';
 import { sfx } from '../core/Audio.js';
@@ -44,6 +45,7 @@ export default class MainMenu {
   }
 
   _buildDom() {
+    const touch = this.game.input.touch;
     const root = document.createElement('div');
     root.id = 'menu-root';
     root.classList.add('hidden');
@@ -51,13 +53,15 @@ export default class MainMenu {
       <div id="menu-panel" class="panel">
         <div id="menu-tabs"></div>
         <div id="menu-body"><div id="menu-content" class="scroll"></div></div>
-        <div id="menu-foot"><span>←/→ 切换页签 · Z 确认 · X 关闭</span><span id="menu-gold"></span></div>
+        <div id="menu-foot"><span>${touch ? '点页签切换 · 点按钮确认' : '←/→ 切换页签 · Z 确认 · X 关闭'}</span><span class="foot-right"><span id="menu-gold"></span><button class="btn" id="menu-close">✕ 关闭</button></span></div>
       </div>`;
     document.getElementById('ui-root').appendChild(root);
     this.el = root;
     this.elTabs = root.querySelector('#menu-tabs');
     this.elContent = root.querySelector('#menu-content');
     this.elGold = root.querySelector('#menu-gold');
+    // 触屏下虚拟 B 键随面板隐藏，页脚的「✕ 关闭」是唯一常驻的关闭入口
+    root.querySelector('#menu-close').addEventListener('click', () => { sfx.play('cancel'); this.close(); });
   }
 
   // ===== 键盘 =====
@@ -361,9 +365,21 @@ export default class MainMenu {
   }
 
   // ---- 任务 ----
+  // NPC 索引：id -> { name, map }（跨图同名 NPC 取首次出现），供任务指引定位
+  _npcLookup() {
+    const idx = {};
+    for (const def of Object.values(MAPS)) {
+      for (const n of def.npcs || []) {
+        if (!idx[n.id]) idx[n.id] = { name: n.name, map: def.name };
+      }
+    }
+    return idx;
+  }
+
   _renderQuests() {
     const g = this.game;
     const stateNames = { available: '可接取', active: '进行中', ready: '可交付', completed: '已完成' };
+    const npcs = this._npcLookup();
     let any = false;
     const quests = g.quests.all();
     for (const q of quests) {
@@ -378,6 +394,15 @@ export default class MainMenu {
         const prog = os.need > 1 ? ` ${os.cur}/${os.need}` : '';
         return `<div class="q-obj ${os.done && !o.final ? 'done' : ''}">${mark}${o.text}${prog}</div>`;
       }).join('');
+      // 接取/交付指引：任务面板本身只读，「去哪里交互」必须写明，
+      // 否则触屏玩家点条目无反馈，会当成「任务无法交互」的故障
+      const turnInId = (q.objectives.find(o => o.type === 'talk' && o.final) || {}).target || q.giver;
+      let go = '';
+      if (st.state === 'available' && npcs[q.giver]) {
+        go = `<div class="q-go">▸ 前往接取：${npcs[q.giver].map} · ${npcs[q.giver].name}</div>`;
+      } else if (st.state === 'ready' && npcs[turnInId]) {
+        go = `<div class="q-go">▸ 前往交付：${npcs[turnInId].map} · ${npcs[turnInId].name}</div>`;
+      }
       const rewards = [];
       if (q.rewards.exp) rewards.push(`经验+${q.rewards.exp}`);
       if (q.rewards.gold) rewards.push(`金钱+${q.rewards.gold}`);
@@ -386,6 +411,7 @@ export default class MainMenu {
         <div class="q-title"><span>【${q.type === 'main' ? '主线' : '支线'}】${q.name}</span><span class="q-state">${stateNames[st.state] || ''}</span></div>
         <div class="q-obj" style="color:#a89878;">${q.intro || ''}</div>
         ${objs}
+        ${go}
         <div class="q-obj" style="color:#8a7a52;">奖励：${rewards.join('　')}</div>`;
       this.elContent.appendChild(box);
     }

@@ -237,6 +237,14 @@ export default class BattleUI {
     this.elCmd.classList.remove('hidden');
     this.elCmdTitle.textContent = title;
     this.elCmdBody.innerHTML = '';
+    // 子菜单（技能/道具/选目标）必须带可见的「返回」：触屏下虚拟 A/B 键在战斗中
+    // 隐藏，没有返回键就无法反悔已进入的子菜单（键盘 X 仍走 onCancel 同一路径）
+    if (onCancel) {
+      const back = document.createElement('button');
+      back.className = 'btn back';
+      back.textContent = '◀ 返回';
+      items = [...items, { el: back, onSelect: onCancel }];
+    }
     const nav = new PanelNav({ onCancel });
     nav.setItems(items);
     nav.attachHover();
@@ -279,9 +287,9 @@ export default class BattleUI {
   _skillTarget(u, s) {
     const t = s.target || 'one_enemy';
     if (t === 'one_enemy') {
-      this._pickTarget('enemy', (tg) => this._commit({ kind: 'skill', skillId: s.id, targets: [tg] }));
+      this._pickTarget('enemy', (tg) => this._commit({ kind: 'skill', skillId: s.id, targets: [tg] }), '选择目标', () => this._showSkillMenu(u));
     } else if (t === 'one_ally') {
-      this._pickTarget('ally', (tg) => this._commit({ kind: 'skill', skillId: s.id, targets: [tg] }));
+      this._pickTarget('ally', (tg) => this._commit({ kind: 'skill', skillId: s.id, targets: [tg] }), '选择目标', () => this._showSkillMenu(u));
     } else if (t === 'all_enemies') {
       this._commit({ kind: 'skill', skillId: s.id, targets: this.engine.aliveEnemies() });
     } else if (t === 'all_allies') {
@@ -299,8 +307,7 @@ export default class BattleUI {
       b.style.cssText = 'padding:10px;font-size:12px;color:#a89878;';
       b.textContent = '（没有可用的丹药）';
       this._showMenu('选择道具', [], { onCancel: () => this.showCommandRoot() });
-      this.elCmdBody.appendChild(b);
-      this.nav.setItems([]);
+      this.elCmdBody.insertBefore(b, this.elCmdBody.lastChild); // 提示置于返回键上方
       return;
     }
     const items = entries.map(e => {
@@ -308,13 +315,13 @@ export default class BattleUI {
       b.className = 'btn';
       b.innerHTML = `<span>${e.def.name}</span><span class="cost">×${e.count}</span>`;
       return { el: b, onSelect: () => {
-        this._pickTarget('ally', (tg) => this._commit({ kind: 'item', itemId: e.id, targets: [tg] }), e.def.name);
+        this._pickTarget('ally', (tg) => this._commit({ kind: 'item', itemId: e.id, targets: [tg] }), e.def.name, () => this._showItemMenu(u));
       } };
     });
     this._showMenu('选择道具', items, { onCancel: () => this.showCommandRoot() });
   }
 
-  _pickTarget(side, cb, label = '选择目标') {
+  _pickTarget(side, cb, label = '选择目标', onCancel = null) {
     const list = side === 'enemy' ? this.engine.aliveEnemies() : this.engine.aliveParty();
     const items = list.map(u => {
       const b = document.createElement('button');
@@ -322,7 +329,8 @@ export default class BattleUI {
       b.innerHTML = `<span>${u.displayName}</span><span class="cost">${u.hp}/${u.maxHp()}</span>`;
       return { el: b, onSelect: () => cb(u) };
     });
-    this._showMenu(label, items, { onCancel: () => this.showCommandRoot() });
+    // 未指定返回目标时回指令根菜单（如「攻击」直达选目标）
+    this._showMenu(label, items, { onCancel: onCancel || (() => this.showCommandRoot()) });
   }
 
   _commit(cmd) {

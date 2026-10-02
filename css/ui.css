@@ -250,6 +250,8 @@
   min-width: 210px;
 }
 #cmd-panel .panel-title { font-size: 12px; padding: 3px 10px; }
+/* 子菜单返回键：弱化于行动项 */
+#cmd-panel .btn.back { color: var(--paper-dim); font-size: 11px; padding: 4px 10px; }
 .cmd-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 4px; padding: 6px; }
 .cmd-list { display: flex; flex-direction: column; gap: 3px; padding: 6px; max-height: 108px; overflow-y: auto; }
 .cmd-list .btn { font-size: 12px; padding: 4px 10px; display: flex; justify-content: space-between; gap: 8px; }
@@ -297,6 +299,9 @@
   overflow-y: auto;
 }
 #menu-foot { border-top: 1px solid rgba(212,175,55,0.2); padding: 5px 12px; font-size: 11px; color: var(--paper-dim); display: flex; justify-content: space-between; }
+#menu-foot .foot-right { display: flex; align-items: center; gap: 10px; }
+#menu-foot .btn { font-size: 11px; padding: 2px 10px; }
+body.is-touch #menu-foot .btn { min-height: 28px; padding: 4px 12px; }
 
 /* 角色 tab */
 .char-head { display: flex; gap: 12px; align-items: center; margin-bottom: 8px; }
@@ -337,6 +342,8 @@
 .quest-item .q-title .q-state { color: var(--paper-dim); font-size: 11px; }
 .quest-item .q-obj { font-size: 12px; color: var(--paper); margin-top: 3px; }
 .quest-item .q-obj.done { color: #7dbb5e; }
+/* 接取/交付指引：告诉玩家去哪里与谁交互 */
+.quest-item .q-go { color: var(--gold); font-size: 12px; margin-top: 4px; }
 
 /* 存档 tab */
 .slot-row-big {
