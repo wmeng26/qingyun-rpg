@@ -24,7 +24,11 @@ export default class Renderer {
       setTimeout(() => this.resize(), 120);
       setTimeout(() => this.resize(), 450);
     });
-    if (window.visualViewport) visualViewport.addEventListener('resize', () => this.resize());
+    if (window.visualViewport) {
+      visualViewport.addEventListener('resize', () => this.resize());
+      // 部分浏览器工具栏收/展只触发 scroll（offsetTop 变化）而不发 resize，一并监听
+      visualViewport.addEventListener('scroll', () => this.resize());
+    }
     this.resize();
   }
 
@@ -36,6 +40,9 @@ export default class Renderer {
     const visible = vv && Math.abs((vv.scale ?? 1) - 1) <= 0.01;
     const w = visible ? vv.width : window.innerWidth;
     const h = visible ? vv.height : window.innerHeight;
+    // 尺寸未变直接跳过：scroll 等高频事件下避免无谓的样式覆写
+    if (w === this._lastW && h === this._lastH) return;
+    this._lastW = w; this._lastH = h;
     let scale = Math.min(w / this.LOGICAL_W, h / this.LOGICAL_H);
     if (scale >= 1 && !this.freeScale) scale = Math.floor(scale); // 桌面整数倍缩放保持像素锐利
     // 不足 1 倍（窗口比 480×270 还小）时按比例继续缩小以完整显示画面，

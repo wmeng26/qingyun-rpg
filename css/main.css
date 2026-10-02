@@ -20,6 +20,8 @@ html, body {
   /* 移动端 100% 可能等于「最大视口」（工具栏占位时可见区域更小），首帧用 dvh 兜底，
      Renderer.resize 会以实测可见视口精确覆写 */
   height: 100dvh;
+  /* 作为虚拟按键的定位基准：bottom:0 = 可视视口底边（工具栏上沿） */
+  position: relative;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -80,8 +82,11 @@ body.is-touch #touch-controls[data-mode="ab"] #dpad { display: none; }
 body.is-touch #touch-controls[data-mode="full"] #ab-btns,
 body.is-touch #touch-controls[data-mode="ab"] #ab-btns { display: flex; }
 
+/* 定位基准是 #stage（Renderer.resize 按可视视口实测其尺寸）：
+   不能用 fixed——fixed 相对布局视口定位，在 viewport-fit=cover 下等于整块物理屏幕，
+   iOS 底部地址栏 / UC 等悬浮工具栏会把沉底的按键整个盖住 */
 #dpad {
-  position: fixed;
+  position: absolute;
   left: calc(14px + env(safe-area-inset-left));
   bottom: calc(16px + env(safe-area-inset-bottom));
   display: grid;
@@ -107,7 +112,7 @@ body.is-touch #touch-controls[data-mode="ab"] #ab-btns { display: flex; }
 #dpad .dp.on { background: rgba(212, 175, 55, 0.4); border-color: var(--gold, #d4af37); }
 
 #ab-btns {
-  position: fixed;
+  position: absolute; /* 同 #dpad：锚定 #stage（可视视口），避开浏览器底部悬浮工具栏 */
   right: calc(16px + env(safe-area-inset-right));
   bottom: calc(18px + env(safe-area-inset-bottom));
   display: none;
