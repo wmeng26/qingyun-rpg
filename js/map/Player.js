@@ -1,4 +1,5 @@
 // 玩家：四方向网格移动（每格 stepMs），行走帧动画
+// trail：刚走过的格子队列（新在前），供队友蛇形跟随
 const DIR_ROW = { down: 0, left: 1, right: 2, up: 3 };
 
 export default class Player {
@@ -11,6 +12,7 @@ export default class Player {
     this.moveT = 0;
     this.onArrive = null; // (gx, gy) => void，由 MapScene 注入
     this.enabled = true;
+    this.trail = [];
   }
 
   place(x, y, dir = 'down') {
@@ -18,6 +20,7 @@ export default class Player {
     this.dir = dir;
     this.moving = false;
     this.moveT = 0;
+    this.trail = [];
   }
 
   // 像素坐标（渲染用）
@@ -63,6 +66,9 @@ export default class Player {
     this._toX = nx; this._toY = ny;
     this.moving = true;
     this.moveT = 0;
+    // 记录刚离开的格子（含本步朝向），队友按槽位取 trail[i] 作为目标格
+    this.trail.unshift({ x: this.gx, y: this.gy, dir });
+    if (this.trail.length > 8) this.trail.pop();
   }
 
   draw(ctx, camX, camY) {

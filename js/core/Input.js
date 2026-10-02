@@ -6,6 +6,7 @@ const KEYMAP = {
   ArrowRight: 'right', KeyD: 'right',
   KeyZ: 'confirm', Enter: 'confirm', Space: 'confirm',
   KeyX: 'cancel', Escape: 'cancel',
+  KeyC: 'log', // 对话中回看记录
 };
 
 export default class Input {

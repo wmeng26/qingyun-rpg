@@ -1,5 +1,6 @@
 // 数据一致性校验（开发工具，node 运行：node tools/validate.mjs）
 // 检查：行宽一致 / 图例齐全 / NPC·传送门·事件落在可行走格 / 传送门目标存在 / 引用的 id 存在
+//       / 连通性：NPC 格视为障碍时，各地图的关键点仍全部可达（NPC 会阻挡行走，防堵死通路）
 import path from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 
@@ -7,11 +8,11 @@ const root = path.dirname(path.dirname(fileURLToPath(import.meta.url)));
 const data = (f) => import(pathToFileURL(path.join(root, 'js', 'data', f)).href);
 const core = (f) => import(pathToFileURL(path.join(root, 'js', 'core', f)).href);
 
-const [maps, quests, dialogs, items, skills, monsters, realms, characters, audioMod] =
+const [maps, quests, dialogs, items, skills, monsters, realms, characters, audioMod, balance] =
   await Promise.all([
     data('maps.js'), data('quests.js'), data('dialogs.js'), data('items.js'),
     data('skills.js'), data('monsters.js'), data('realms.js'), data('characters.js'),
-    core('Audio.js'),
+    core('Audio.js'), data('balance.js'),
   ]).then(arrs => arrs.map(m => m.default !== undefined ? m.default : m));
 const { SONG_NAMES } = audioMod;
 
@@ -129,6 +130,46 @@ for (const s of Object.values(skills)) {
     }
   }
   if (!SFX_NAMES.length) err('音效表为空');
+}
+
+// 连通性：NPC 格视为障碍（游戏中 NPC 阻挡行走），从各入口（出生点/复活点/传送门落点）
+// BFS，验证所有传送门、事件格可达，且每个 NPC 至少一侧邻格可达（保证能对话）
+{
+  const entries = {};
+  const addEntry = (mapId, x, y) => {
+    if (maps[mapId]) (entries[mapId] ||= []).push([x, y]);
+  };
+  addEntry(balance.start.mapId, balance.start.pos.x, balance.start.pos.y);
+  addEntry(balance.respawn.mapId, balance.respawn.x, balance.respawn.y);
+  for (const m of Object.values(maps)) for (const p of m.portals || []) addEntry(p.to, p.toX, p.toY);
+
+  for (const [id, map] of Object.entries(maps)) {
+    const { tiles, legend, width, height } = map;
+    const walkable = (x, y) => x >= 0 && y >= 0 && y < tiles.length && x < (tiles[y]?.length || 0)
+      && legend[tiles[y][x]] && !legend[tiles[y][x]].solid;
+    const npcSet = new Set((map.npcs || []).map(n => `${n.x},${n.y}`));
+    const blocked = (x, y) => !walkable(x, y) || npcSet.has(`${x},${y}`);
+    const seen = new Set();
+    const q = [];
+    for (const [x, y] of entries[id] || []) {
+      if (walkable(x, y) && !npcSet.has(`${x},${y}`) && !seen.has(`${x},${y}`)) { seen.add(`${x},${y}`); q.push([x, y]); }
+    }
+    while (q.length) {
+      const [x, y] = q.pop();
+      for (const [dx, dy] of [[1, 0], [-1, 0], [0, 1], [0, -1]]) {
+        const nx = x + dx, ny = y + dy, k = `${nx},${ny}`;
+        if (seen.has(k) || blocked(nx, ny)) continue;
+        seen.add(k); q.push([nx, ny]);
+      }
+    }
+    const reach = (x, y) => seen.has(`${x},${y}`);
+    for (const p of map.portals || []) if (!reach(p.x, p.y)) err(`${id}: 传送门 (${p.x},${p.y}) 被 NPC 隔断不可达`);
+    for (const e of map.events || []) if (!reach(e.x, e.y)) err(`${id}: 事件 ${e.type} (${e.x},${e.y}) 被 NPC 隔断不可达`);
+    for (const n of map.npcs || []) {
+      const touchable = [[1, 0], [-1, 0], [0, 1], [0, -1]].some(([dx, dy]) => walkable(n.x + dx, n.y + dy) && reach(n.x + dx, n.y + dy));
+      if (!touchable) err(`${id}: NPC ${n.id} (${n.x},${n.y}) 四邻均不可达，无法对话`);
+    }
+  }
 }
 
 // 商店物品价格

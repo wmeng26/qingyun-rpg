@@ -1,8 +1,9 @@
-// 地图场景：瓦片渲染 / 网格移动 / NPC 交互 / 传送门 / 宝箱 / 暗雷
+// 地图场景：瓦片渲染 / 网格移动 / NPC 交互 / 传送门 / 宝箱 / 暗雷 / 队友跟随
 import MAPS from '../data/maps.js';
 import TileMap from '../map/TileMap.js';
 import Player from '../map/Player.js';
 import NPC from '../map/NPC.js';
+import Follower from '../map/Follower.js';
 import Encounter from '../map/Encounter.js';
 import { sfx } from '../core/Audio.js';
 
@@ -23,16 +24,39 @@ export default class MapScene {
     this.player.place(this.startPos.x, this.startPos.y, this.startPos.dir);
     this.player.onArrive = (x, y) => this._onArrive(x, y);
     this.npcs = (this.def.npcs || []).map(d => new NPC(d));
+    // 队友蛇形跟随（槽位 = 队伍序号 - 1）；碰撞体把 NPC 格也视为障碍
+    this.followers = g.party.slice(1).map(c => new Follower(g, c));
+    this.moveBlocker = { isSolid: (x, y) => this.tileMap.isSolid(x, y) || !!this.npcAt(x, y) };
     this.encounter = new Encounter(g, this.def);
     this.fade = 1;
     this.fadeDir = -1;   // 进入时从黑淡入
     this.pendingPortal = null;
+    this.talkTarget = null;
+    this._tapHintT = 0;
+    this._bindTap();
     g.mapId = this.mapId;
     g.mapScene = this;
     g.playerPos = { ...this.startPos };
     g.ui.setMapName(this.def.name);
     g.ui.showHUD(true);
     sfx.music(this.def.music || 'map');
+  }
+
+  npcAt(x, y) { return this.npcs.find(n => n.x === x && n.y === y) || null; }
+
+  // 队伍变动同步：入队发生在地图上的对话中，须按帧补齐跟随者（按 spriteKey 保留既有状态）
+  _syncFollowers() {
+    const want = this.game.party.length - 1;
+    if (this.followers.length === want) return;
+    for (const c of this.game.party.slice(1)) {
+      if (!this.followers.some(f => f.spriteKey === c.spriteKey)) {
+        this.followers.push(new Follower(this.game, c));
+      }
+    }
+    // 队伍只增不减；顺序以入队序为准
+    this.followers.sort((a, b) =>
+      this.game.party.findIndex(c => c.spriteKey === a.spriteKey)
+      - this.game.party.findIndex(c => c.spriteKey === b.spriteKey));
   }
 
   // 战斗场景弹出回到地图时接回地图 BGM（战斗结算画面已停曲）
@@ -61,7 +85,20 @@ export default class MapScene {
     }
 
     const blocked = this.game.ui.hasModal() || this.game.dialog.active || this.pendingPortal;
-    this.player.update(dt, !blocked, this.tileMap);
+    this.player.update(dt, !blocked, this.moveBlocker);
+    this._syncFollowers();
+    // 跟随者紧随玩家同步（须在玩家 update 后、早退分支前）
+    for (let i = 0; i < this.followers.length; i++) this.followers[i].update(i, this.player);
+    if (this._tapHintT > 0) this._tapHintT -= dt;
+
+    // 面向可交互 NPC：NPC 注视玩家 + 更新交互提示
+    this.talkTarget = null;
+    if (!blocked) {
+      const [dx, dy] = DIR_VEC[this.player.dir];
+      const n = this.npcAt(this.player.gx + dx, this.player.gy + dy);
+      if (n) { this.talkTarget = n; n.faceToward(this.player.gx, this.player.gy); }
+    }
+    this._refreshHint();
 
     // 交互
     const input = this.game.input;
@@ -70,15 +107,57 @@ export default class MapScene {
       return;
     }
     if (!blocked && input.wasPressed('confirm')) {
-      const [dx, dy] = DIR_VEC[this.player.dir];
-      const fx = this.player.gx + dx, fy = this.player.gy + dy;
-      const npc = this.npcs.find(n => n.x === fx && n.y === fy);
-      if (npc) {
-        npc.faceToward(this.player.gx, this.player.gy);
-        this.game.quests.notifyTalk(npc.id);
-        this.game.dialog.start(npc.dialog);
-      }
+      const n = this.talkTarget;
+      if (n) this._talkTo(n);
     }
+  }
+
+  _refreshHint() {
+    const g = this.game;
+    if (!g.ui.setHint) return;
+    const n = this.talkTarget;
+    if (n) g.ui.setHint(g.input.touch ? `A 与${n.name}交谈` : `Z 与${n.name}交谈 · X 菜单`);
+    else g.ui.setHint(g.input.touch ? 'A 交互 · B 菜单' : 'Z 交互 · X 菜单');
+  }
+
+  // 与 NPC 交谈（确认键 / 点按共用）：NPC 转向玩家 + 任务交谈事件 + 开对话
+  _talkTo(n) {
+    n.faceToward(this.player.gx, this.player.gy);
+    this.game.quests.notifyTalk(n.id);
+    this.game.dialog.start(n.dialog);
+  }
+
+  // 画布点按：直接点 NPC 交谈（触屏免对准）；离得远则提示走近
+  handleTap(lx, ly) {
+    const g = this.game;
+    if (g.inBattle || g.dialog.active || g.ui.hasModal() || this.pendingPortal || this.fadeDir > 0) return;
+    const tx = Math.floor((lx + this.camX) / 32), ty = Math.floor((ly + this.camY) / 32);
+    const n = this.npcAt(tx, ty);
+    if (!n) return;
+    const dist = Math.abs(n.x - this.player.gx) + Math.abs(n.y - this.player.gy);
+    if (dist === 1) {
+      this.player.dir = n.x > this.player.gx ? 'right' : n.x < this.player.gx ? 'left'
+        : n.y > this.player.gy ? 'down' : 'up';
+      this._talkTo(n);
+    } else if (this._tapHintT <= 0) {
+      this._tapHintT = 2.5;
+      g.ui.toast(`走近「${n.name}」再交谈`);
+    }
+  }
+
+  // 画布点按只绑一次（画布常驻，handler 委托给当前 mapScene）
+  _bindTap() {
+    const g = this.game;
+    const canvas = g.renderer.canvas;
+    if (canvas._npcTapBound) return;
+    canvas._npcTapBound = true;
+    canvas.addEventListener('pointerdown', (e) => {
+      const sc = g.mapScene;
+      if (!sc) return;
+      const r = canvas.getBoundingClientRect();
+      if (!r.width || !r.height) return;
+      sc.handleTap((e.clientX - r.left) / r.width * 480, (e.clientY - r.top) / r.height * 270);
+    });
   }
 
   _onArrive(x, y) {
@@ -174,7 +253,31 @@ export default class MapScene {
     }
 
     for (const n of this.npcs) n.draw(ctx, camX, camY, g.assets);
+    // 队友蛇形跟随（队首离玩家最近、最后绘制）
+    for (let i = this.followers.length - 1; i >= 0; i--) {
+      this.followers[i].draw(ctx, camX, camY, g.assets);
+    }
     this.player.draw(ctx, camX, camY);
+
+    // 交互提示：面向 NPC 时头顶名字 + 弹跳「!」
+    if (this.talkTarget) {
+      const n = this.talkTarget;
+      const bob = Math.round(Math.sin(performance.now() / 170) * 2);
+      const cx = n.x * 32 + 16 - camX;
+      const top = n.y * 32 - camY;
+      ctx.font = 'bold 10px "Microsoft YaHei", sans-serif';
+      ctx.textAlign = 'center';
+      ctx.lineWidth = 3;
+      ctx.strokeStyle = 'rgba(0,0,0,0.85)';
+      ctx.strokeText(n.name, cx, top - 10);
+      ctx.fillStyle = '#ffe9a8';
+      ctx.fillText(n.name, cx, top - 10);
+      ctx.font = 'bold 14px "Microsoft YaHei", sans-serif';
+      ctx.strokeText('!', cx, top - 24 + bob);
+      ctx.fillStyle = '#ffd24c';
+      ctx.fillText('!', cx, top - 24 + bob);
+      ctx.textAlign = 'left';
+    }
 
     // 黑场过渡
     if (this.fade > 0) {

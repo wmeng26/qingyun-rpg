@@ -92,6 +92,11 @@ export default class UIScene {
     this.elRight.querySelector('#hud-mapname').textContent = n;
   }
 
+  // 右下操作提示（面向 NPC 时由 MapScene 切换为交谈提示）
+  setHint(text) {
+    if (this.elHint && this.elHint.textContent !== text) this.elHint.textContent = text;
+  }
+
   toast(text) {
     const t = document.createElement('div');
     t.className = 'toast';
@@ -239,10 +244,12 @@ export default class UIScene {
     const controlLines = touch
       ? `<div><span class="k">左下方向键</span>移动 · 按住持续走</div>
          <div><span class="k">A 键</span>确认 · 交互 · 快进对话（也可点对话框）</div>
-         <div><span class="k">B 键</span>取消 · 打开菜单（地图中）</div>`
+         <div><span class="k">B 键</span>取消 · 打开菜单（地图中）</div>
+         <div><span class="k">直接点 NPC</span>即可交谈（无需对准）· 按住 A 快进对话</div>`
       : `<div><span class="k">方向键 / WASD</span>移动 · 选择</div>
-         <div><span class="k">Z / 回车 / 空格</span>确认 · 交互 · 快进对话</div>
-         <div><span class="k">X / Esc</span>取消 · 打开菜单（地图中）</div>`;
+         <div><span class="k">Z / 回车 / 空格</span>确认 · 交互 · 快进对话（按住更快）</div>
+         <div><span class="k">X / Esc</span>取消 · 打开菜单（地图中）</div>
+         <div><span class="k">C</span>对话中回看记录 · 点击 NPC 也可直接交谈</div>`;
     const root = document.createElement('div');
     root.id = 'confirm-root';
     root.innerHTML = `
