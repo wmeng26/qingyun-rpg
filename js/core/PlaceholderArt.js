@@ -42,6 +42,10 @@ function tileGrass(ctx, seed, dark = false) {
 
 function tileFlower(ctx) {
   tileGrass(ctx, 7);
+  tileFlowerDetail(ctx);
+}
+
+function tileFlowerDetail(ctx) {
   const rnd = mulberry32(77);
   const cols = ['#e8e4d8', '#d06a5a', '#e8c84c'];
   for (let i = 0; i < 3; i++) {
@@ -76,9 +80,9 @@ function tileTree(ctx) {
   P(20, 10, 3, 2, '#26471e'); P(11, 14, 10, 2, '#26471e');
 }
 
-function tileWater(ctx) {
+function tileWater(ctx, seed = 11) {
   ctx.fillStyle = '#3a6a9a'; ctx.fillRect(0, 0, 32, 32);
-  const rnd = mulberry32(11);
+  const rnd = mulberry32(seed);
   for (let i = 0; i < 7; i++) {
     const y = 2 + ((rnd() * 28) | 0), x = (rnd() * 24) | 0;
     ctx.fillStyle = '#2c5580'; ctx.fillRect(x, y, 6, 2);
@@ -95,8 +99,8 @@ function tileBridge(ctx) {
   ctx.fillStyle = '#a3825a'; ctx.fillRect(2, 3, 28, 1);
 }
 
-function tilePath(ctx) {
-  const rnd = mulberry32(23);
+function tilePath(ctx, seed = 23) {
+  const rnd = mulberry32(seed);
   ctx.fillStyle = '#c0a878'; ctx.fillRect(0, 0, 32, 32);
   for (let i = 0; i < 22; i++) {
     ctx.fillStyle = rnd() > 0.5 ? '#b09868' : '#cbb68a';
@@ -145,8 +149,8 @@ function tileCavewall(ctx) {
   ctx.fillStyle = '#1a1614'; ctx.fillRect(0, 28, 32, 4);
 }
 
-function tileCavefloor(ctx) {
-  const rnd = mulberry32(63);
+function tileCavefloor(ctx, seed = 63) {
+  const rnd = mulberry32(seed);
   ctx.fillStyle = '#4a4038'; ctx.fillRect(0, 0, 32, 32);
   for (let i = 0; i < 24; i++) {
     ctx.fillStyle = rnd() > 0.5 ? '#3e352e' : '#544940';
@@ -163,8 +167,8 @@ function tileStairs(ctx) {
 }
 
 // ---- 第四章：寒渊雪地 ----
-function tileSnow(ctx) {
-  const rnd = mulberry32(71);
+function tileSnow(ctx, seed = 71) {
+  const rnd = mulberry32(seed);
   ctx.fillStyle = '#dfe6ea'; ctx.fillRect(0, 0, 32, 32);
   for (let i = 0; i < 20; i++) {
     ctx.fillStyle = rnd() > 0.5 ? '#d2dbe2' : '#eef2f5';
@@ -176,9 +180,9 @@ function tileSnow(ctx) {
   }
 }
 
-function tileSnowGrass(ctx) {
-  tileSnow(ctx);
-  const rnd = mulberry32(83);
+function tileSnowGrass(ctx, seed = 83) {
+  tileSnow(ctx, seed);
+  const rnd = mulberry32(seed * 17);
   for (let i = 0; i < 6; i++) {
     const x = 2 + ((rnd() * 27) | 0), y = 4 + ((rnd() * 24) | 0);
     ctx.fillStyle = '#7a8a6a'; ctx.fillRect(x, y, 1, 4); ctx.fillRect(x + 2, y + 1, 1, 3);
@@ -186,9 +190,9 @@ function tileSnowGrass(ctx) {
   }
 }
 
-function tileSnowDeep(ctx) {
-  tileSnow(ctx);
-  const rnd = mulberry32(97);
+function tileSnowDeep(ctx, seed = 97) {
+  tileSnow(ctx, seed);
+  const rnd = mulberry32(seed * 11);
   for (let i = 0; i < 7; i++) {
     const x = 2 + ((rnd() * 26) | 0), y = 6 + ((rnd() * 20) | 0);
     ctx.fillStyle = '#b8c6d0'; ctx.fillRect(x, y, 5, 3);
@@ -210,8 +214,8 @@ function tilePine(ctx) {
   P(14, 3, 4, 3, '#e8eef2'); P(15, 2, 2, 2, '#f4f8fa');
 }
 
-function tileIce(ctx) {
-  const rnd = mulberry32(109);
+function tileIce(ctx, seed = 109) {
+  const rnd = mulberry32(seed);
   ctx.fillStyle = '#a8ccd8'; ctx.fillRect(0, 0, 32, 32);
   for (let i = 0; i < 10; i++) {
     ctx.fillStyle = rnd() > 0.5 ? '#bcdce6' : '#98c0cc';
@@ -222,15 +226,14 @@ function tileIce(ctx) {
 }
 
 // 踏雪之路：压实的雪面 + 车辙足迹。仍是雪色系，但比周遭雪地更暗更实
-function tileSnowPath(ctx) {
-  const rnd = mulberry32(131);
+// （不画瓦片边线——横竖两个方向的路面都由相邻瓦片自然连成整条）
+function tileSnowPath(ctx, seed = 131) {
+  const rnd = mulberry32(seed);
   ctx.fillStyle = '#cfd8de'; ctx.fillRect(0, 0, 32, 32);
   for (let i = 0; i < 20; i++) {
     ctx.fillStyle = rnd() > 0.5 ? '#c2ccd4' : '#dae2e8';
     ctx.fillRect((rnd() * 30) | 0, (rnd() * 30) | 0, 4, 2);
   }
-  ctx.fillStyle = '#b2bcc6';
-  ctx.fillRect(0, 0, 32, 1); ctx.fillRect(0, 31, 32, 1);
   for (let i = 0; i < 3; i++) {
     ctx.fillStyle = '#a8b4be';
     ctx.fillRect(5 + ((rnd() * 20) | 0), 6 + ((rnd() * 20) | 0), 4, 3);
@@ -1424,27 +1427,34 @@ function bgTitle() {
 export default {
   build(assets) {
     // --- 瓦片 ---
-    assets.put('grass', tile(32, c => tileGrass(c, 5)));
-    assets.put('flower', tile(32, tileFlower));
-    assets.put('tallgrass', tile(32, c => tileTallgrass(c, 3)));
-    assets.put('tallgrass2', tile(32, c => tileTallgrass(c, 8, true)));
+    // 大面积铺贴的基础瓦片各带两枚变体（'名#1' / '名#2'），TileMap 预渲染时按格坐标
+    // 确定性混铺，打破整图单一贴图的重复感；其余装饰/立体瓦片保持单张。
+    const V = (key, make) => {
+      assets.put(key, make(0));
+      assets.put(`${key}#1`, make(1));
+      assets.put(`${key}#2`, make(2));
+    };
+    V('grass', v => tile(32, c => tileGrass(c, 5 + v * 11)));
+    V('flower', v => tile(32, c => { tileGrass(c, 5 + v * 11); tileFlowerDetail(c); }));
+    V('tallgrass', v => tile(32, c => tileTallgrass(c, 3 + v * 9)));
+    V('tallgrass2', v => tile(32, c => tileTallgrass(c, 8 + v * 9, true)));
+    V('path', v => tile(32, c => tilePath(c, 23 + v * 7)));
+    V('water', v => tile(32, c => tileWater(c, 11 + v * 5)));
+    V('cavefloor', v => tile(32, c => tileCavefloor(c, 63 + v * 5)));
+    V('snow', v => tile(32, c => tileSnow(c, 71 + v * 5)));
+    V('snowgrass', v => tile(32, c => tileSnowGrass(c, 83 + v * 5)));
+    V('snowdeep', v => tile(32, c => tileSnowDeep(c, 97 + v * 5)));
+    V('snowpath', v => tile(32, c => tileSnowPath(c, 131 + v * 5)));
+    V('ice', v => tile(32, c => tileIce(c, 109 + v * 5)));
     assets.put('tree', tile(32, tileTree));
-    assets.put('water', tile(32, tileWater));
     assets.put('bridge', tile(32, tileBridge));
-    assets.put('path', tile(32, tilePath));
     assets.put('rock', tile(32, tileRock));
     assets.put('wall', tile(32, tileWall));
     assets.put('roof', tile(32, tileRoof));
     assets.put('door', tile(32, tileDoor));
     assets.put('cavewall', tile(32, tileCavewall));
-    assets.put('cavefloor', tile(32, tileCavefloor));
     assets.put('stairs', tile(32, tileStairs));
-    assets.put('snow', tile(32, tileSnow));
-    assets.put('snowgrass', tile(32, tileSnowGrass));
-    assets.put('snowdeep', tile(32, tileSnowDeep));
     assets.put('pine', tile(32, tilePine));
-    assets.put('ice', tile(32, tileIce));
-    assets.put('snowpath', tile(32, tileSnowPath));
 
     // --- 行走图（sheet: 2帧×4向） ---
     assets.put('char_hero', charSheet({ hair: '#2a2a30', skin: '#e8b888', robe: '#3a5a8a', robeDark: '#2c4568', trim: '#c8a84c', pants: '#33302a' }));

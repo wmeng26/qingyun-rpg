@@ -241,14 +241,15 @@ export default class MapScene {
       const img = g.assets.get(opened ? 'chest_open' : 'chest_closed');
       if (img) ctx.drawImage(img, ev.x * 32 + 8 - camX, ev.y * 32 + 10 - camY);
     }
-    // 传送门提示
+    // 传送门提示（顶部一行的标签画在格下方，避免被视口上缘裁掉）
     for (const p of this.def.portals || []) {
+      const ly = p.y === 0 ? p.y * 32 + 27 : p.y * 32 - 6;
       ctx.font = '9px "Microsoft YaHei", sans-serif';
       ctx.textAlign = 'center';
       ctx.fillStyle = 'rgba(0,0,0,0.6)';
-      ctx.fillText(p.label || '', p.x * 32 + 17 - camX, p.y * 32 - 6 - camY);
+      ctx.fillText(p.label || '', p.x * 32 + 17 - camX, ly + 1 - camY);
       ctx.fillStyle = '#ffe9a8';
-      ctx.fillText(p.label || '', p.x * 32 + 16 - camX, p.y * 32 - 7 - camY);
+      ctx.fillText(p.label || '', p.x * 32 + 16 - camX, ly - camY);
       ctx.textAlign = 'left';
     }
 
