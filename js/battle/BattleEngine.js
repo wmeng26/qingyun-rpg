@@ -84,6 +84,7 @@ export default class BattleEngine {
   }
 
   _execute(actor, cmd, events) {
+    this._redirectDeadTargets(actor, cmd, events);
     switch (cmd.kind) {
       case 'attack':
         events.push(...executeSkill(actor, SKILLS.skill_attack, cmd.targets));
@@ -131,6 +132,23 @@ export default class BattleEngine {
       }
     }
     return false;
+  }
+
+  // 指令阶段锁定的目标，在按速度结算时可能已被队友抢先击杀。
+  // 单体敌方指令（普攻/单体技能）不应白白落空：执行前改锁其他存活敌人
+  _redirectDeadTargets(actor, cmd, events) {
+    if (cmd.kind !== 'attack' && cmd.kind !== 'skill') return;
+    if (cmd.kind === 'skill') {
+      const skill = SKILLS[cmd.skillId];
+      if (!skill || (skill.target || 'one_enemy') !== 'one_enemy') return;
+    }
+    cmd.targets = cmd.targets.map(t => {
+      if (t.alive) return t;
+      const alt = this.aliveEnemies()[0];
+      if (!alt) return t;
+      events.push({ type: 'msg', text: `${t.displayName} 已倒下，${actor.displayName} 将目标转向 ${alt.displayName}！` });
+      return alt;
+    });
   }
 
   _checkEnd(events) {
