@@ -2,6 +2,7 @@
 // 检查：行宽一致 / 图例齐全 / NPC·传送门·事件落在可行走格 / 传送门目标存在 / 引用的 id 存在
 //       / 连通性：NPC 格视为障碍时，各地图的关键点仍全部可达（NPC 会阻挡行走，防堵死通路）
 import path from 'node:path';
+import { readFileSync } from 'node:fs';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 
 const root = path.dirname(path.dirname(fileURLToPath(import.meta.url)));
@@ -15,6 +16,9 @@ const [maps, quests, dialogs, items, skills, monsters, realms, characters, audio
     core('Audio.js'), data('balance.js'),
   ]).then(arrs => arrs.map(m => m.default !== undefined ? m.default : m));
 const { SONG_NAMES } = audioMod;
+// 头像白名单动态扫描美术模块源码，新增 face_* 后无需再改本文件
+const FACE_NAMES = [...readFileSync(path.join(root, 'js', 'core', 'PlaceholderArt.js'), 'utf8')
+  .matchAll(/^\s{2}(face_[A-Za-z0-9_]+)\s*:/gm)].map(m => m[1]);
 
 const errors = [];
 const warnings = [];
@@ -85,7 +89,7 @@ for (const [sid, script] of Object.entries(dialogs)) {
     for (const b of node.branch || []) if (!script.nodes[b.next] && b.next !== null) err(`${sid}.${nid}: branch next 不存在 ${b.next}`);
     if (node.next && !script.nodes[node.next]) err(`${sid}.${nid}: next 不存在 ${node.next}`);
     for (const c of node.choices || []) if (c.next && !script.nodes[c.next]) err(`${sid}.${nid}: choice next 不存在 ${c.next}`);
-    if (node.portrait && !['face_hero','face_liu','face_luo','face_shen','face_zhangmen','face_shangren','face_dizi','face_boss','face_hunter','face_huolang','face_heifeng','face_yaonong','face_xuesha','face_cunzhang','face_laoban','face_xuanming'].includes(node.portrait))
+    if (node.portrait && !FACE_NAMES.includes(node.portrait))
       warnings.push(`${sid}.${nid}: 头像未注册 ${node.portrait}`);
   }
 }
@@ -141,7 +145,11 @@ for (const s of Object.values(skills)) {
   };
   addEntry(balance.start.mapId, balance.start.pos.x, balance.start.pos.y);
   addEntry(balance.respawn.mapId, balance.respawn.x, balance.respawn.y);
-  for (const m of Object.values(maps)) for (const p of m.portals || []) addEntry(p.to, p.toX, p.toY);
+  // 入口来源包含 portals 与 doors（室内建筑的进出走 doors 字段）
+  for (const m of Object.values(maps)) {
+    for (const p of m.portals || []) addEntry(p.to, p.toX, p.toY);
+    for (const d of m.doors || []) addEntry(d.to, d.toX, d.toY);
+  }
 
   for (const [id, map] of Object.entries(maps)) {
     const { tiles, legend, width, height } = map;
