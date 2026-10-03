@@ -267,17 +267,18 @@ export default class BattleUI {
     if (!u) { this._resolveAll(); return; }
     this.phase = 'command';
     const items = [];
-    const mk = (label, fn, disabled = false) => {
+    const mk = (label, fn, disabled = false, desc = '') => {
       const b = document.createElement('button');
       b.className = 'btn' + (disabled ? ' disabled' : '');
       b.textContent = label;
-      return { el: b, onSelect: fn, disabled };
+      return { el: b, onSelect: fn, disabled, desc };
     };
     items.push(mk('攻击', () => this._pickTarget('enemy', t => this._commit({ kind: 'attack', targets: [t] }))));
     items.push(mk('技能', () => this._showSkillMenu(u)));
     items.push(mk('道具', () => this._showItemMenu(u)));
     items.push(mk('防御', () => this._commit({ kind: 'defend' })));
     if (this.engine.canFlee) items.push(mk('逃跑', () => this._commit({ kind: 'flee' })));
+    items.push(mk('自动', () => this._autoAll(), false, '全员本回合自动普攻敌人，立即结算'));
     this._showMenu(`${u.displayName} · 行动指令`, items, { vertical: true });
   }
 
@@ -360,6 +361,16 @@ export default class BattleUI {
     const next = this.engine.popCommander();
     if (next) this.showCommandRoot();
     else this._resolveAll();
+  }
+
+  // 自动指令：当前角色及所有尚未下达指令的角色本回合全部普攻，随即结算
+  _autoAll() {
+    const eng = this.engine;
+    for (let u = eng.currentCommander(); u; u = eng.popCommander()) {
+      const t = eng.autoTarget();
+      if (t) eng.setCommand(u, { kind: 'attack', targets: [t] });
+    }
+    this._resolveAll();
   }
 
   _resolveAll() {

@@ -33,6 +33,9 @@ export default class BattleEngine {
   aliveEnemies() { return this.enemyUnits.filter(u => u.alive); }
   aliveParty() { return this.partyUnits.filter(u => u.alive); }
 
+  // 自动指令的默认目标：首位存活敌人（集火；结算时若已阵亡会自动转向其他敌人）
+  autoTarget() { return this.aliveEnemies()[0] || null; }
+
   // ===== 指令阶段 =====
   beginTurn() {
     this.phase = 'command';
