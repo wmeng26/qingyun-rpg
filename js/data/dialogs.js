@@ -2,7 +2,7 @@
 // node: { speaker, portrait, text, next | branch | choices, actions(进入节点时执行) }
 // choice: { text, next(null=结束), cond?, actions? }
 // cond: {quest:{id,state}} | {flag} | {flagAbsent} | {realm:'zhuji'} | {item:{id,count}} | {ally:'liu'} | {all:[...]} | {any:[...]}
-// actions: startQuest/completeQuest/giveItem/giveGold/setFlag/joinAlly/startBattle/openShop/healFull
+// actions: startQuest/completeQuest/giveItem/giveGold/setFlag/joinAlly/startBattle/openShop(id=shops.js)/healFull
 export default {
   dlg_prologue: {
     entry: 'n1',
@@ -484,7 +484,7 @@ export default {
         speaker: '杂货商·钱掌柜', portrait: 'face_shangren',
         text: '客官要些什么？丹药器械，咱这儿虽小，样样齐全。',
         choices: [
-          { text: '看看货物。', next: null, actions: [{ do: 'openShop' }] },
+          { text: '看看货物。', next: null, actions: [{ do: 'openShop', id: 'shop_qingyun' }] },
           { text: '只是路过。', next: null },
         ],
       },
@@ -500,7 +500,7 @@ export default {
         speaker: '杂货商·钱掌柜', portrait: 'face_shangren',
         text: '狼牙凑齐了吗？打狼的时候留神别被咬了。',
         choices: [
-          { text: '看看货物。', next: null, actions: [{ do: 'openShop' }] },
+          { text: '看看货物。', next: null, actions: [{ do: 'openShop', id: 'shop_qingyun' }] },
           { text: '这就去。', next: null },
         ],
       },
@@ -514,7 +514,7 @@ export default {
         speaker: '杂货商·钱掌柜', portrait: 'face_shangren',
         text: '以后要买丹药器械，随时来找我。',
         choices: [
-          { text: '看看货物。', next: null, actions: [{ do: 'openShop' }] },
+          { text: '看看货物。', next: null, actions: [{ do: 'openShop', id: 'shop_qingyun' }] },
           { text: '告辞。', next: null },
         ],
       },
@@ -989,7 +989,7 @@ export default {
         speaker: '渡口村正·赵老爹', portrait: 'face_cunzhang',
         text: '客人身上的煞气……你是除了血煞教主的恩人！\n不瞒您说：渡口被雪魈围了半个月，商路断了，柴米都进不来。北面——北面还有更邪性的东西。',
         choices: [
-          { text: '老爹放心，交给我。', next: 'offer9b', actions: [{ do: 'startQuest', id: 'quest_main_9' }] },
+          { text: '老爹放心，交给我。', next: 'offer9b', actions: [{ do: 'startQuest', id: 'quest_main_9' }, { do: 'setFlag', flag: 'bingyuan_open' }] },
           { text: '容我先准备一下。', next: null },
         ],
       },
@@ -1001,6 +1001,8 @@ export default {
       progress9: {
         speaker: '渡口村正·赵老爹', portrait: 'face_cunzhang',
         text: '雪魈不退，渡口不宁。冰原的深雪里，多加当心。',
+        // 兼容旧存档：任务已接但旗标未设（修复前的卡死存档），再访村正补开北门
+        actions: [{ do: 'setFlag', flag: 'bingyuan_open' }],
         next: null,
       },
       turnin9: {
@@ -1088,7 +1090,7 @@ export default {
         speaker: '渡口商人·孙掌柜', portrait: 'face_laoban',
         text: '客官要点什么？北地的规矩：丹药管够，价钱公道！',
         choices: [
-          { text: '看看货物。', next: null, actions: [{ do: 'openShop' }] },
+          { text: '看看货物。', next: null, actions: [{ do: 'openShop', id: 'shop_hanshidu' }] },
           { text: '只是看看。', next: null },
         ],
       },
@@ -1115,7 +1117,7 @@ export default {
         speaker: '渡口商人·孙掌柜', portrait: 'face_laoban',
         text: '要买丹药器械，随时来孙某这儿。',
         choices: [
-          { text: '看看货物。', next: null, actions: [{ do: 'openShop' }] },
+          { text: '看看货物。', next: null, actions: [{ do: 'openShop', id: 'shop_hanshidu' }] },
           { text: '告辞。', next: null },
         ],
       },
@@ -1610,7 +1612,7 @@ export default {
         speaker: '铺伙计', portrait: 'face_shangren',
         text: '客官想看点什么？掌柜的进货去了，小的也能做主！',
         choices: [
-          { text: '看看货物。', next: null, actions: [{ do: 'openShop' }] },
+          { text: '看看货物。', next: null, actions: [{ do: 'openShop', id: 'shop_zahuopu' }] },
           { text: '随便逛逛。', next: null },
         ],
       },

@@ -293,7 +293,7 @@ export default class DialogEngine {
           this.game.party.forEach(c => c.fullHeal());
           this.game.ui.toast('众人伤势尽复');
           break;
-        case 'openShop': this.deferred.push(() => this.game.ui.openShop()); break;
+        case 'openShop': this.deferred.push(() => this.game.ui.openShop(a.id)); break;
         case 'startBattle': {
           const def = BATTLES[a.id];
           if (def) this.deferred.push(() => this.game.startBattle(def));

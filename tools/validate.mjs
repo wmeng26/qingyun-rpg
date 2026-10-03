@@ -1,6 +1,6 @@
 // 数据一致性校验（开发工具，node 运行：node tools/validate.mjs）
 // 检查：行宽一致 / 图例齐全 / NPC·传送门·事件落在可行走格 / 传送门目标存在 / 引用的 id 存在
-//       / 连通性：NPC 格视为障碍时，各地图的关键点仍全部可达（NPC 会阻挡行走，防堵死通路）
+//       / 连通性：NPC 格与明雷格视为障碍时，各地图的关键点仍全部可达（NPC 阻挡行走、明雷未讨伐时阻挡）
 import path from 'node:path';
 import { readFileSync } from 'node:fs';
 import { fileURLToPath, pathToFileURL } from 'node:url';
@@ -9,11 +9,11 @@ const root = path.dirname(path.dirname(fileURLToPath(import.meta.url)));
 const data = (f) => import(pathToFileURL(path.join(root, 'js', 'data', f)).href);
 const core = (f) => import(pathToFileURL(path.join(root, 'js', 'core', f)).href);
 
-const [maps, quests, dialogs, items, skills, monsters, realms, characters, audioMod, balance] =
+const [maps, quests, dialogs, items, skills, monsters, realms, characters, audioMod, balance, shops] =
   await Promise.all([
     data('maps.js'), data('quests.js'), data('dialogs.js'), data('items.js'),
     data('skills.js'), data('monsters.js'), data('realms.js'), data('characters.js'),
-    core('Audio.js'), data('balance.js'),
+    core('Audio.js'), data('balance.js'), data('shops.js'),
   ]).then(arrs => arrs.map(m => m.default !== undefined ? m.default : m));
 const { SONG_NAMES } = audioMod;
 // 头像白名单动态扫描美术模块源码，新增 face_* 后无需再改本文件
@@ -57,6 +57,7 @@ for (const map of Object.values(maps)) {
       for (const it of e.items || []) if (!items[it.id]) err(`${id}: 宝箱物品不存在 ${it.id}`);
     }
     if (e.type === 'battle') {
+      if (!e.battle) { err(`${id}: 战斗事件 (${e.x},${e.y}) 缺少 battle 配置`); continue; }
       for (const m of e.battle.mobs) if (!monsters[m]) err(`${id}: 战斗怪物不存在 ${m}`);
       if (e.battle.introDialog && !dialogs[e.battle.introDialog]) err(`${id}: 战斗前置对话不存在 ${e.battle.introDialog}`);
     }
@@ -88,10 +89,47 @@ for (const [sid, script] of Object.entries(dialogs)) {
   for (const [nid, node] of Object.entries(script.nodes)) {
     for (const b of node.branch || []) if (!script.nodes[b.next] && b.next !== null) err(`${sid}.${nid}: branch next 不存在 ${b.next}`);
     if (node.next && !script.nodes[node.next]) err(`${sid}.${nid}: next 不存在 ${node.next}`);
-    for (const c of node.choices || []) if (c.next && !script.nodes[c.next]) err(`${sid}.${nid}: choice next 不存在 ${c.next}`);
+    for (const c of node.choices || []) {
+      if (c.next && !script.nodes[c.next]) err(`${sid}.${nid}: choice next 不存在 ${c.next}`);
+      for (const a of c.actions || []) {
+        if (a.do === 'openShop' && a.id && !shops[a.id]) err(`${sid}.${nid}: openShop 商店不存在 ${a.id}`);
+      }
+    }
     if (node.portrait && !FACE_NAMES.includes(node.portrait))
       warnings.push(`${sid}.${nid}: 头像未注册 ${node.portrait}`);
   }
+}
+
+// 商店表：货品存在、商店被对话引用（缺省回退到 shop_qingyun）
+for (const [sid, shop] of Object.entries(shops)) {
+  for (const it of shop.goods) if (!items[it]) err(`商店 ${sid}: 货品不存在 ${it}`);
+  else if (items[it].price <= 0) err(`商店 ${sid}: 货品无售价 ${it}`);
+}
+const referencedShops = new Set(Object.values(dialogs)
+  .flatMap(s => Object.values(s.nodes)).flatMap(n => (n.choices || []).flatMap(c => c.actions || []))
+  .filter(a => a.do === 'openShop').map(a => a.id || 'shop_qingyun'));
+for (const sid of Object.keys(shops)) {
+  if (!referencedShops.has(sid)) warnings.push(`商店 ${sid}: 没有任何对话引用（不可达）`);
+}
+
+// 武器门类：weapon 必须带合法 wtype；角色 wtype 合法；每名角色至少可获得一把本门类武器
+const WEAPON_TYPE_KEYS = ['sword', 'blade', 'qin', 'brush'];
+for (const it of Object.values(items)) {
+  if (it.type === 'equipment' && it.slot === 'weapon' && !WEAPON_TYPE_KEYS.includes(it.wtype))
+    err(`武器 ${it.id}: wtype 非法 ${it.wtype}`);
+}
+for (const c of Object.values(characters)) {
+  if (!WEAPON_TYPE_KEYS.includes(c.wtype)) err(`角色 ${c.id}: wtype 非法 ${c.wtype}`);
+}
+const obtainableWtypes = new Set();
+for (const shop of Object.values(shops)) {
+  for (const id of shop.goods) if (items[id] && items[id].slot === 'weapon') obtainableWtypes.add(items[id].wtype);
+}
+for (const q of Object.values(quests)) {
+  for (const it of q.rewards.items || []) if (items[it.id] && items[it.id].slot === 'weapon') obtainableWtypes.add(items[it.id].wtype);
+}
+for (const c of Object.values(characters)) {
+  if (!obtainableWtypes.has(c.wtype)) err(`角色 ${c.id}（${c.wtype}系）: 商店与任务奖励中没有任何本门类武器`);
 }
 
 // 技能引用
@@ -136,8 +174,9 @@ for (const s of Object.values(skills)) {
   if (!SFX_NAMES.length) err('音效表为空');
 }
 
-// 连通性：NPC 格视为障碍（游戏中 NPC 阻挡行走），从各入口（出生点/复活点/传送门落点）
-// BFS，验证所有传送门、事件格可达，且每个 NPC 至少一侧邻格可达（保证能对话）
+// 连通性：NPC 格与明雷格（可视敌人，未讨伐时为障碍）均视为障碍，从各入口
+// （出生点/复活点/传送门落点）BFS，验证所有传送门、事件格可达，且每个 NPC / 明雷
+// 至少一侧邻格可达（保证能对话 / 能走近交战）
 {
   const entries = {};
   const addEntry = (mapId, x, y) => {
@@ -156,11 +195,12 @@ for (const s of Object.values(skills)) {
     const walkable = (x, y) => x >= 0 && y >= 0 && y < tiles.length && x < (tiles[y]?.length || 0)
       && legend[tiles[y][x]] && !legend[tiles[y][x]].solid;
     const npcSet = new Set((map.npcs || []).map(n => `${n.x},${n.y}`));
-    const blocked = (x, y) => !walkable(x, y) || npcSet.has(`${x},${y}`);
+    const mobSet = new Set((map.events || []).filter(e => e.type === 'battle' && e.sprite).map(e => `${e.x},${e.y}`));
+    const blocked = (x, y) => !walkable(x, y) || npcSet.has(`${x},${y}`) || mobSet.has(`${x},${y}`);
     const seen = new Set();
     const q = [];
     for (const [x, y] of entries[id] || []) {
-      if (walkable(x, y) && !npcSet.has(`${x},${y}`) && !seen.has(`${x},${y}`)) { seen.add(`${x},${y}`); q.push([x, y]); }
+      if (walkable(x, y) && !blocked(x, y) && !seen.has(`${x},${y}`)) { seen.add(`${x},${y}`); q.push([x, y]); }
     }
     while (q.length) {
       const [x, y] = q.pop();
@@ -171,8 +211,16 @@ for (const s of Object.values(skills)) {
       }
     }
     const reach = (x, y) => seen.has(`${x},${y}`);
-    for (const p of map.portals || []) if (!reach(p.x, p.y)) err(`${id}: 传送门 (${p.x},${p.y}) 被 NPC 隔断不可达`);
-    for (const e of map.events || []) if (!reach(e.x, e.y)) err(`${id}: 事件 ${e.type} (${e.x},${e.y}) 被 NPC 隔断不可达`);
+    for (const p of map.portals || []) if (!reach(p.x, p.y)) err(`${id}: 传送门 (${p.x},${p.y}) 被 NPC/明雷 隔断不可达`);
+    for (const e of map.events || []) {
+      // 明雷本身即障碍格：改为验证四邻至少一格可达（能走近交战）
+      if (e.type === 'battle' && e.sprite) {
+        const touchable = [[1, 0], [-1, 0], [0, 1], [0, -1]].some(([dx, dy]) => walkable(e.x + dx, e.y + dy) && reach(e.x + dx, e.y + dy));
+        if (!touchable) err(`${id}: 明雷 (${e.x},${e.y}) 四邻均不可达，无法交战`);
+        continue;
+      }
+      if (!reach(e.x, e.y)) err(`${id}: 事件 ${e.type} (${e.x},${e.y}) 被 NPC/明雷 隔断不可达`);
+    }
     for (const n of map.npcs || []) {
       const touchable = [[1, 0], [-1, 0], [0, 1], [0, -1]].some(([dx, dy]) => walkable(n.x + dx, n.y + dy) && reach(n.x + dx, n.y + dy));
       if (!touchable) err(`${id}: NPC ${n.id} (${n.x},${n.y}) 四邻均不可达，无法对话`);

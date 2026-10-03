@@ -1,9 +1,11 @@
 // 可入队角色定义（growth 为纯成长函数，n = 等级）
+// wtype = 武器门类（sword 剑/blade 刀/qin 琴/brush 笔），与 items.js 武器的 wtype 对应
 export default {
   hero: {
     id: 'hero',
     name: '萧逸',
     title: '青云门外弟子',
+    wtype: 'sword',
     sprite: 'char_hero',
     battleSprite: 'bchar_hero',
     portrait: 'face_hero',
@@ -24,6 +26,7 @@ export default {
     id: 'luo',
     name: '洛清霜',
     title: '寒江刀客',
+    wtype: 'blade',
     sprite: 'char_luo',
     battleSprite: 'bchar_luo',
     portrait: 'face_luo',
@@ -44,6 +47,7 @@ export default {
     id: 'shen',
     name: '沈孤鸿',
     title: '游方琴师',
+    wtype: 'qin',
     sprite: 'char_shen',
     battleSprite: 'bchar_shen',
     portrait: 'face_shen',
@@ -64,6 +68,7 @@ export default {
     id: 'liu',
     name: '柳如烟',
     title: '青云门医修师姐',
+    wtype: 'brush',
     sprite: 'char_liu',
     battleSprite: 'bchar_liu',
     portrait: 'face_liu',

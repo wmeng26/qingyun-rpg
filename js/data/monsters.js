@@ -74,6 +74,15 @@ export default {
     drops: [{ id: 'hou_niang', chance: 0.5 }, { id: 'pill_huixue', chance: 0.12 }],
     desc: '落霞林里成了精的猕猴，手快得很，专抢游人的酒囊。',
   },
+  mob_hou_wang: {
+    id: 'mob_hou_wang', name: '通臂猴王', level: 8, element: 'none',
+    sprite: 'mob_hou', scale: 1.2,
+    stats: { maxHp: 300, maxMp: 0, atk: 29, def: 11, matk: 0,  mdef: 9,  spd: 20 },
+    exp: 420, gold: 200,
+    skills: ['e_siyao', 'e_kanpai'], ai: 'aggressive',
+    drops: [{ id: 'hou_niang', chance: 1 }, { id: 'pill_huixue', chance: 0.35 }],
+    desc: '抱走采药妪酒坛的老猴王，通臂雪白，守着它的酒缸谁也不给。',
+  },
   mob_zhufeng: {
     id: 'mob_zhufeng', name: '竹蜂', level: 6, element: 'poison',
     sprite: 'mob_zhufeng', scale: 1,
@@ -277,6 +286,15 @@ export default {
     skills: ['e_xuezhua', 'e_bingji'], ai: 'animal',
     drops: [{ id: 'bing_lian', chance: 0.4 }, { id: 'pill_jiuzhuan', chance: 0.25 }],
     desc: '冰原雪魅，爪带寒毒，成群出没。',
+  },
+  mob_xuejiao_wang: {
+    id: 'mob_xuejiao_wang', name: '雪魈王', level: 39, element: 'ice',
+    sprite: 'mob_xuejiao', scale: 1.3,
+    stats: { maxHp: 4800, maxMp: 0, atk: 345, def: 135, matk: 0,  mdef: 105, spd: 22 },
+    exp: 3200, gold: 1300,
+    skills: ['e_xuezhua', 'e_bingji'], ai: 'aggressive',
+    drops: [{ id: 'bing_lian', chance: 1 }, { id: 'pill_jiuzhuan', chance: 0.5 }],
+    desc: '围渡雪魈的首领，双角如铁，啸声可裂冰河。',
   },
   mob_bingkui: {
     id: 'mob_bingkui', name: '冰魁', level: 40, element: 'ice',

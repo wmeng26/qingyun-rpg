@@ -4,6 +4,7 @@ import SKILLS from '../data/skills.js';
 import MONSTERS from '../data/monsters.js';
 import MAPS from '../data/maps.js';
 import Cultivation from '../systems/Cultivation.js';
+import { weaponTypeName, weaponTypeUsers } from '../systems/Equipment.js';
 import { PanelNav } from '../core/UIPanel.js';
 import { sfx } from '../core/Audio.js';
 import TitleScene from './TitleScene.js';
@@ -205,13 +206,16 @@ export default class MainMenu {
 
   _openEquipSub(char, slot) {
     const g = this.game;
-    const candidates = g.inventory.entries().filter(e => e.def.type === 'equipment' && e.def.slot === slot);
+    // 武器按门类绑定角色：只列出该角色能用的装备
+    const candidates = g.inventory.entries().filter(e =>
+      e.def.type === 'equipment' && e.def.slot === slot && g.equipment.canEquip(char, e.def).ok);
     const current = char.equipment[slot];
     const wrap = document.createElement('div');
     wrap.style.cssText = 'position:absolute;inset:0;background:rgba(8,6,4,0.96);padding:10px 14px;overflow-y:auto;';
     const title = document.createElement('div');
     title.className = 'sec-title';
-    title.textContent = `更换${SLOT_NAMES[slot]}（${char.name}）`;
+    const wtTag = slot === 'weapon' ? ` · ${weaponTypeName(char.def.wtype)}系` : '';
+    title.textContent = `更换${SLOT_NAMES[slot]}（${char.name}${wtTag}）`;
     wrap.appendChild(title);
     const nav = new PanelNav({ onCancel: () => this._closeSub() });
     const addBtn = (label, fn) => {
@@ -254,6 +258,11 @@ export default class MainMenu {
     return Object.entries(def.bonus).map(([k, v]) => `${names[k] || k}+${v}`).join(' ');
   }
 
+  // 武器门类的适用角色名（未入队的也算，提示「这把刀归洛清霜」）
+  _wtypeUserNames(wtype) {
+    return weaponTypeUsers(wtype);
+  }
+
   _closeSub() {
     if (this.subEl) { this.subEl.remove(); this.subEl = null; }
     this.subNav = null;
@@ -281,16 +290,24 @@ export default class MainMenu {
         row.appendChild(img);
       }
       const bonus = e.def.type === 'equipment' ? this._bonusText(e.def) : '';
+      // 武器显示门类与适用者，一眼看清归谁用
+      const wtTag = e.def.slot === 'weapon'
+        ? ` <span class="i-bonus">（${weaponTypeName(e.def.wtype)} · ${this._wtypeUserNames(e.def.wtype)}）</span>`
+        : '';
       row.insertAdjacentHTML('beforeend', `
         <span class="i-name">${e.def.name}</span>
         <span class="i-count">×${e.count}</span>
-        <span class="i-desc">${e.def.desc || ''}${bonus ? ` <span class="i-bonus">（${bonus}）</span>` : ''}</span>`);
+        <span class="i-desc">${e.def.desc || ''}${bonus ? ` <span class="i-bonus">（${bonus}）</span>` : ''}${wtTag}</span>`);
       if (e.def.type === 'consumable') {
         const b = this._btn('使用', () => this._openUseSub(e));
         row.appendChild(b);
       } else if (e.def.type === 'equipment') {
-        const b = this._btn('装备', () => this._openEquipMemberSub(e));
-        row.appendChild(b);
+        // 武器无人能用（门类角色未入队）时不出「装备」按钮，避免空列表
+        const usable = e.def.slot !== 'weapon' || g.party.some(c => g.equipment.canEquip(c, e.def).ok);
+        if (usable) {
+          const b = this._btn('装备', () => this._openEquipMemberSub(e));
+          row.appendChild(b);
+        }
       }
       grid.appendChild(row);
     }
@@ -324,9 +341,11 @@ export default class MainMenu {
 
   _openEquipMemberSub(entry) {
     const g = this.game;
+    // 只列出能装备该武器的成员（门类不符的成员不出现）
+    const members = g.party.filter(c => g.equipment.canEquip(c, entry.def).ok);
     const wrap = this._subWrap(`装备 ${entry.def.name}（选择对象）`);
     const nav = new PanelNav({ onCancel: () => this._closeSub() });
-    for (const c of g.party) {
+    for (const c of members) {
       const b = document.createElement('button');
       b.className = 'btn';
       b.style.cssText = 'display:flex;justify-content:space-between;width:100%;margin-bottom:4px;';

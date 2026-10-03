@@ -1,5 +1,7 @@
 // 道具表：consumable 消耗品 / equipment 装备 / material 材料 / quest 任务品
-// price = 商店售价（0 = 商店不出售）；材料可按半价出售给商人
+// price = 商店售价（0 = 商店不出售且不可变卖）；向商人出售一律按半价回收，任务品除外
+// 武器门类 wtype（sword 剑/blade 刀/qin 琴/brush 笔）与角色绑定，见 characters.js
+export const WEAPON_TYPES = { sword: '剑', blade: '刀', qin: '琴', brush: '笔' };
 export default {
   // ---- 丹药 ----
   pill_huixue: {
@@ -104,13 +106,13 @@ export default {
     desc: '赤焰蝠翼上的火羽，是铸剑师梦寐以求的淬火之材。',
   },
 
-  // ---- 装备：武器 ----
+  // ---- 装备：武器（wtype 门类与角色绑定：sword 剑=萧逸 / blade 刀=洛清霜 / qin 琴=沈孤鸿 / brush 笔=柳如烟） ----
   sword_iron: {
-    id: 'sword_iron', name: '铁剑', type: 'equipment', slot: 'weapon', price: 120, icon: 'icon_sword',
+    id: 'sword_iron', name: '铁剑', type: 'equipment', slot: 'weapon', wtype: 'sword', price: 120, icon: 'icon_sword',
     desc: '最普通的制式铁剑。', bonus: { atk: 4 },
   },
   sword_qingfeng: {
-    id: 'sword_qingfeng', name: '青锋剑', type: 'equipment', slot: 'weapon', price: 420, icon: 'icon_sword2',
+    id: 'sword_qingfeng', name: '青锋剑', type: 'equipment', slot: 'weapon', wtype: 'sword', price: 420, icon: 'icon_sword2',
     desc: '剑身泛着青光，吹毛断发。', bonus: { atk: 10, spd: 1 },
   },
   // ---- 装备：防具 ----
@@ -135,7 +137,7 @@ export default {
     desc: '甲片如龙鳞层叠，水火难侵。', bonus: { def: 28, mdef: 10, maxHp: 60 },
   },
   sword_zhanxing: {
-    id: 'sword_zhanxing', name: '斩星剑', type: 'equipment', slot: 'weapon', price: 8000, icon: 'icon_sword5',
+    id: 'sword_zhanxing', name: '斩星剑', type: 'equipment', slot: 'weapon', wtype: 'sword', price: 8000, icon: 'icon_sword5',
     desc: '剑气可断星辰，寒渊之地方见其锋。', bonus: { atk: 36, spd: 4 },
   },
   armor_xuanming: {
@@ -143,7 +145,7 @@ export default {
     desc: '以渊魔之鳞缀成，寒暑不侵，魔煞不近。', bonus: { def: 38, mdef: 14, maxHp: 90 },
   },
   sword_tianwen: {
-    id: 'sword_tianwen', name: '天问剑', type: 'equipment', slot: 'weapon', price: 16000, icon: 'icon_sword5',
+    id: 'sword_tianwen', name: '天问剑', type: 'equipment', slot: 'weapon', wtype: 'sword', price: 16000, icon: 'icon_sword5',
     desc: '以赤渊残韵淬炼的长剑，剑鸣如问天。', bonus: { atk: 46, spd: 6 },
   },
   armor_chixia: {
@@ -151,20 +153,75 @@ export default {
     desc: '赤霞织就的法袍，煞气不侵。', bonus: { def: 42, mdef: 18, maxHp: 120 },
   },
   qin_jiaowei: {
-    id: 'qin_jiaowei', name: '焦尾琴', type: 'equipment', slot: 'weapon', price: 7000, icon: 'icon_qin',
+    id: 'qin_jiaowei', name: '焦尾琴', type: 'equipment', slot: 'weapon', wtype: 'qin', price: 7000, icon: 'icon_qin',
     desc: '沈孤鸿的故琴，琴音可裂金石。', bonus: { matk: 30, maxMp: 30 },
   },
   sword_hanshuang: {
-    id: 'sword_hanshuang', name: '寒霜剑', type: 'equipment', slot: 'weapon', price: 1500, icon: 'icon_sword3',
+    id: 'sword_hanshuang', name: '寒霜剑', type: 'equipment', slot: 'weapon', wtype: 'sword', price: 1500, icon: 'icon_sword3',
     desc: '剑锋凝霜，出鞘时寒气逼人。', bonus: { atk: 16, spd: 2 },
   },
   sword_zhanlu: {
-    id: 'sword_zhanlu', name: '湛卢剑', type: 'equipment', slot: 'weapon', price: 4000, icon: 'icon_sword4',
+    id: 'sword_zhanlu', name: '湛卢剑', type: 'equipment', slot: 'weapon', wtype: 'sword', price: 4000, icon: 'icon_sword4',
     desc: '古名匠所铸仁道之剑，剑气如虹。', bonus: { atk: 26, spd: 3 },
   },
   dao_nujiang: {
-    id: 'dao_nujiang', name: '怒江刀', type: 'equipment', slot: 'weapon', price: 3600, icon: 'icon_dao',
+    id: 'dao_nujiang', name: '怒江刀', type: 'equipment', slot: 'weapon', wtype: 'blade', price: 3600, icon: 'icon_dao',
     desc: '以玄晶重铸的洛家宝刀，刀出如江潮。', bonus: { atk: 23, spd: 3 },
+  },
+  // ---- 刀系（洛清霜） ----
+  dao_liuye: {
+    id: 'dao_liuye', name: '柳叶刀', type: 'equipment', slot: 'weapon', wtype: 'blade', price: 140, icon: 'icon_dao',
+    desc: '轻薄的制式短刀，刀身窄如柳叶。', bonus: { atk: 5 },
+  },
+  dao_pozhen: {
+    id: 'dao_pozhen', name: '破阵刀', type: 'equipment', slot: 'weapon', wtype: 'blade', price: 480, icon: 'icon_dao',
+    desc: '刃厚背沉，专劈坚甲硬壳。', bonus: { atk: 11 },
+  },
+  dao_duanjiang: {
+    id: 'dao_duanjiang', name: '断江刀', type: 'equipment', slot: 'weapon', wtype: 'blade', price: 1600, icon: 'icon_dao2',
+    desc: '刀势大开大合，一劈如断江流。', bonus: { atk: 17, spd: 1 },
+  },
+  dao_hanyue: {
+    id: 'dao_hanyue', name: '寒月刀', type: 'equipment', slot: 'weapon', wtype: 'blade', price: 4200, icon: 'icon_dao2',
+    desc: '刀光如月色泻地，冷意侵人。', bonus: { atk: 27, spd: 1 },
+  },
+  dao_tunxiao: {
+    id: 'dao_tunxiao', name: '吞霄刀', type: 'equipment', slot: 'weapon', wtype: 'blade', price: 8600, icon: 'icon_dao2',
+    desc: '刀身乌沉如渊，出鞘时隐有啸声，似欲吞天。', bonus: { atk: 38, spd: 2 },
+  },
+  // ---- 琴系（沈孤鸿） ----
+  qin_wutong: {
+    id: 'qin_wutong', name: '梧桐琴', type: 'equipment', slot: 'weapon', wtype: 'qin', price: 160, icon: 'icon_qin',
+    desc: '桐木斫成的素琴，音色清越。', bonus: { matk: 6, maxMp: 12 },
+  },
+  qin_liuquan: {
+    id: 'qin_liuquan', name: '流泉琴', type: 'equipment', slot: 'weapon', wtype: 'qin', price: 1800, icon: 'icon_qin',
+    desc: '琴音如泠泠流水，养神蓄灵。', bonus: { matk: 14, maxMp: 24 },
+  },
+  qin_hanquan: {
+    id: 'qin_hanquan', name: '寒泉琴', type: 'equipment', slot: 'weapon', wtype: 'qin', price: 4200, icon: 'icon_qin',
+    desc: '冰弦七根，弹拨间寒泉激荡。', bonus: { matk: 24, maxMp: 34 },
+  },
+  qin_tianlai: {
+    id: 'qin_tianlai', name: '天籁琴', type: 'equipment', slot: 'weapon', wtype: 'qin', price: 14000, icon: 'icon_qin',
+    desc: '传说中通灵之琴，一曲可引风云变色。', bonus: { matk: 42, maxMp: 50 },
+  },
+  // ---- 笔系（柳如烟） ----
+  bi_qingzhu: {
+    id: 'bi_qingzhu', name: '青竹笔', type: 'equipment', slot: 'weapon', wtype: 'brush', price: 150, icon: 'icon_brush',
+    desc: '以竹为杆的符笔，画符施药两相宜。', bonus: { matk: 5, maxMp: 12 },
+  },
+  bi_zhusha: {
+    id: 'bi_zhusha', name: '朱砂笔', type: 'equipment', slot: 'weapon', wtype: 'brush', price: 1800, icon: 'icon_brush',
+    desc: '笔锋浸过朱砂，落笔成箓，邪祟辟易。', bonus: { matk: 13, maxMp: 24, mdef: 2 },
+  },
+  bi_zixiao: {
+    id: 'bi_zixiao', name: '紫霄笔', type: 'equipment', slot: 'weapon', wtype: 'brush', price: 4800, icon: 'icon_brush',
+    desc: '笔杆以紫竹炼制，符光如霄电流转。', bonus: { matk: 24, maxMp: 34, mdef: 3 },
+  },
+  bi_chunqiu: {
+    id: 'bi_chunqiu', name: '春秋笔', type: 'equipment', slot: 'weapon', wtype: 'brush', price: 13000, icon: 'icon_brush',
+    desc: '一笔写尽春秋，一字可定生死。', bonus: { matk: 40, maxMp: 50, mdef: 4 },
   },
   // ---- 装备：饰品 ----
   amulet_pingan: {

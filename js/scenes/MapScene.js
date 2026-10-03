@@ -1,5 +1,6 @@
-// 地图场景：瓦片渲染 / 网格移动 / NPC 交互 / 传送门 / 推门进屋 / 宝箱 / 暗雷 / 队友跟随
+// 地图场景：瓦片渲染 / 网格移动 / NPC 交互 / 传送门 / 推门进屋 / 宝箱 / 暗雷 / 明雷 / 队友跟随
 import MAPS from '../data/maps.js';
+import MONSTERS from '../data/monsters.js';
 import TileMap from '../map/TileMap.js';
 import Player from '../map/Player.js';
 import NPC from '../map/NPC.js';
@@ -25,13 +26,16 @@ export default class MapScene {
     this.player.onArrive = (x, y) => this._onArrive(x, y);
     this.player.onBump = (x, y) => this._onBump(x, y);
     this.npcs = (this.def.npcs || []).map(d => new NPC(d));
+    // 明雷（可视敌人）：带 sprite 的 battle 事件，占格为障碍，触碰/面向确认/点按开战
+    this.visibleMobs = (this.def.events || []).filter(e => e.type === 'battle' && e.sprite);
     // 门（建筑互动）：朝门走（推门）/ 面向按确认 / 点按均可进入
     this.doors = this.def.doors || [];
     this.doorTarget = null;
+    this.mobTarget = null;
     this._loreShown = new Set();
     // 队友蛇形跟随（槽位 = 队伍序号 - 1）；碰撞体把 NPC 格也视为障碍
     this.followers = g.party.slice(1).map(c => new Follower(g, c));
-    this.moveBlocker = { isSolid: (x, y) => this.tileMap.isSolid(x, y) || !!this.npcAt(x, y) };
+    this.moveBlocker = { isSolid: (x, y) => this.tileMap.isSolid(x, y) || !!this.npcAt(x, y) || !!this.mobAt(x, y) };
     this.encounter = new Encounter(g, this.def);
     this.fade = 1;
     this.fadeDir = -1;   // 进入时从黑淡入
@@ -50,6 +54,14 @@ export default class MapScene {
   npcAt(x, y) { return this.npcs.find(n => n.x === x && n.y === y) || null; }
 
   doorAt(x, y) { return this.doors.find(d => d.x === x && d.y === y) || null; }
+
+  // 未被讨伐的明雷（带 flag 的一次性明雷战后消失；无 flag 的可反复挑战）
+  mobAt(x, y) {
+    const g = this.game;
+    return this.visibleMobs.find(m => m.x === x && m.y === y && !(m.flag && g.flags.has(m.flag))) || null;
+  }
+
+  mobName(ev) { return ev.name || (MONSTERS[ev.battle.mobs[0]] || {}).name || '妖物'; }
 
   // 队伍变动同步：入队发生在地图上的对话中，须按帧补齐跟随者（按 spriteKey 保留既有状态）
   _syncFollowers() {
@@ -98,15 +110,19 @@ export default class MapScene {
     for (let i = 0; i < this.followers.length; i++) this.followers[i].update(i, this.player);
     if (this._tapHintT > 0) this._tapHintT -= dt;
 
-    // 面向可交互目标（NPC / 门）：NPC 注视玩家 + 更新交互提示
+    // 面向可交互目标（NPC / 明雷 / 门）：NPC 注视玩家 + 更新交互提示
     this.talkTarget = null;
     this.doorTarget = null;
+    this.mobTarget = null;
     if (!blocked) {
       const [dx, dy] = DIR_VEC[this.player.dir];
       const fx = this.player.gx + dx, fy = this.player.gy + dy;
       const n = this.npcAt(fx, fy);
       if (n) { this.talkTarget = n; n.faceToward(this.player.gx, this.player.gy); }
-      else this.doorTarget = this.doorAt(fx, fy);
+      else {
+        this.mobTarget = this.mobAt(fx, fy);
+        if (!this.mobTarget) this.doorTarget = this.doorAt(fx, fy);
+      }
     }
     this._refreshHint();
 
@@ -118,6 +134,7 @@ export default class MapScene {
     }
     if (!blocked && input.wasPressed('confirm')) {
       if (this.talkTarget) this._talkTo(this.talkTarget);
+      else if (this.mobTarget) this._startMobBattle(this.mobTarget);
       else if (this.doorTarget) this._enterDoor(this.doorTarget);
     }
   }
@@ -126,8 +143,10 @@ export default class MapScene {
     const g = this.game;
     if (!g.ui.setHint) return;
     const n = this.talkTarget;
+    const m = this.mobTarget;
     const d = this.doorTarget;
     if (n) g.ui.setHint(g.input.touch ? `A 与${n.name}交谈` : `Z 与${n.name}交谈 · X 菜单`);
+    else if (m) g.ui.setHint(g.input.touch ? `A 与${this.mobName(m)}交战` : `Z 与${this.mobName(m)}交战 · X 菜单`);
     else if (d && d.label) g.ui.setHint(g.input.touch ? `A 进入${d.label}` : `Z 进入${d.label} · X 菜单`);
     else g.ui.setHint(g.input.touch ? 'A 交互 · B 菜单' : 'Z 交互 · X 菜单');
   }
@@ -139,8 +158,10 @@ export default class MapScene {
     this.game.dialog.start(n.dialog);
   }
 
-  // 推门：朝门方向走撞上时触发（Player.onBump 边沿回调）
+  // 撞击：朝明雷走（撞上开战）/ 朝门走（推门），均为 Player.onBump 边沿回调
   _onBump(x, y) {
+    const m = this.mobAt(x, y);
+    if (m) { this._startMobBattle(m); return; }
     const d = this.doorAt(x, y);
     if (d) this._enterDoor(d);
   }
@@ -164,7 +185,7 @@ export default class MapScene {
     this.pendingPortal = to;
   }
 
-  // 画布点按：直接点 NPC 交谈、点门进入（触屏免对准）；离得远则提示走近
+  // 画布点按：直接点 NPC 交谈、点门进入、点明雷交战（触屏免对准）；离得远则提示走近
   handleTap(lx, ly) {
     const g = this.game;
     if (g.inBattle || g.dialog.active || g.ui.hasModal() || this.pendingPortal || this.fadeDir > 0) return;
@@ -179,6 +200,19 @@ export default class MapScene {
       } else if (this._tapHintT <= 0) {
         this._tapHintT = 2.5;
         g.ui.toast(`走近「${n.name}」再交谈`);
+      }
+      return;
+    }
+    const m = this.mobAt(tx, ty);
+    if (m) {
+      const dist = Math.abs(m.x - this.player.gx) + Math.abs(m.y - this.player.gy);
+      if (dist === 1) {
+        this.player.dir = m.x > this.player.gx ? 'right' : m.x < this.player.gx ? 'left'
+          : m.y > this.player.gy ? 'down' : 'up';
+        this._startMobBattle(m);
+      } else if (this._tapHintT <= 0) {
+        this._tapHintT = 2.5;
+        g.ui.toast(`走近「${this.mobName(m)}」再交战`);
       }
       return;
     }
@@ -265,24 +299,39 @@ export default class MapScene {
       return false;
     }
     if (ev.type === 'battle') {
-      if (g.flags.has(ev.flag)) return false;
-      const b = ev.battle;
-      const start = () => g.startBattle({
-        mobs: b.mobs, boss: b.boss, canFlee: b.canFlee !== false, bg: this.def.bg,
-        winFlag: ev.flag,
-        onEnd: (o) => {
-          if (o === 'victory') {
-            g.ui.toast(b.victoryMsg || '妖气散去，洞窟恢复了平静……');
-            // 战后剧情（如顿悟突破）待 toast 播出、场景切回地图后再展开
-            if (b.afterDialog) setTimeout(() => g.dialog.start(b.afterDialog), 500);
-          }
-        },
-      });
-      if (b.introDialog) g.dialog.start(b.introDialog, { onDone: start });
-      else start();
+      if (ev.flag && g.flags.has(ev.flag)) return false;
+      this._beginEventBattle(ev);
       return true;
     }
     return false;
+  }
+
+  // 按事件配置开战（隐形首领战与明雷共用）
+  _beginEventBattle(ev) {
+    const g = this.game;
+    const b = ev.battle;
+    const start = () => g.startBattle({
+      mobs: b.mobs, boss: b.boss, canFlee: b.canFlee !== false, bg: this.def.bg,
+      winFlag: ev.flag,
+      onEnd: (o) => {
+        if (o === 'victory') {
+          g.ui.toast(b.victoryMsg || '妖气散去，洞窟恢复了平静……');
+          // 战后剧情（如顿悟突破）待 toast 播出、场景切回地图后再展开
+          if (b.afterDialog) setTimeout(() => g.dialog.start(b.afterDialog), 500);
+        }
+      },
+    });
+    if (b.introDialog) g.dialog.start(b.introDialog, { onDone: start });
+    else start();
+  }
+
+  // 明雷开战入口（撞上 / 面向确认 / 点按），带遇敌音效
+  _startMobBattle(ev) {
+    const g = this.game;
+    if (ev.flag && g.flags.has(ev.flag)) return;
+    if (g.inBattle || g.dialog.active || this.pendingPortal || this.fadeDir > 0) return;
+    sfx.play('encounter');
+    this._beginEventBattle(ev);
   }
 
   render(ctx) {
@@ -335,6 +384,29 @@ export default class MapScene {
       ctx.textAlign = 'left';
     }
 
+    // 明雷（可视敌人）：煞气底环 + 影子 + 战斗精灵浮动，朝向玩家一侧镜像
+    for (const m of this.visibleMobs) {
+      if (m.flag && g.flags.has(m.flag)) continue;
+      const img = g.assets.get(m.sprite);
+      if (!img) continue;
+      const x = m.x * 32 - camX, y = m.y * 32 - camY;
+      if (x < -40 || y < -40 || x > 480 || y > 270) continue;
+      const now = performance.now();
+      const pulse = 0.22 + 0.12 * Math.sin(now / 300 + m.x * 2);
+      ctx.fillStyle = `rgba(224,64,48,${Math.max(0, pulse).toFixed(3)})`;
+      ctx.beginPath();
+      ctx.ellipse(x + 16, y + 26, 13, 5, 0, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.fillStyle = 'rgba(0,0,0,0.3)';
+      ctx.fillRect(x + 6, y + 27, 20, 4);
+      const bob = Math.round(Math.sin(now / 260 + m.y) * 2);
+      const flip = this.player.gx < m.x;
+      ctx.save();
+      if (flip) { ctx.translate(x + 32, 0); ctx.scale(-1, 1); ctx.drawImage(img, 0, y - 3 + bob, 34, 34); }
+      else ctx.drawImage(img, x - 2, y - 3 + bob, 34, 34);
+      ctx.restore();
+    }
+
     for (const n of this.npcs) n.draw(ctx, camX, camY, g.assets);
     // 队友蛇形跟随（队首离玩家最近、最后绘制）
     for (let i = this.followers.length - 1; i >= 0; i--) {
@@ -358,6 +430,26 @@ export default class MapScene {
       ctx.font = 'bold 14px "Microsoft YaHei", sans-serif';
       ctx.strokeText('!', cx, top - 24 + bob);
       ctx.fillStyle = '#ffd24c';
+      ctx.fillText('!', cx, top - 24 + bob);
+      ctx.textAlign = 'left';
+    }
+
+    // 面向明雷时头顶名字 + 红色「!」（与 NPC 的金色提示区分）
+    if (this.mobTarget) {
+      const m = this.mobTarget;
+      const bob = Math.round(Math.sin(performance.now() / 170) * 2);
+      const cx = m.x * 32 + 16 - camX;
+      const top = m.y * 32 - camY;
+      ctx.font = 'bold 10px "Microsoft YaHei", sans-serif';
+      ctx.textAlign = 'center';
+      ctx.lineWidth = 3;
+      ctx.strokeStyle = 'rgba(0,0,0,0.85)';
+      ctx.strokeText(this.mobName(m), cx, top - 10);
+      ctx.fillStyle = '#ffb0a0';
+      ctx.fillText(this.mobName(m), cx, top - 10);
+      ctx.font = 'bold 14px "Microsoft YaHei", sans-serif';
+      ctx.strokeText('!', cx, top - 24 + bob);
+      ctx.fillStyle = '#ff6a50';
       ctx.fillText('!', cx, top - 24 + bob);
       ctx.textAlign = 'left';
     }

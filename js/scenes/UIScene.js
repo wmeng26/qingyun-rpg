@@ -1,18 +1,13 @@
 // UI 总管（非场景栈成员）：HUD / Toast / 菜单 / 商店 / 确认框 / 帮助 / 章节结算
 import ITEMS from '../data/items.js';
+import SHOPS from '../data/shops.js';
 import MainMenu from './MainMenu.js';
+import { weaponTypeName, weaponTypeUsers } from '../systems/Equipment.js';
 import { PanelNav } from '../core/UIPanel.js';
 import { sfx } from '../core/Audio.js';
 
-const SHOP_GOODS = [
-  'pill_huixue', 'pill_lingli', 'pill_jiedu',
-  'sword_iron', 'robe_cotton', 'armor_leather', 'amulet_pingan', 'jade_ling',
-  'sword_qingfeng', 'pill_zhuji', 'pill_jindan',
-  'pill_dahuan', 'sword_hanshuang', 'armor_silver', 'amulet_yulin',
-  'pill_jiuzhuan', 'sword_zhanlu', 'armor_longlin', 'amulet_huhun',
-  'pill_guyuan', 'pill_huashen', 'sword_zhanxing', 'armor_xuanming', 'yu_longhun', 'qin_jiaowei',
-  'pill_xuling', 'pill_tianyuan', 'sword_tianwen', 'armor_chixia', 'ling_xukong',
-];
+// 出售回收价：统一按商店价折半（任务品 price=0 不可卖）
+const SELL_RATE = 0.5;
 
 // 各章结算文案
 const CHAPTER_CN = ['一', '二', '三', '四', '五'];
@@ -133,69 +128,142 @@ export default class UIScene {
   }
 
   // ===== 商店 =====
-  openShop() {
+  // 购买/出售双页签。shopId 对应 js/data/shops.js；缺省打开青云门杂货摊（兼容旧调用）
+  openShop(shopId = 'shop_qingyun') {
     if (this.shopOpen) return;
+    const shop = SHOPS[shopId] || SHOPS.shop_qingyun;
     this.shopOpen = true;
     const g = this.game;
+    const touch = g.input.touch;
     const root = document.createElement('div');
     root.id = 'shop-root';
     root.innerHTML = `
       <div id="shop-panel" class="panel">
-        <div class="panel-title">杂货铺 · 丹药器械</div>
+        <div class="panel-title">${shop.name}</div>
+        <div class="shop-tabs">
+          <button class="btn shop-tab" data-tab="buy">购买</button>
+          <button class="btn shop-tab" data-tab="sell">出售</button>
+        </div>
         <div class="goods scroll" id="shop-goods"></div>
         <div class="shop-gold" id="shop-gold"></div>
-        <div style="text-align:center;padding:0 0 10px;"><button class="btn" id="shop-close">打烊（X）</button></div>
+        <div class="shop-foot">
+          <span class="shop-hint">${touch ? '点页签切换 · 点按钮买卖' : '←/→ 换页签 · Z 买卖 · X 打烊'}</span>
+          <button class="btn" id="shop-close">打烊</button>
+        </div>
       </div>`;
     this.root.appendChild(root);
     this.elShop = root;
     const nav = new PanelNav({ onCancel: () => this.closeShop() });
     const goods = root.querySelector('#shop-goods');
     const goldEl = root.querySelector('#shop-gold');
-    const rerender = () => {
+    const tabBtns = [...root.querySelectorAll('.shop-tab')];
+    this._shopTab = 'buy';
+
+    const bonusText = (def) => {
+      const wt = def.slot === 'weapon' ? ` <span class="i-bonus">（${weaponTypeName(def.wtype)} · ${weaponTypeUsers(def.wtype)}专用）</span>` : '';
+      if (!def.bonus) return wt;
+      const names = { maxHp: '气血', maxMp: '灵力', atk: '攻', def: '防', matk: '灵攻', mdef: '灵防', spd: '速' };
+      return `${wt} <span class="i-bonus">（${Object.entries(def.bonus).map(([k, v]) => `${names[k] || k}+${v}`).join(' ')}）</span>`;
+    };
+    const addIcon = (row, icon) => {
+      const cv = g.assets.get(icon);
+      if (!cv) return;
+      const img = document.createElement('canvas');
+      img.width = 24; img.height = 24;
+      img.style.cssText = 'width:24px;height:24px;image-rendering:pixelated;';
+      img.getContext('2d').drawImage(cv, 0, 0);
+      row.appendChild(img);
+    };
+    const sellPrice = (def) => Math.floor(def.price * SELL_RATE);
+
+    const renderList = () => {
       goldEl.textContent = `金钱 ${g.gold} 文`;
       goods.innerHTML = '';
-      nav.setItems([]);
-      for (const id of SHOP_GOODS) {
-        const def = ITEMS[id];
-        const row = document.createElement('div');
-        row.className = 'inv-row';
-        const icon = g.assets.get(def.icon);
-        if (icon) {
-          const img = document.createElement('canvas');
-          img.width = 24; img.height = 24;
-          img.style.cssText = 'width:24px;height:24px;image-rendering:pixelated;';
-          img.getContext('2d').drawImage(icon, 0, 0);
-          row.appendChild(img);
+      nav.items = [];
+      if (this._shopTab === 'buy') {
+        for (const id of shop.goods) {
+          const def = ITEMS[id];
+          const row = document.createElement('div');
+          row.className = 'inv-row';
+          addIcon(row, def.icon);
+          const owned = g.inventory.count(id);
+          row.insertAdjacentHTML('beforeend', `
+            <span class="i-name">${def.name}</span>
+            <span class="i-count">${def.price}文</span>
+            <span class="i-desc">${def.desc || ''}${bonusText(def)}${owned ? ` <span class="i-bonus">（持有×${owned}）</span>` : ''}</span>`);
+          const b = document.createElement('button');
+          b.className = 'btn' + (g.gold < def.price ? ' disabled' : '');
+          b.textContent = '购买';
+          row.appendChild(b);
+          goods.appendChild(row);
+          nav.items.push({
+            el: b, disabled: g.gold < def.price,
+            onSelect: () => {
+              if (g.gold < def.price) { g.ui.toast('钱不够……'); return; }
+              g.addGold(-def.price);
+              g.obtainItem(id, 1, true);
+              sfx.play('gold');
+              g.ui.toast(`买下了「${def.name}」`);
+              renderList();
+            },
+          });
         }
-        row.insertAdjacentHTML('beforeend', `
-          <span class="i-name">${def.name}</span>
-          <span class="i-count">${def.price}文</span>
-          <span class="i-desc">${def.desc || ''}</span>`);
-        const b = document.createElement('button');
-        b.className = 'btn' + (g.gold < def.price ? ' disabled' : '');
-        b.textContent = '购买';
-        row.appendChild(b);
-        goods.appendChild(row);
-        nav.items.push({
-          el: b, disabled: g.gold < def.price,
-          onSelect: () => {
-            if (g.gold < def.price) return;
-            g.addGold(-def.price);
-            g.obtainItem(id, 1);
-            sfx.play('gold');
-            g.ui.toast(`买下了「${def.name}」`);
-            rerender();
-          },
-        });
+      } else {
+        const entries = g.inventory.entries().filter(e => e.def.price > 0 && e.def.type !== 'quest');
+        if (!entries.length) goods.innerHTML = '<div class="inv-empty">行囊里没有能出手的物件。</div>';
+        for (const e of entries) {
+          const row = document.createElement('div');
+          row.className = 'inv-row';
+          addIcon(row, e.def.icon);
+          row.insertAdjacentHTML('beforeend', `
+            <span class="i-name">${e.def.name}</span>
+            <span class="i-count">×${e.count}</span>
+            <span class="i-desc">${sellPrice(e.def)}文/件${bonusText(e.def)}</span>`);
+          const b = document.createElement('button');
+          b.className = 'btn';
+          b.textContent = '卖出';
+          row.appendChild(b);
+          goods.appendChild(row);
+          nav.items.push({
+            el: b,
+            onSelect: () => {
+              if (!g.inventory.remove(e.id, 1)) return;
+              const got = sellPrice(e.def);
+              g.addGold(got);
+              sfx.play('gold');
+              g.ui.toast(`卖出「${e.def.name}」，得 ${got} 文`);
+              renderList();
+            },
+          });
+        }
       }
+      nav.idx = Math.min(nav.idx, Math.max(0, nav.items.length - 1));
       nav.attachHover();
       nav.refresh();
     };
-    rerender();
+
+    const setTab = (tab, silent = false) => {
+      if (this._shopTab === tab && !silent) return;
+      this._shopTab = tab;
+      if (!silent) sfx.play('cursor');
+      tabBtns.forEach(b => b.classList.toggle('focus', b.dataset.tab === tab));
+      renderList();
+    };
+    tabBtns.forEach(b => b.addEventListener('click', () => setTab(b.dataset.tab)));
     root.querySelector('#shop-close').addEventListener('click', () => this.closeShop());
+
     this.shopNav = nav;
-    this.pushPanel({ handleKey: (a) => this.shopNav.handleKey(a) });
+    this.pushPanel({
+      handleKey: (a) => {
+        if (a === 'left' || a === 'right') {
+          setTab(this._shopTab === 'buy' ? 'sell' : 'buy');
+          return true;
+        }
+        return nav.handleKey(a);
+      },
+    });
     this._shopPanelObj = this.activePanel;
+    setTab('buy', true);
   }
 
   closeShop() {
@@ -258,6 +326,7 @@ export default class UIScene {
         <div class="c-text" id="help-body">
           ${controlLines}
           <div class="dim">深草丛中会遭遇「暗雷」（随机遇敌）。</div>
+          <div class="dim">武器各有门类：剑（萧逸）· 刀（洛清霜）· 琴（沈孤鸿）· 笔（柳如烟），防具饰品通用。</div>
           <div class="dim">菜单中可随时存档（战斗中不可）。全灭后将在青云门苏醒。</div>
           <div class="dim">境界突破：等级达标 + 对应丹药，在「角色」页尝试。</div>
         </div>
