@@ -41,6 +41,7 @@ export default class Game {
     this.mapScene = null;
     this.mapId = null;
     this.playerPos = null;
+    this.doorReturn = null; // 进室内前的门外落脚格（存档随行，出门送回）
     this.ui = null; // main.js 注入（UIScene）
 
     this.audio = initAudio();
@@ -73,6 +74,7 @@ export default class Game {
     this.killsByMob = {};
     this.inventory.deserialize({});
     for (const it of BALANCE.start.items) this.inventory.add(it.id, it.count);
+    this.doorReturn = null;
     this.dialog.start('dlg_prologue', {
       onDone: () => {
         this.enterMap(BALANCE.start.mapId, BALANCE.start.pos.x, BALANCE.start.pos.y, BALANCE.start.dir);
@@ -92,6 +94,7 @@ export default class Game {
     this.playSec = d.playSec || 0;
     this.seenMobs = new Set(d.seen || []);
     this.killsByMob = d.killsByMob || {};
+    this.doorReturn = d.doorReturn || null;
     const pos = d.pos || BALANCE.start.pos;
     this.enterMap(d.mapId || BALANCE.start.mapId, pos.x, pos.y, pos.dir || 'down');
   }
@@ -102,6 +105,7 @@ export default class Game {
       mapId: this.mapId,
       pos: this.playerPos || BALANCE.start.pos,
       mapName: this.mapId && MAPS[this.mapId] ? MAPS[this.mapId].name : '',
+      doorReturn: this.doorReturn,
       gold: this.gold,
       kills: this.kills,
       playSec: Math.floor(this.playSec),

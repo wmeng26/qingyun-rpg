@@ -1468,4 +1468,152 @@ export default {
       },
     },
   },
+
+  // ---- 室内建筑互动 NPC ----
+  dlg_zhike: {
+    entry: 'root',
+    nodes: {
+      root: {
+        speaker: '知客弟子', portrait: 'face_dizi',
+        text: '大殿乃清净之地，这位师弟还请放缓脚步，莫要喧哗。',
+        choices: [
+          { text: '想借蒲团打坐调息片刻。', next: 'rest' },
+          { text: '告辞。', next: null },
+        ],
+      },
+      rest: {
+        speaker: '知客弟子', portrait: 'face_dizi',
+        text: '东侧的蒲团常年沐着殿中灵气，最是灵验。\n……你盘膝而坐，灵息沉入丹田，气血周流，浑身舒畅。',
+        actions: [{ do: 'healFull' }],
+        next: null,
+      },
+    },
+  },
+
+  dlg_cangjing: {
+    entry: 'root',
+    nodes: {
+      root: {
+        speaker: '阁老', portrait: 'face_yaonong',
+        text: '藏经阁三百卷，吐纳、剑诀、拳谱无不齐备。只是——看得懂是缘分，看不懂，是命数。',
+        next: 'n2',
+      },
+      n2: {
+        speaker: '阁老', portrait: 'face_yaonong',
+        text: '老夫观你根骨不错，赠你一句：境界之道如筑高台，根基不稳，登得再高也要塌。\n（服用丹药冲击境界，可在「角色」页进行。）',
+        next: null,
+      },
+    },
+  },
+
+  dlg_cunfu: {
+    entry: 'root',
+    nodes: {
+      root: {
+        speaker: '张嫂', portrait: 'face_cunv',
+        text: '',
+        branch: [
+          { cond: { flagAbsent: 'gift_cunfu' }, next: 'first' },
+        ],
+        next: 'again',
+      },
+      first: {
+        speaker: '张嫂', portrait: 'face_cunv',
+        text: '外头那个闷葫芦是我家当家的，打了一辈子猎。近年山里狼群闹得凶，他的箭都快不够使了。\n这颗回血丹你拿着——进山莫逞强，可记住了。',
+        actions: [{ do: 'giveItem', id: 'pill_huixue', count: 1 }, { do: 'setFlag', flag: 'gift_cunfu' }],
+        next: null,
+      },
+      again: {
+        speaker: '张嫂', portrait: 'face_cunv',
+        text: '当家的又跟采药妪讨酒喝去了……真拿他没办法。',
+        next: null,
+      },
+    },
+  },
+
+  dlg_laobo: {
+    entry: 'root',
+    nodes: {
+      root: {
+        speaker: '赵老伯', portrait: 'face_laobo',
+        text: '老汉在山下住了六十年。早年妖物哪敢这般靠近村落？这两年……唉，世道变了。',
+        next: 'n2',
+      },
+      n2: {
+        speaker: '赵老伯', portrait: 'face_laobo',
+        text: '后生，听说山上仙人正收弟子。你若能拜入青云门学些真本事，可别忘了乡里乡亲。',
+        next: null,
+      },
+    },
+  },
+
+  dlg_yaotong: {
+    entry: 'root',
+    nodes: {
+      root: {
+        speaker: '药童', portrait: 'face_dizi',
+        text: '',
+        branch: [
+          { cond: { quest: { id: 'quest_side_11', state: 'active' } }, next: 'progress' },
+          { cond: { quest: { id: 'quest_side_11', state: 'completed' } }, next: 'done' },
+        ],
+        next: 'idle',
+      },
+      idle: {
+        speaker: '药童', portrait: 'face_dizi',
+        text: '秦婆婆在林子里采药，让我看家。她那手药酒可神了——就是酒引子老是缺。',
+        next: null,
+      },
+      progress: {
+        speaker: '药童', portrait: 'face_dizi',
+        text: '婆婆念叨的猴儿酿还没找齐吗？妖猴群聚的地方，酒香能飘出二里地。',
+        next: null,
+      },
+      done: {
+        speaker: '药童', portrait: 'face_dizi',
+        text: '婆婆泡上了新药酒，满屋子都是药香。她说等腿脚利索了，要亲自谢你。',
+        next: null,
+      },
+    },
+  },
+
+  dlg_xiaoer: {
+    entry: 'root',
+    nodes: {
+      root: {
+        speaker: '店小二', portrait: 'face_xiaoer',
+        text: '客官里边请！本店虽小，酒是陈的，被褥是干净的，北边来的客人都夸！',
+        choices: [
+          { text: '开一间房，歇息一晚。', next: 'rest' },
+          { text: '只打尖，不住店。', next: 'food' },
+          { text: '扰了。', next: null },
+        ],
+      },
+      rest: {
+        speaker: '',
+        text: '……一夜无话。窗外渡口水声潺潺，你睡了个难得的好觉。',
+        actions: [{ do: 'healFull' }],
+        next: null,
+      },
+      food: {
+        speaker: '店小二', portrait: 'face_xiaoer',
+        text: '好嘞——两斤酱牛肉一壶热酒，客官慢用！',
+        next: null,
+      },
+    },
+  },
+
+  dlg_xuetu: {
+    entry: 'root',
+    nodes: {
+      root: {
+        speaker: '铺伙计', portrait: 'face_shangren',
+        text: '客官想看点什么？掌柜的进货去了，小的也能做主！',
+        choices: [
+          { text: '看看货物。', next: null, actions: [{ do: 'openShop' }] },
+          { text: '随便逛逛。', next: null },
+        ],
+      },
+    },
+  },
 };

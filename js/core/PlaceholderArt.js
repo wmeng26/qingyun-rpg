@@ -240,6 +240,78 @@ function tileSnowPath(ctx, seed = 131) {
   }
 }
 
+// ---- 室内：木地板 / 地毯 / 桌案 / 柜台 / 货架 ----
+function tileFloor(ctx, seed = 141) {
+  const rnd = mulberry32(seed);
+  ctx.fillStyle = '#96744a'; ctx.fillRect(0, 0, 32, 32);
+  for (let y = 0; y < 32; y += 8) {
+    ctx.fillStyle = '#7a5c38'; ctx.fillRect(0, y, 32, 1);          // 板缝
+    const jx = ((seed * 7 + y * 13) % 24) + 4;
+    ctx.fillRect(jx, y, 1, 8);                                      // 交错端缝
+  }
+  for (let i = 0; i < 10; i++) {
+    ctx.fillStyle = rnd() > 0.5 ? '#a5825a' : '#85613c';
+    ctx.fillRect((rnd() * 28) | 0, (rnd() * 30) | 0, 3 + ((rnd() * 4) | 0), 1);
+  }
+}
+
+function tileCarpet(ctx) {
+  ctx.fillStyle = '#8a3030'; ctx.fillRect(0, 0, 32, 32);
+  const rnd = mulberry32(151);
+  for (let i = 0; i < 12; i++) {
+    ctx.fillStyle = rnd() > 0.5 ? '#7a2828' : '#983c3c';
+    ctx.fillRect((rnd() * 28) | 0, (rnd() * 28) | 0, 3, 2);
+  }
+  ctx.fillStyle = '#c8a84c';                                        // 金线回纹边
+  ctx.fillRect(0, 0, 32, 2); ctx.fillRect(0, 30, 32, 2);
+  ctx.fillRect(0, 0, 2, 32); ctx.fillRect(30, 0, 2, 32);
+  ctx.fillStyle = '#d8bc6c'; ctx.fillRect(2, 2, 1, 28); ctx.fillRect(29, 2, 1, 28);
+  ctx.fillRect(2, 2, 28, 1); ctx.fillRect(2, 29, 28, 1);
+  ctx.fillStyle = '#6a2222';                                        // 中央团花
+  ctx.fillRect(13, 13, 6, 6);
+  ctx.fillStyle = '#a84a4a'; ctx.fillRect(15, 15, 2, 2);
+}
+
+// 地面基底的家具（桌/柜/架先铺地板再画家具，保证与房间地面无缝）
+function tileTable(ctx) {
+  tileFloor(ctx, 143);
+  const P = (x, y, w, h, c) => { ctx.fillStyle = c; ctx.fillRect(x, y, w, h); };
+  P(3, 6, 26, 21, '#54371f');
+  P(4, 5, 24, 20, '#7a5230');                                       // 桌面
+  P(4, 5, 24, 3, '#93683f');
+  P(5, 22, 22, 3, '#634023');
+  P(6, 11, 4, 4, '#54371f'); P(7, 10, 4, 4, '#d8d0c0');             // 茶碗
+  P(20, 9, 6, 8, '#8a6a42'); P(21, 8, 5, 2, '#a8865a');             // 书卷
+}
+
+function tileCounter(ctx) {
+  tileFloor(ctx, 147);
+  const P = (x, y, w, h, c) => { ctx.fillStyle = c; ctx.fillRect(x, y, w, h); };
+  P(0, 7, 32, 20, '#4a3220');
+  P(0, 5, 32, 19, '#5f4227');                                       // 柜身
+  P(0, 5, 32, 4, '#7a5a36');                                        // 台面
+  P(0, 8, 32, 1, '#8d6c40');
+  P(4, 1, 6, 4, '#9aa2ac'); P(10, 0, 5, 5, '#b0a084'); P(22, 1, 5, 4, '#c0b090'); // 台上货物
+  P(6, 14, 20, 2, '#54371f');                                       // 抽屉缝
+  P(9, 14, 2, 2, '#c8a84c'); P(21, 14, 2, 2, '#c8a84c');            // 铜扣
+}
+
+function tileShelf(ctx) {
+  tileFloor(ctx, 149);
+  const P = (x, y, w, h, c) => { ctx.fillStyle = c; ctx.fillRect(x, y, w, h); };
+  P(2, 0, 28, 32, '#54371f');
+  P(3, 1, 26, 30, '#3a281a');                                       // 架膛
+  P(3, 12, 26, 2, '#7a5230'); P(3, 24, 26, 2, '#7a5230');           // 隔板
+  const jars = ['#a8865a', '#8a9a6a', '#c0b0a0', '#b06a4a'];
+  for (let i = 0; i < 4; i++) {
+    P(4 + i * 7, 5 + (i % 2), 5, 7, jars[i]);
+    P(4 + i * 7, 5 + (i % 2), 5, 2, '#d8ccb8');
+  }
+  for (let i = 0; i < 4; i++) P(4 + i * 7, 16, 5, 8, i % 2 ? '#8a4a3a' : '#4a5a6a'); // 竖排书册
+  P(4, 26, 24, 6, '#2e2015');
+  for (let i = 0; i < 5; i++) P(5 + i * 5, 27, 4, 4, ['#a8865a', '#b06a4a', '#8a9a6a'][i % 3]);
+}
+
 // ================= 人物（16×16 帧，2 帧 × 4 向，sheet 32×64） =================
 // pal: {hair, skin, robe, robeDark, trim, pants}
 function drawPersonFrame(ctx, ox, oy, pal, dir, frame) {
@@ -1055,6 +1127,31 @@ const PORTRAITS = {
     P(14, 20, 4, 2, '#c07a5a');
     P(9, 15, 1, 3, '#b08858'); P(22, 15, 1, 3, '#b08858');
   },
+  face_xiaoer: (P) => {
+    P(10, 26, 12, 6, '#4a7a5a');
+    P(8, 4, 16, 4, '#e8e4d8'); P(8, 3, 16, 2, '#f4f0e4');            // 小二白巾
+    P(10, 8, 12, 12, '#e0b090');
+    P(12, 12, 2, 2, '#1a1a1a'); P(18, 12, 2, 2, '#1a1a1a');
+    P(13, 17, 6, 2, '#8a5a3a');
+    P(12, 16, 1, 1, '#c87a5a'); P(19, 16, 1, 1, '#c87a5a');           // 笑纹
+  },
+  face_cunv: (P) => {
+    P(10, 26, 12, 6, '#a86a5a');
+    P(8, 5, 16, 8, '#4a3222'); P(7, 8, 2, 10, '#4a3222'); P(23, 8, 2, 10, '#4a3222');
+    P(13, 4, 6, 3, '#4a3222');                                        // 发髻
+    P(15, 5, 2, 2, '#d06a5a');                                        // 簪花
+    P(10, 9, 12, 12, '#f0c8a8');
+    P(12, 13, 2, 2, '#2a2a2a'); P(18, 13, 2, 2, '#2a2a2a');
+    P(14, 18, 4, 1, '#c08a7a');
+  },
+  face_laobo: (P) => {
+    P(10, 26, 12, 6, '#7a7a6a');
+    P(9, 5, 14, 5, '#c8c4bc'); P(8, 7, 2, 8, '#c8c4bc'); P(22, 7, 2, 8, '#c8c4bc');
+    P(10, 10, 12, 11, '#d8a878');
+    P(12, 14, 2, 2, '#2a2a2a'); P(18, 14, 2, 2, '#2a2a2a');
+    P(11, 17, 10, 5, '#c8c4bc'); P(13, 22, 6, 3, '#c8c4bc');          // 白须
+    P(14, 15, 4, 1, '#8a7a6a');
+  },
   face_xuanming: (P) => {
     P(6, 26, 20, 6, '#120e1a');
     P(5, 2, 22, 22, '#1e1826'); P(7, 4, 18, 18, '#120e1a');
@@ -1446,6 +1543,11 @@ export default {
     V('snowdeep', v => tile(32, c => tileSnowDeep(c, 97 + v * 5)));
     V('snowpath', v => tile(32, c => tileSnowPath(c, 131 + v * 5)));
     V('ice', v => tile(32, c => tileIce(c, 109 + v * 5)));
+    V('floor', v => tile(32, c => tileFloor(c, 141 + v * 7)));
+    assets.put('carpet', tile(32, tileCarpet));
+    assets.put('table', tile(32, tileTable));
+    assets.put('counter', tile(32, tileCounter));
+    assets.put('shelf', tile(32, tileShelf));
     assets.put('tree', tile(32, tileTree));
     assets.put('bridge', tile(32, tileBridge));
     assets.put('rock', tile(32, tileRock));
@@ -1528,6 +1630,10 @@ export default {
     assets.put('npc_qiuju', charSheet({ hair: '#2a2a30', skin: '#d0a888', robe: '#6e5a48', robeDark: '#54443a', trim: '#8a7a5a', pants: '#443a30' }));
     assets.put('npc_yaogu', charSheet({ hair: '#d8d4c8', skin: '#d0a888', robe: '#7a6a52', robeDark: '#5f523e', trim: '#8a9a6a', pants: '#4a4438' }));
     assets.put('npc_xiangke', charSheet({ hair: '#2a2a30', skin: '#e0b090', robe: '#9a8a5a', robeDark: '#7a6c44', trim: '#c8b28a', pants: '#5a523e' }));
+    // 室内居民（店小二 / 村妇 / 村中老伯）
+    assets.put('npc_xiaoer', charSheet({ hair: '#2a2a30', skin: '#e0b090', robe: '#4a7a5a', robeDark: '#38604a', trim: '#c8b28a', pants: '#3a3a30' }));
+    assets.put('npc_cunv', charSheet({ hair: '#4a3222', skin: '#f0c8a8', robe: '#a86a5a', robeDark: '#8a5245', trim: '#e0d0b0', pants: '#5a4a4a' }));
+    assets.put('npc_laobo', charSheet({ hair: '#c8c4bc', skin: '#d8a878', robe: '#7a7a6a', robeDark: '#63635a', trim: '#a8a094', pants: '#4a4a40' }));
 
     // --- 头像 ---
     for (const [k, fn] of Object.entries(PORTRAITS)) assets.put(k, portrait('#1c1812', fn));

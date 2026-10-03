@@ -5,10 +5,10 @@ const TILE = 32;
 // 参与坐标混铺变体的基础瓦片（美术端为它们各注册两枚 '名#1'/'名#2' 变体）
 const VARYING = new Set([
   'grass', 'flower', 'tallgrass', 'tallgrass2', 'path', 'water',
-  'cavefloor', 'snow', 'snowgrass', 'snowdeep', 'snowpath', 'ice',
+  'cavefloor', 'snow', 'snowgrass', 'snowdeep', 'snowpath', 'ice', 'floor',
 ]);
 // 会向正下方邻格投影的立体制瓦片
-const CASTS_SHADOW = new Set(['tree', 'rock', 'pine', 'wall', 'roof', 'door']);
+const CASTS_SHADOW = new Set(['tree', 'rock', 'pine', 'wall', 'roof', 'door', 'table', 'counter', 'shelf']);
 
 // (x,y) -> 0..255 确定性哈希：变体选择与波光相位共用，保证每次启动画面一致
 function hash2(x, y) {

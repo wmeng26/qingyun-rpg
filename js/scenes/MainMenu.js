@@ -129,7 +129,7 @@ export default class MainMenu {
       const skillRows = c.skills.map(id => {
         const s = SKILLS[id];
         if (!s) return '';
-        return `<div class="skill-row"><span>${s.name}</span><span class="s-cost">${s.mpCost ? s.mpCost + ' 灵力' : '—'}</span></div>`;
+        return `<div class="skill-row"><div class="s-top"><span>${s.name}</span><span class="s-cost">${s.mpCost ? s.mpCost + ' 灵力' : '—'}</span></div><div class="s-desc">${s.desc || ''}</div></div>`;
       }).join('');
 
       const slots = ['weapon', 'armor', 'accessory'].map(slot => {
@@ -280,10 +280,11 @@ export default class MainMenu {
         img.getContext('2d').drawImage(icon, 0, 0);
         row.appendChild(img);
       }
+      const bonus = e.def.type === 'equipment' ? this._bonusText(e.def) : '';
       row.insertAdjacentHTML('beforeend', `
         <span class="i-name">${e.def.name}</span>
         <span class="i-count">×${e.count}</span>
-        <span class="i-desc">${e.def.desc || ''}</span>`);
+        <span class="i-desc">${e.def.desc || ''}${bonus ? ` <span class="i-bonus">（${bonus}）</span>` : ''}</span>`);
       if (e.def.type === 'consumable') {
         const b = this._btn('使用', () => this._openUseSub(e));
         row.appendChild(b);
@@ -442,9 +443,18 @@ export default class MainMenu {
           <div class="q-obj" style="color:#5a5040;">Lv?? · 尚未照面的妖物。</div>`;
       } else {
         const bossTag = m.boss ? '<span class="q-state">首领</span>' : '';
+        const stats = m.stats || {};
+        const skillNames = (m.skills || []).map(id => (SKILLS[id] || {}).name).filter(Boolean).join('、');
+        const dropNames = (m.drops || []).map(d => {
+          const it = ITEMS[d.id];
+          return it ? `${it.name} ${Math.round(d.chance * 100)}%` : null;
+        }).filter(Boolean).join('、');
         box.innerHTML = `
           <div class="q-title"><span>Lv${m.level} ${m.name}${el}</span><span class="q-state">${kills ? `击杀 ×${kills}` : '已遭遇'}</span>${bossTag}</div>
-          <div class="q-obj" style="color:#a89878;">${m.desc || ''}</div>`;
+          <div class="q-obj m-stats">气血 ${stats.maxHp} · 攻 ${stats.atk} · 防 ${stats.def} · 灵攻 ${stats.matk} · 灵防 ${stats.mdef} · 速 ${stats.spd}</div>
+          <div class="q-obj" style="color:#a89878;">${m.desc || ''}</div>
+          ${skillNames ? `<div class="q-obj">功法：${skillNames}</div>` : ''}
+          ${dropNames ? `<div class="q-obj m-drops">掉落：${dropNames}</div>` : ''}`;
       }
       this.elContent.appendChild(box);
     }

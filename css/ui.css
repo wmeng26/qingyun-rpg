@@ -293,6 +293,9 @@
 .cmd-list .btn .cost { color: var(--blue); font-size: 11px; }
 .cmd-list .btn .cost.no { color: var(--red); }
 .cmd-hint { padding: 2px 8px 5px; font-size: 10px; color: var(--paper-dim); text-align: right; }
+/* 光标所指技能/道具/目标的说明栏 */
+#cmd-desc { padding: 0 10px; font-size: 10px; color: var(--paper-dim); line-height: 1.5; }
+#cmd-desc:empty { display: none; }
 
 /* 战斗结算 */
 #battle-result {
@@ -353,8 +356,11 @@ body.is-touch #menu-foot .btn { min-height: 28px; padding: 4px 12px; }
   padding: 4px 8px; font-size: 12px;
   border: 1px solid transparent;
 }
+/* 功法行：名称+耗灵一行，说明另起一行 */
+.skill-row { display: block; }
+.skill-row .s-top { display: flex; justify-content: space-between; align-items: center; }
 .skill-row .s-cost { color: var(--blue); font-size: 11px; }
-.skill-row .s-desc { color: var(--paper-dim); font-size: 11px; }
+.skill-row .s-desc { color: var(--paper-dim); font-size: 11px; margin-top: 1px; }
 .slot-row .btn { padding: 2px 8px; font-size: 11px; }
 
 /* 背包 tab */
@@ -368,6 +374,7 @@ body.is-touch #menu-foot .btn { min-height: 28px; padding: 4px 12px; }
 .inv-row .i-name { color: var(--paper); min-width: 90px; }
 .inv-row .i-count { color: var(--gold); min-width: 34px; text-align: right; }
 .inv-row .i-desc { color: var(--paper-dim); font-size: 11px; flex: 1; }
+.inv-row .i-desc .i-bonus { color: var(--gold); }
 .inv-row .btn { padding: 1px 8px; font-size: 11px; }
 .inv-empty { color: var(--paper-dim); text-align: center; padding: 30px 0; }
 
@@ -379,6 +386,9 @@ body.is-touch #menu-foot .btn { min-height: 28px; padding: 4px 12px; }
 .quest-item .q-obj.done { color: #7dbb5e; }
 /* 接取/交付指引：告诉玩家去哪里与谁交互 */
 .quest-item .q-go { color: var(--gold); font-size: 12px; margin-top: 4px; }
+/* 图鉴：妖物数值与掉落 */
+.quest-item .m-stats { color: #7fa8c8; }
+.quest-item .m-drops { color: #8a7a52; }
 
 /* 存档 tab */
 .slot-row-big {

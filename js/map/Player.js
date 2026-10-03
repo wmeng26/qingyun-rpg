@@ -11,8 +11,11 @@ export default class Player {
     this.fromX = 0; this.fromY = 0;
     this.moveT = 0;
     this.onArrive = null; // (gx, gy) => void，由 MapScene 注入
+    this.onBump = null;   // (gx, gy, dir) => void，撞上障碍格的边沿触发（推门用）
     this.enabled = true;
     this.trail = [];
+    this._lastDir = null;
+    this._bumped = false;
   }
 
   place(x, y, dir = 'down') {
@@ -56,12 +59,18 @@ export default class Player {
     else if (input.isDown('down')) { dy = 1; dir = 'down'; }
     else if (input.isDown('left')) { dx = -1; dir = 'left'; }
     else if (input.isDown('right')) { dx = 1; dir = 'right'; }
-    if (!dir) return;
+    if (!dir) { this._lastDir = null; return; }
+    // 方向变化时重置撞墙闩：同一次按住只触发一次 onBump
+    if (dir !== this._lastDir) { this._lastDir = dir; this._bumped = false; }
     this.dir = dir;
     const map = tileMap || (this.game.mapScene && this.game.mapScene.tileMap);
     if (!map) return;
     const nx = this.gx + dx, ny = this.gy + dy;
-    if (map.isSolid(nx, ny)) return;
+    if (map.isSolid(nx, ny)) {
+      if (!this._bumped && this.onBump) { this._bumped = true; this.onBump(nx, ny, dir); }
+      return;
+    }
+    this._bumped = false;
     this.fromX = this.gx; this.fromY = this.gy;
     this._toX = nx; this._toY = ny;
     this.moving = true;

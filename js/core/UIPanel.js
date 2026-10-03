@@ -2,11 +2,13 @@
 import { sfx } from './Audio.js';
 
 export class PanelNav {
-  constructor({ onCancel = null, vertical = true } = {}) {
+  constructor({ onCancel = null, vertical = true, onFocus = null } = {}) {
     this.items = [];
     this.idx = 0;
     this.onCancel = onCancel;
     this.vertical = vertical;
+    // 焦点变化回调（光标移动/悬停都会触发），用于联动刷新说明文字
+    this.onFocus = onFocus;
   }
 
   setItems(items) {
@@ -23,6 +25,7 @@ export class PanelNav {
         it.el.scrollIntoView({ block: 'nearest' });
       }
     });
+    if (this.onFocus) this.onFocus(this.current(), this.idx);
   }
 
   current() { return this.items[this.idx] || null; }

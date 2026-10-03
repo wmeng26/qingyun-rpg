@@ -8,6 +8,8 @@ const EVENT_WAIT = {
   cure: 0.5, status: 0.55, dot: 0.5, die: 0.6, end: 0.15,
 };
 
+const ELEMENT_CN = { fire: '火', water: '水', ice: '冰', thunder: '雷', dark: '阴', holy: '阳', poison: '毒' };
+
 export default class BattleUI {
   constructor(game, engine, onEnd) {
     this.game = game;
@@ -34,6 +36,7 @@ export default class BattleUI {
       <div id="cmd-panel" class="panel hidden">
         <div class="panel-title"></div>
         <div id="cmd-body"></div>
+        <div id="cmd-desc"></div>
         <div class="cmd-hint">${this.game.input.touch ? '点击选项行动' : 'Z/回车 确认 · X 取消'}</div>
       </div>
       <div id="battle-result" class="panel hidden">
@@ -49,6 +52,7 @@ export default class BattleUI {
     this.elCmd = root.querySelector('#cmd-panel');
     this.elCmdTitle = this.elCmd.querySelector('.panel-title');
     this.elCmdBody = this.elCmd.querySelector('#cmd-body');
+    this.elCmdDesc = this.elCmd.querySelector('#cmd-desc');
     this.elResult = root.querySelector('#battle-result');
     this.elResultTitle = this.elResult.querySelector('.panel-title');
     this.elResultBody = this.elResult.querySelector('.res-body');
@@ -92,6 +96,7 @@ export default class BattleUI {
         const tag = document.createElement('span');
         tag.className = 'st-tag' + (s.def.isDebuff ? '' : ' buff');
         tag.textContent = s.def.name;
+        tag.title = s.def.desc || s.def.name;
         st.appendChild(tag);
       }
     }
@@ -233,10 +238,12 @@ export default class BattleUI {
   }
 
   // ================= 指令菜单 =================
+  // items 的条目可携带 desc 字段：光标指向/悬停该条目时显示在面板底部的说明栏
   _showMenu(title, items, { onCancel = null, vertical = true } = {}) {
     this.elCmd.classList.remove('hidden');
     this.elCmdTitle.textContent = title;
     this.elCmdBody.innerHTML = '';
+    this.elCmdDesc.textContent = '';
     // 子菜单（技能/道具/选目标）必须带可见的「返回」：触屏下虚拟 A/B 键在战斗中
     // 隐藏，没有返回键就无法反悔已进入的子菜单（键盘 X 仍走 onCancel 同一路径）
     if (onCancel) {
@@ -245,7 +252,10 @@ export default class BattleUI {
       back.textContent = '◀ 返回';
       items = [...items, { el: back, onSelect: onCancel }];
     }
-    const nav = new PanelNav({ onCancel });
+    const nav = new PanelNav({
+      onCancel,
+      onFocus: (it) => { this.elCmdDesc.textContent = (it && it.desc) || ''; },
+    });
     nav.setItems(items);
     nav.attachHover();
     for (const it of items) this.elCmdBody.appendChild(it.el);
@@ -279,9 +289,17 @@ export default class BattleUI {
       const b = document.createElement('button');
       b.className = 'btn' + (disabled ? ' disabled' : '');
       b.innerHTML = `<span>${s.name}</span><span class="cost${disabled ? ' no' : ''}">${s.mpCost ? s.mpCost + ' 灵力' : '—'}</span>`;
-      return { el: b, disabled, onSelect: () => this._skillTarget(u, s) };
+      return { el: b, disabled, desc: this._skillDesc(s), onSelect: () => this._skillTarget(u, s) };
     });
     this._showMenu('选择功法', items, { onCancel: () => this.showCommandRoot() });
+  }
+
+  // 技能说明：描述 + 属性标注（敌人同样属性的克制规则适用于属性技）
+  _skillDesc(s) {
+    if (!s) return '';
+    let t = s.desc || '';
+    if (s.element && ELEMENT_CN[s.element]) t += `（${ELEMENT_CN[s.element]}系）`;
+    return t;
   }
 
   _skillTarget(u, s) {
@@ -314,7 +332,7 @@ export default class BattleUI {
       const b = document.createElement('button');
       b.className = 'btn';
       b.innerHTML = `<span>${e.def.name}</span><span class="cost">×${e.count}</span>`;
-      return { el: b, onSelect: () => {
+      return { el: b, desc: e.def.desc || '', onSelect: () => {
         this._pickTarget('ally', (tg) => this._commit({ kind: 'item', itemId: e.id, targets: [tg] }), e.def.name, () => this._showItemMenu(u));
       } };
     });
@@ -327,7 +345,9 @@ export default class BattleUI {
       const b = document.createElement('button');
       b.className = 'btn';
       b.innerHTML = `<span>${u.displayName}</span><span class="cost">${u.hp}/${u.maxHp()}</span>`;
-      return { el: b, onSelect: () => cb(u) };
+      // 选敌方目标时顺带展示图鉴描述（u.source 即怪物定义）
+      const desc = side === 'enemy' ? (u.source.desc || '') : '';
+      return { el: b, desc, onSelect: () => cb(u) };
     });
     // 未指定返回目标时回指令根菜单（如「攻击」直达选目标）
     this._showMenu(label, items, { onCancel: onCancel || (() => this.showCommandRoot()) });

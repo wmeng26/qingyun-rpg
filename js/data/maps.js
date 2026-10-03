@@ -160,7 +160,7 @@ export default {
       'T.TTTTTTT.....pp.TTTTTTTTTT.TT',
       'T..RRRRR.....tpp..RRRRR..,t.TT',
       'T..WWDWW.....tpp..WWDWW...t..T',
-      'T...t.....t...pp....t......t.T',
+      'T...t.....t...pp....,......t.T',
       'T......,......pp...,....t....T',
       'TT....t....t..ppTT...t......TT',
       'TTTTTTTTTTTTTTTTTTTTTTTTTTTTTT',
@@ -192,6 +192,10 @@ export default {
       { x: 0, y: 13, to: 'map_huanggu', toX: 28, toY: 9, label: '西山古道',
         requiresFlag: 'quest_main_4_done',
         lockedMsg: '山道西侧草木压伏，明显有人马常年踩踏，路口却设着拒马路障。\n（完成掌门的「黑风疑云」后再来）' },
+    ],
+    doors: [
+      { x: 5, y: 17, to: 'map_hut_liehu', toX: 7, toY: 7, label: '猎户小屋' },
+      { x: 20, y: 17, to: 'map_minju_shanxia', toX: 7, toY: 7, label: '山下民居' },
     ],
     npcs: [
       { id: 'npc_hunter', name: '老猎户', x: 12, y: 12, dir: 'down', sprite: 'npc_hunter', dialog: 'dlg_hunter' },
@@ -243,6 +247,10 @@ export default {
       { x: 13, y: 19, to: 'map_shanxia', toX: 15, toY: 1, label: '青云山下' },
       { x: 2, y: 12, to: 'map_lunhui', toX: 8, toY: 10, label: '轮回古塔', requiresFlag: 'quest_main_9_done', lockedMsg: '古塔塔门紧闭，石缝间隐有灵光流转——仿佛在等待什么人。' },
       { x: 23, y: 9, to: 'map_chishaku', toX: 3, toY: 17, label: '赤煞窟', requiresFlag: 'quest_main_11_done', lockedMsg: '西面的古窟幽幽，煞气隐现——其中凶险未明。' },
+    ],
+    doors: [
+      { x: 10, y: 5, to: 'map_dadian', toX: 7, toY: 7, label: '青云大殿' },
+      { x: 16, y: 5, to: 'map_cangjingge', toX: 7, toY: 7, label: '藏经阁' },
     ],
     npcs: [
       { id: 'npc_zhangmen', name: '掌门·玄阳子', x: 12, y: 7, dir: 'down', sprite: 'npc_zhangmen', dialog: 'dlg_zhangmen' },
@@ -312,6 +320,9 @@ export default {
     portals: [
       { x: 0, y: 7, to: 'map_shanxia', toX: 28, toY: 7, label: '青云山下' },
       { x: 25, y: 14, to: 'map_jinghong', toX: 1, toY: 14, label: '惊鸿涧' },
+    ],
+    doors: [
+      { x: 11, y: 4, to: 'map_yaolu', toX: 7, toY: 7, label: '采药庐' },
     ],
     npcs: [
       { id: 'npc_yaogu', name: '采药妪·秦婆', x: 13, y: 6, dir: 'left', sprite: 'npc_yaogu', dialog: 'dlg_yaogu' },
@@ -568,6 +579,10 @@ export default {
       { x: 12, y: 19, to: 'map_huanggu', toX: 1, toY: 9, label: '荒古道' },
       { x: 13, y: 19, to: 'map_huanggu', toX: 1, toY: 10, label: '荒古道' },
     ],
+    doors: [
+      { x: 12, y: 5, to: 'map_juyiting', toX: 7, toY: 7, label: '聚义厅' },
+      { x: 13, y: 5, to: 'map_juyiting', toX: 7, toY: 7, label: '聚义厅' },
+    ],
     npcs: [],
     events: [
       { type: 'chest', x: 3, y: 6, items: [{ id: 'dao_pu', count: 1 }] },
@@ -751,6 +766,10 @@ export default {
         lockedMsg: '渡口以北的风雪里隐有魔嚎……\n（解了渡口之围，村正自会为你引路）' },
       { x: 25, y: 9, to: 'map_xueshagu', toX: 1, toY: 14, label: '血煞谷' },
       { x: 25, y: 10, to: 'map_xueshagu', toX: 1, toY: 15, label: '血煞谷' },
+    ],
+    doors: [
+      { x: 5, y: 5, to: 'map_yizhan', toX: 7, toY: 7, label: '渡口客栈' },
+      { x: 17, y: 5, to: 'map_zahuopu', toX: 7, toY: 7, label: '渡口杂货铺' },
     ],
     npcs: [
       { id: 'npc_cunzhang', name: '渡口村正·赵老爹', x: 8, y: 7, dir: 'down', sprite: 'npc_cunzhang', dialog: 'dlg_cunzhang' },
@@ -986,6 +1005,275 @@ export default {
       { type: 'chest', x: 19, y: 1, items: [{ id: 'pill_tianyuan', count: 2 }] },
       { type: 'battle', x: 11, y: 3, flag: 'boss_chiyuan_defeated', battle: { mobs: ['boss_chiyuan'], boss: true, canFlee: false, introDialog: 'dlg_chiyuan_intro', afterDialog: 'dlg_trueend', victoryMsg: '赤渊的咆哮渐渐低哑——千年血祭，至此终焉。' } },
       { type: 'battle', x: 12, y: 3, flag: 'boss_chiyuan_defeated', battle: { mobs: ['boss_chiyuan'], boss: true, canFlee: false, introDialog: 'dlg_chiyuan_intro', afterDialog: 'dlg_trueend', victoryMsg: '赤渊的咆哮渐渐低哑——千年血祭，至此终焉。' } },
+    ],
+  },
+
+  // ---- 室内地图（建筑互动）：单门进出，出门格 useReturn 按来路送回门外 ----
+  // legend：W 墙 / D 门 / f 木地板 / c 地毯 / g 石地 / t 桌案 / k 柜台 / s 货架（t/k/s 为实体家具）
+  map_dadian: {
+    id: 'map_dadian', name: '青云大殿', interior: true, width: 15, height: 9, bg: 'bg_outdoor',
+    legend: {
+      'W': { tile: 'wall', solid: true, enc: null },
+      'D': { tile: 'door', solid: true, enc: null },
+      'f': { tile: 'floor', solid: false, enc: null },
+      'c': { tile: 'carpet', solid: false, enc: null },
+      't': { tile: 'table', solid: true, enc: null },
+    },
+    tiles: [
+      'WWWWWWWWWWWWWWW',
+      'WfffffffffffffW',
+      'WffffcccccffffW',
+      'WffffccctcffffW',
+      'WffffcccccffffW',
+      'WffffcccccffffW',
+      'WfffffffffffffW',
+      'WfffffffffffffW',
+      'WWWWWWWDWWWWWWW',
+    ],
+    encounters: null,
+    doors: [
+      { x: 7, y: 8, to: 'map_qingyunmen', toX: 10, toY: 6, label: '离开', useReturn: true },
+    ],
+    npcs: [
+      { id: 'npc_zhike', name: '知客弟子', x: 11, y: 4, dir: 'left', sprite: 'npc_dizi', dialog: 'dlg_zhike' },
+    ],
+    events: [
+      { type: 'chest', x: 2, y: 2, gold: 120, items: [{ id: 'pill_huixue', count: 2 }] },
+      { type: 'lore', x: 7, y: 4, text: '供案上香炉青烟袅袅，殿中悬着「浩然正气」的匾额，笔力遒劲。' },
+    ],
+  },
+
+  map_cangjingge: {
+    id: 'map_cangjingge', name: '藏经阁', interior: true, width: 15, height: 9, bg: 'bg_outdoor',
+    legend: {
+      'W': { tile: 'wall', solid: true, enc: null },
+      'D': { tile: 'door', solid: true, enc: null },
+      'f': { tile: 'floor', solid: false, enc: null },
+      '.': { tile: 'floor', solid: false, enc: null },
+      's': { tile: 'shelf', solid: true, enc: null },
+      't': { tile: 'table', solid: true, enc: null },
+    },
+    tiles: [
+      'WWWWWWWWWWWWWWW',
+      'WfffffffffffffW',
+      'W.sssffff.sss.W',
+      'WfffffffffffffW',
+      'WfffffffffffffW',
+      'WffffffftfffffW',
+      'WfffffffffffffW',
+      'WfffffffffffffW',
+      'WWWWWWWDWWWWWWW',
+    ],
+    encounters: null,
+    doors: [
+      { x: 7, y: 8, to: 'map_qingyunmen', toX: 16, toY: 6, label: '离开', useReturn: true },
+    ],
+    npcs: [
+      { id: 'npc_canglao', name: '阁老', x: 10, y: 3, dir: 'left', sprite: 'npc_yaonong', dialog: 'dlg_cangjing' },
+    ],
+    events: [
+      { type: 'chest', x: 2, y: 7, gold: 200, items: [{ id: 'pill_lingli', count: 2 }] },
+      { type: 'lore', x: 2, y: 3, text: '架上竹简按「炼气、筑基、金丹」分列，越往高处积尘越厚。' },
+      { type: 'lore', x: 7, y: 6, text: '书案上摊着一卷未抄完的吐纳诀，墨迹犹新。' },
+    ],
+  },
+
+  map_hut_liehu: {
+    id: 'map_hut_liehu', name: '猎户小屋', interior: true, width: 15, height: 9, bg: 'bg_outdoor',
+    legend: {
+      'W': { tile: 'wall', solid: true, enc: null },
+      'D': { tile: 'door', solid: true, enc: null },
+      'f': { tile: 'floor', solid: false, enc: null },
+      't': { tile: 'table', solid: true, enc: null },
+      'k': { tile: 'counter', solid: true, enc: null },
+      's': { tile: 'shelf', solid: true, enc: null },
+    },
+    tiles: [
+      'WWWWWWWWWWWWWWW',
+      'WfffffffffffffW',
+      'WfffffffffffssW',
+      'WfffffffffffffW',
+      'WffttfffkfffffW',
+      'WfffffffffffffW',
+      'WfffffffffffffW',
+      'WfffffffffffffW',
+      'WWWWWWWDWWWWWWW',
+    ],
+    encounters: null,
+    doors: [
+      { x: 7, y: 8, to: 'map_shanxia', toX: 5, toY: 18, label: '离开', useReturn: true },
+    ],
+    npcs: [
+      { id: 'npc_cunfu', name: '张嫂', x: 9, y: 5, dir: 'left', sprite: 'npc_cunv', dialog: 'dlg_cunfu' },
+    ],
+    events: [
+      { type: 'chest', x: 12, y: 6, gold: 80 },
+      { type: 'lore', x: 8, y: 5, text: '火塘余烬未熄，铁架上烘着几张硝好的兽皮。' },
+    ],
+  },
+
+  map_minju_shanxia: {
+    id: 'map_minju_shanxia', name: '山下民居', interior: true, width: 15, height: 9, bg: 'bg_outdoor',
+    legend: {
+      'W': { tile: 'wall', solid: true, enc: null },
+      'D': { tile: 'door', solid: true, enc: null },
+      'f': { tile: 'floor', solid: false, enc: null },
+      't': { tile: 'table', solid: true, enc: null },
+      's': { tile: 'shelf', solid: true, enc: null },
+    },
+    tiles: [
+      'WWWWWWWWWWWWWWW',
+      'WfffffffffffffW',
+      'WfffffffffffffW',
+      'WfffffffffffffW',
+      'WfffftffffffsfW',
+      'WfffffffffffffW',
+      'WfffffffffffffW',
+      'WfffffffffffffW',
+      'WWWWWWWDWWWWWWW',
+    ],
+    encounters: null,
+    doors: [
+      { x: 7, y: 8, to: 'map_shanxia', toX: 20, toY: 18, label: '离开', useReturn: true },
+    ],
+    npcs: [
+      { id: 'npc_laobo', name: '赵老伯', x: 8, y: 4, dir: 'left', sprite: 'npc_laobo', dialog: 'dlg_laobo' },
+    ],
+    events: [
+      { type: 'chest', x: 2, y: 6, gold: 60, items: [{ id: 'pill_huixue', count: 1 }] },
+      { type: 'lore', x: 5, y: 5, text: '灶上炖着野菜汤，咕嘟咕嘟冒着热气。' },
+    ],
+  },
+
+  map_yaolu: {
+    id: 'map_yaolu', name: '采药庐', interior: true, width: 15, height: 9, bg: 'bg_outdoor',
+    legend: {
+      'W': { tile: 'wall', solid: true, enc: null },
+      'D': { tile: 'door', solid: true, enc: null },
+      'f': { tile: 'floor', solid: false, enc: null },
+      't': { tile: 'table', solid: true, enc: null },
+      'k': { tile: 'counter', solid: true, enc: null },
+      's': { tile: 'shelf', solid: true, enc: null },
+    },
+    tiles: [
+      'WWWWWWWWWWWWWWW',
+      'WsssssssssssssW',
+      'WfffffffffffffW',
+      'WfffffffffffffW',
+      'WffttfffkfffffW',
+      'WfffffffffffffW',
+      'WfffffffffffffW',
+      'WfffffffffffffW',
+      'WWWWWWWDWWWWWWW',
+    ],
+    encounters: null,
+    doors: [
+      { x: 7, y: 8, to: 'map_luoxia', toX: 11, toY: 5, label: '离开', useReturn: true },
+    ],
+    npcs: [
+      { id: 'npc_yaotong', name: '药童', x: 9, y: 5, dir: 'left', sprite: 'npc_dizi', dialog: 'dlg_yaotong' },
+    ],
+    events: [
+      { type: 'chest', x: 2, y: 7, gold: 100, items: [{ id: 'pill_jiedu', count: 2 }] },
+      { type: 'lore', x: 8, y: 5, text: '药炉上煨着汤药，苦香混着淡淡酒气在屋里弥漫。' },
+    ],
+  },
+
+  map_yizhan: {
+    id: 'map_yizhan', name: '渡口客栈', interior: true, width: 15, height: 9, bg: 'bg_outdoor', music: 'ice',
+    legend: {
+      'W': { tile: 'wall', solid: true, enc: null },
+      'D': { tile: 'door', solid: true, enc: null },
+      'f': { tile: 'floor', solid: false, enc: null },
+      'c': { tile: 'carpet', solid: false, enc: null },
+      't': { tile: 'table', solid: true, enc: null },
+      'k': { tile: 'counter', solid: true, enc: null },
+    },
+    tiles: [
+      'WWWWWWWWWWWWWWW',
+      'WfffffkkkfffffW',
+      'WfffffffffffffW',
+      'WfftffffffftffW',
+      'WfffffffffffffW',
+      'WfffffffffffffW',
+      'WffffcccccffffW',
+      'WffffcccccffffW',
+      'WWWWWWWDWWWWWWW',
+    ],
+    encounters: null,
+    doors: [
+      { x: 7, y: 8, to: 'map_hanshidu', toX: 5, toY: 6, label: '离开', useReturn: true },
+    ],
+    npcs: [
+      { id: 'npc_xiaoer', name: '店小二', x: 9, y: 2, dir: 'left', sprite: 'npc_xiaoer', dialog: 'dlg_xiaoer' },
+    ],
+    events: [
+      { type: 'chest', x: 13, y: 1, gold: 150, items: [{ id: 'pill_huixue', count: 1 }] },
+      { type: 'lore', x: 11, y: 4, text: '桌上粗瓷碗里的酒还温着——渡口夜里风大，行客都爱这一口热酒。' },
+    ],
+  },
+
+  map_zahuopu: {
+    id: 'map_zahuopu', name: '渡口杂货铺', interior: true, width: 15, height: 9, bg: 'bg_outdoor', music: 'ice',
+    legend: {
+      'W': { tile: 'wall', solid: true, enc: null },
+      'D': { tile: 'door', solid: true, enc: null },
+      'f': { tile: 'floor', solid: false, enc: null },
+      'k': { tile: 'counter', solid: true, enc: null },
+      's': { tile: 'shelf', solid: true, enc: null },
+    },
+    tiles: [
+      'WWWWWWWWWWWWWWW',
+      'WsssssssssssssW',
+      'WfffffffffffffW',
+      'WfffffffffffffW',
+      'WffkkkffkkkfffW',
+      'WfffffffffffffW',
+      'WfffffffffffffW',
+      'WfffffffffffffW',
+      'WWWWWWWDWWWWWWW',
+    ],
+    encounters: null,
+    doors: [
+      { x: 7, y: 8, to: 'map_hanshidu', toX: 17, toY: 6, label: '离开', useReturn: true },
+    ],
+    npcs: [
+      { id: 'npc_xuetu', name: '铺伙计', x: 7, y: 3, dir: 'down', sprite: 'npc_shangren', dialog: 'dlg_xuetu' },
+    ],
+    events: [
+      { type: 'lore', x: 2, y: 2, text: '货架从丹药、符纸到干粮杂货，码得整整齐齐。' },
+    ],
+  },
+
+  map_juyiting: {
+    id: 'map_juyiting', name: '聚义厅', interior: true, width: 15, height: 9, bg: 'bg_cave',
+    legend: {
+      'W': { tile: 'wall', solid: true, enc: null },
+      'D': { tile: 'door', solid: true, enc: null },
+      'g': { tile: 'cavefloor', solid: false, enc: null },
+      't': { tile: 'table', solid: true, enc: null },
+    },
+    tiles: [
+      'WWWWWWWWWWWWWWW',
+      'WgggggggggggggW',
+      'WgggggggggggggW',
+      'WgggtttttttgggW',
+      'WgggWgggggWgggW',
+      'WgggggggggggggW',
+      'WgggWgggggWgggW',
+      'WgggggggggggggW',
+      'WWWWWWWDWWWWWWW',
+    ],
+    encounters: null,
+    doors: [
+      { x: 7, y: 8, to: 'map_heifengzhai', toX: 12, toY: 6, label: '离开', useReturn: true },
+    ],
+    npcs: [],
+    events: [
+      { type: 'chest', x: 12, y: 2, gold: 300, items: [{ id: 'jade_ling', count: 1 }, { id: 'zei_zang', count: 2 }] },
+      { type: 'lore', x: 7, y: 2, text: '主位的虎皮交椅空着——黑风王已伏诛，寨众四散。' },
+      { type: 'lore', x: 5, y: 6, text: '青石地面上残留着暗褐血渍，怎么擦也擦不干净。' },
+      { type: 'lore', x: 11, y: 6, text: '梁上悬着「替天行道」的破匾，字迹早被炊烟熏黑。' },
     ],
   },
 
