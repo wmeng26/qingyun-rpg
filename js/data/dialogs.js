@@ -1008,7 +1008,7 @@ export default {
       turnin9: {
         speaker: '渡口村正·赵老爹', portrait: 'face_cunzhang',
         text: '雪魈退了！好，好！北面的路老爹给你开——只是记住：冰原尽头是魔渊，千年前祖师爷用命封的魔窟。\n没化神的修为，进了就是送死。',
-        actions: [{ do: 'completeQuest', id: 'quest_main_9' }],
+        actions: [{ do: 'completeQuest', id: 'quest_main_9' }, { do: 'setFlag', flag: 'bingyuan_open' }],
         next: 'turnin9b',
       },
       turnin9b: {

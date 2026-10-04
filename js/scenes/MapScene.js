@@ -166,11 +166,19 @@ export default class MapScene {
     if (d) this._enterDoor(d);
   }
 
+  // 通行条件：requiresFlag 之外兼看 requiresQuestDone——任务已完成即视为已开，
+  // 兜底旧存档漏设旗标的情况（旗标靠对话节点补设，任何状态都可能漏）
+  _questDone(id) {
+    if (!id) return false;
+    const st = this.game.quests.get(id);
+    return !!st && st.state === 'completed';
+  }
+
   // 进入门：目标地图为室内时记下回程（门外那格），室内的门按来路送回
   _enterDoor(d) {
     const g = this.game;
     if (this.pendingPortal || this.fadeDir > 0) return;
-    if (d.requiresFlag && !g.flags.has(d.requiresFlag)) {
+    if (d.requiresFlag && !g.flags.has(d.requiresFlag) && !this._questDone(d.requiresQuestDone)) {
       g.ui.toast(d.lockedMsg || '此门尚未开启');
       return;
     }
@@ -252,7 +260,7 @@ export default class MapScene {
     // 传送门
     const portal = (this.def.portals || []).find(p => p.x === x && p.y === y);
     if (portal) {
-      if (portal.requiresFlag && !g.flags.has(portal.requiresFlag)) {
+      if (portal.requiresFlag && !g.flags.has(portal.requiresFlag) && !this._questDone(portal.requiresQuestDone)) {
         g.ui.toast(portal.lockedMsg || '此路尚未开启');
       } else {
         sfx.play('teleport');

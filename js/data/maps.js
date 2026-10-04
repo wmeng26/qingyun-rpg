@@ -762,10 +762,10 @@ export default {
     encounters: null,
     portals: [
       { x: 14, y: 0, to: 'map_bingyuan', toX: 14, toY: 20, label: '寒渊冰原',
-        requiresFlag: 'bingyuan_open',
+        requiresFlag: 'bingyuan_open', requiresQuestDone: 'quest_main_9',
         lockedMsg: '渡口以北的风雪里隐有魔嚎……\n（风雪封路——先向村正问问渡口之围的事）' },
       { x: 15, y: 0, to: 'map_bingyuan', toX: 15, toY: 20, label: '寒渊冰原',
-        requiresFlag: 'bingyuan_open',
+        requiresFlag: 'bingyuan_open', requiresQuestDone: 'quest_main_9',
         lockedMsg: '渡口以北的风雪里隐有魔嚎……\n（风雪封路——先向村正问问渡口之围的事）' },
       { x: 25, y: 9, to: 'map_xueshagu', toX: 1, toY: 14, label: '血煞谷' },
       { x: 25, y: 10, to: 'map_xueshagu', toX: 1, toY: 15, label: '血煞谷' },
