@@ -240,6 +240,162 @@ function tileSnowPath(ctx, seed = 131) {
   }
 }
 
+// ---- 轮回古塔：青石砖墙 / 石板地 / 阶梯 / 盘纹柱 ----
+// 塔壁冷青灰砌砖，偶有轮回阵纹透出微光；地面为整齐石板，与洞窟的粗粝岩面区分
+function tileTowerwall(ctx, seed = 171, variant = 0) {
+  const rnd = mulberry32(seed);
+  ctx.fillStyle = '#2e3242'; ctx.fillRect(0, 0, 32, 32);
+  for (let i = 0; i < 12; i++) {
+    ctx.fillStyle = rnd() > 0.5 ? '#333848' : '#282c3a';
+    ctx.fillRect((rnd() * 29) | 0, (rnd() * 29) | 0, 4, 3);
+  }
+  // 砖缝：横缝每 8px + 上下错位的竖缝
+  ctx.fillStyle = '#1f222e';
+  for (let y = 0; y < 32; y += 8) {
+    ctx.fillRect(0, y, 32, 1);
+    const off = ((y / 8) % 2) * 8;
+    for (let x = off; x < 32; x += 16) ctx.fillRect(x, y, 1, 8);
+  }
+  ctx.fillStyle = '#414760'; ctx.fillRect(0, 0, 32, 1);   // 顶受光
+  ctx.fillStyle = '#181b26'; ctx.fillRect(0, 28, 32, 4);  // 底压暗成砌层
+  if (variant === 1) {
+    // 塔壁铭刻的轮回阵纹，青金双色极淡微光
+    runeDiamond(ctx, 16, 15, 7, 'rgba(126,196,206,0.5)', 'rgba(200,168,76,0.55)');
+  } else if (variant === 2) {
+    // 风化裂纹
+    ctx.fillStyle = '#1a1d28';
+    ctx.fillRect(9, 6, 1, 9); ctx.fillRect(10, 14, 2, 1); ctx.fillRect(11, 15, 1, 7);
+    ctx.fillRect(22, 18, 1, 8); ctx.fillRect(21, 17, 1, 1);
+  }
+}
+
+// 像素菱形阵纹（轮回塔母题）：外环 + 四向刻度 + 中心珠
+function runeDiamond(ctx, cx, cy, rad, ring, core) {
+  ctx.fillStyle = ring;
+  for (let i = -rad; i <= rad; i++) {
+    const w = rad - Math.abs(i);
+    ctx.fillRect(cx - w, cy + i, 1, 1);
+    ctx.fillRect(cx + w - 1, cy + i, 1, 1);
+  }
+  ctx.fillRect(cx - 1, cy - rad - 2, 2, 2); ctx.fillRect(cx - 1, cy + rad + 1, 2, 2);
+  ctx.fillRect(cx - rad - 2, cy - 1, 2, 2); ctx.fillRect(cx + rad + 1, cy - 1, 2, 2);
+  ctx.fillStyle = core;
+  ctx.fillRect(cx - 1, cy - 1, 2, 2);
+}
+
+function tileTowerfloor(ctx, seed = 177, variant = 0) {
+  const rnd = mulberry32(seed);
+  ctx.fillStyle = '#524c5e'; ctx.fillRect(0, 0, 32, 32);
+  for (let i = 0; i < 16; i++) {
+    ctx.fillStyle = rnd() > 0.5 ? '#474153' : '#5c566a';
+    ctx.fillRect((rnd() * 30) | 0, (rnd() * 30) | 0, 3, 2);
+  }
+  // 石板缝：16px 方板错缝铺砌
+  ctx.fillStyle = '#3b3746';
+  for (let y = 0; y < 32; y += 16) ctx.fillRect(0, y, 32, 1);
+  for (let y = 0; y < 32; y += 16) {
+    const off = ((y / 16) % 2) * 16;
+    for (let x = off; x < 32; x += 16) ctx.fillRect(x, y, 1, 16);
+  }
+  ctx.fillStyle = '#615b70';
+  for (let y = 1; y < 32; y += 16) ctx.fillRect(0, y, 32, 1);  // 板棱受光
+  if (variant === 1) runeDiamond(ctx, 16, 16, 6, 'rgba(198,168,90,0.4)', 'rgba(198,168,90,0.5)');
+  else if (variant === 2) {
+    ctx.fillStyle = '#332f3e';
+    ctx.fillRect(6, 20, 8, 1); ctx.fillRect(13, 17, 1, 4); ctx.fillRect(20, 5, 1, 6);
+  }
+}
+
+function tileTowerstairs(ctx) {
+  tileTowerfloor(ctx, 179);
+  for (let y = 3; y < 32; y += 7) {
+    ctx.fillStyle = '#5f5971'; ctx.fillRect(2, y, 28, 5);
+    ctx.fillStyle = '#6f6982'; ctx.fillRect(2, y, 28, 2);
+  }
+  ctx.fillStyle = '#332f40'; ctx.fillRect(0, 0, 2, 32); ctx.fillRect(30, 0, 2, 32);
+}
+
+// 守塔石柱：整根通顶，金箍两道，柱身嵌青光符眼
+function tileTowerpillar(ctx) {
+  tileTowerfloor(ctx, 181);
+  const P = (x, y, w, h, c) => { ctx.fillStyle = c; ctx.fillRect(x, y, w, h); };
+  P(5, 0, 22, 5, '#332f40'); P(5, 0, 22, 2, '#443f54');        // 柱头
+  P(8, 4, 16, 23, '#403a50');
+  P(8, 4, 3, 23, '#4c4660');                                    // 左侧受光
+  P(21, 4, 3, 23, '#312c40');                                   // 右侧背光
+  for (let y = 8; y < 27; y += 7) P(8, y, 16, 1, '#2a2634');    // 石节缝
+  P(8, 11, 16, 2, '#a8893c'); P(8, 11, 16, 1, '#c8a84c');       // 金箍
+  P(8, 20, 16, 2, '#a8893c'); P(8, 20, 16, 1, '#c8a84c');
+  P(14, 14, 4, 4, '#20232e'); P(15, 15, 2, 2, '#7ac0c8');       // 符眼
+  P(6, 26, 20, 5, '#332f40'); P(7, 26, 18, 2, '#464152');       // 柱础
+}
+
+// ---- 赤煞窟：血染岩壁 / 暗赤地面 / 血晶岩 ----
+// 渗血裂缝刻意短促、只占砖面一角：整墙铺贴时 50% 素砖间隔，避免重复纹理显形
+function tileBloodwall(ctx, seed = 191, variant = 0) {
+  const rnd = mulberry32(seed);
+  ctx.fillStyle = '#251116'; ctx.fillRect(0, 0, 32, 32);
+  for (let i = 0; i < 14; i++) {
+    ctx.fillStyle = rnd() > 0.5 ? '#2f161c' : '#1b0d11';
+    ctx.fillRect((rnd() * 28) | 0, (rnd() * 28) | 0, 4 + ((rnd() * 4) | 0), 3);
+  }
+  // 岩缝渗血：暗红折线下行，末端偶有凝聚的血珠
+  const seep = (x0, y0, len, glow) => {
+    let x = x0;
+    for (let i = 0; i < len; i++) {
+      const y = y0 + i * 2;
+      ctx.fillStyle = '#5e1822'; ctx.fillRect(x, y, 2, 2);
+      if (glow && i === len - 1) {
+        ctx.fillStyle = '#c03040'; ctx.fillRect(x, y, 1, 2);
+        ctx.fillStyle = '#ff6a72'; ctx.fillRect(x, y - 2, 1, 1);
+      }
+      x += ((rnd() * 3) | 0) - 1;
+    }
+  };
+  if (variant === 1) seep(9, 3, 8, false);
+  else if (variant === 2) seep(19, 6, 10, true);
+  else {
+    // 素砖：一条将干未干的淡血渍
+    ctx.fillStyle = 'rgba(94,24,34,0.4)';
+    ctx.fillRect(4 + ((rnd() * 16) | 0), 5 + ((rnd() * 18) | 0), 9, 1);
+  }
+  ctx.fillStyle = '#100608'; ctx.fillRect(0, 28, 32, 4);
+}
+
+function tileBloodfloor(ctx, seed = 197, variant = 0) {
+  const rnd = mulberry32(seed);
+  ctx.fillStyle = '#3a232b'; ctx.fillRect(0, 0, 32, 32);
+  for (let i = 0; i < 22; i++) {
+    ctx.fillStyle = rnd() > 0.5 ? '#31202a' : '#442a34';
+    ctx.fillRect((rnd() * 30) | 0, (rnd() * 30) | 0, 3, 2);
+  }
+  if (variant === 1) {
+    // 积血洼：暗池泛血光
+    const bx = 5 + ((rnd() * 14) | 0), by = 6 + ((rnd() * 14) | 0);
+    ctx.fillStyle = '#4a161e'; ctx.fillRect(bx, by, 11, 6); ctx.fillRect(bx + 2, by - 2, 7, 10);
+    ctx.fillStyle = '#6a1e28'; ctx.fillRect(bx + 2, by + 1, 7, 3);
+    ctx.fillStyle = '#8a2a34'; ctx.fillRect(bx + 3, by + 1, 3, 1);
+  } else if (variant === 2) {
+    // 白骨碎屑与干涸血痕
+    ctx.fillStyle = '#b0a48c';
+    ctx.fillRect(7, 9, 4, 1); ctx.fillRect(6, 10, 2, 1); ctx.fillRect(20, 21, 5, 1);
+    ctx.fillStyle = '#8a8070'; ctx.fillRect(21, 22, 2, 1);
+    ctx.fillStyle = '#521820'; ctx.fillRect(13, 24, 6, 2); ctx.fillRect(24, 5, 4, 1);
+  }
+}
+
+// 血晶岩：暗赤岩体上劈出的血晶簇
+function tileBloodrock(ctx) {
+  tileBloodfloor(ctx, 199);
+  const P = (x, y, w, h, c) => { ctx.fillStyle = c; ctx.fillRect(x, y, w, h); };
+  P(7, 14, 18, 12, '#452a32'); P(9, 9, 14, 7, '#452a32');
+  P(11, 11, 10, 4, '#57373f');
+  P(8, 24, 16, 3, '#241418');
+  P(13, 5, 4, 10, '#8a2030'); P(14, 3, 2, 4, '#c03050'); P(14, 3, 2, 2, '#ff6a72');
+  P(19, 9, 3, 8, '#8a2030'); P(20, 7, 2, 3, '#c03050'); P(20, 7, 1, 1, '#ff6a72');
+  P(9, 12, 3, 6, '#7a1c2c');
+}
+
 // ---- 室内：木地板 / 地毯 / 桌案 / 柜台 / 货架 ----
 function tileFloor(ctx, seed = 141) {
   const rnd = mulberry32(seed);
@@ -1444,6 +1600,99 @@ function bgBlood() {
   return c;
 }
 
+// ---- 轮回古塔战斗背景：塔身内堂，巨阵微光 ----
+function bgTower() {
+  const [c, ctx] = makeCanvas(480, 270);
+  const g = ctx.createLinearGradient(0, 0, 0, 270);
+  g.addColorStop(0, '#0e1020'); g.addColorStop(0.6, '#1c2038'); g.addColorStop(1, '#2c3048');
+  ctx.fillStyle = g; ctx.fillRect(0, 0, 480, 270);
+  const rnd = mulberry32(606);
+  // 背墙巨幅轮回阵纹（青金双色同心环 + 内接菱形）
+  ctx.lineWidth = 3;
+  ctx.strokeStyle = 'rgba(126,196,206,0.15)';
+  ctx.beginPath(); ctx.arc(240, 104, 76, 0, Math.PI * 2); ctx.stroke();
+  ctx.strokeStyle = 'rgba(200,168,76,0.14)';
+  ctx.beginPath(); ctx.arc(240, 104, 56, 0, Math.PI * 2); ctx.stroke();
+  ctx.beginPath(); ctx.arc(240, 104, 30, 0, Math.PI * 2); ctx.stroke();
+  ctx.strokeStyle = 'rgba(126,196,206,0.18)';
+  ctx.beginPath(); ctx.moveTo(240, 50); ctx.lineTo(294, 104); ctx.lineTo(240, 158); ctx.lineTo(186, 104); ctx.closePath(); ctx.stroke();
+  // 两侧盘纹石柱
+  for (const px of [54, 426]) {
+    ctx.fillStyle = '#10121e'; ctx.fillRect(px - 18, 6, 36, 14);
+    ctx.fillStyle = '#171a2c'; ctx.fillRect(px - 12, 18, 24, 188);
+    ctx.fillStyle = '#22263e'; ctx.fillRect(px - 12, 18, 6, 188);
+    for (let y = 30; y < 198; y += 22) { ctx.fillStyle = 'rgba(200,168,76,0.32)'; ctx.fillRect(px - 12, y, 24, 2); }
+    ctx.fillStyle = '#10121e'; ctx.fillRect(px - 16, 202, 32, 12);
+  }
+  // 高窗漏下的月光柱
+  ctx.fillStyle = 'rgba(150,180,220,0.06)';
+  ctx.beginPath(); ctx.moveTo(160, 0); ctx.lineTo(210, 0); ctx.lineTo(250, 204); ctx.lineTo(180, 204); ctx.fill();
+  // 石板地面
+  ctx.fillStyle = '#333048'; ctx.fillRect(0, 206, 480, 64);
+  ctx.fillStyle = '#282540'; ctx.fillRect(0, 206, 480, 6);
+  for (let x = 0; x < 480; x += 60) { ctx.fillStyle = 'rgba(10,10,20,0.4)'; ctx.fillRect(x, 212, 2, 58); }
+  for (let i = 0; i < 60; i++) {
+    ctx.fillStyle = rnd() > 0.5 ? '#3a3752' : '#2c2942';
+    ctx.fillRect((rnd() * 478) | 0, 214 + ((rnd() * 52) | 0), 4, 2);
+  }
+  // 浮游的灵光尘
+  for (let i = 0; i < 14; i++) {
+    ctx.fillStyle = rnd() > 0.5 ? 'rgba(126,196,206,0.3)' : 'rgba(200,168,76,0.28)';
+    ctx.fillRect((rnd() * 470) | 0, 20 + ((rnd() * 160) | 0), 2, 2);
+  }
+  return c;
+}
+
+// ---- 赤煞窟战斗背景：血染溶窟，血晶幽光 ----
+function bgBloodcave() {
+  const [c, ctx] = makeCanvas(480, 270);
+  const g = ctx.createLinearGradient(0, 0, 0, 270);
+  g.addColorStop(0, '#140608'); g.addColorStop(0.6, '#2a0e14'); g.addColorStop(1, '#1c080c');
+  ctx.fillStyle = g; ctx.fillRect(0, 0, 480, 270);
+  const rnd = mulberry32(707);
+  // 顶部钟乳石（暗红岩）
+  ctx.fillStyle = '#1e0a0e';
+  for (let i = 0; i < 12; i++) {
+    const x = rnd() * 460, w = 14 + rnd() * 22, h = 30 + rnd() * 55;
+    ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x + w, 0); ctx.lineTo(x + w / 2, h); ctx.fill();
+  }
+  // 岩壁血脉：短促贴壁下行的暗红折线，末端血珠凝亮
+  ctx.lineWidth = 2;
+  for (let i = 0; i < 7; i++) {
+    let x = 40 + rnd() * 400;
+    const y0 = 20 + rnd() * 110, seg = 3 + ((rnd() * 3) | 0);
+    ctx.strokeStyle = 'rgba(140,32,46,0.4)';
+    ctx.beginPath(); ctx.moveTo(x, y0);
+    for (let s = 1; s <= seg; s++) { x += (rnd() - 0.5) * 16; ctx.lineTo(x, y0 + s * 16); }
+    ctx.stroke();
+    ctx.fillStyle = 'rgba(224,72,88,0.55)';
+    ctx.fillRect(x - 1, y0 + seg * 16, 3, 3);
+  }
+  // 血晶簇：自岩基劈出的多棱晶柱，晶尖提亮
+  for (let i = 0; i < 7; i++) {
+    const x = 24 + rnd() * 430, y = 84 + rnd() * 86;
+    ctx.fillStyle = '#3a2026'; ctx.fillRect(x - 4, y + 8, 14, 4);          // 岩基
+    ctx.fillStyle = '#7a1c2c'; ctx.fillRect(x, y, 5, 10);
+    ctx.fillStyle = '#c03050'; ctx.fillRect(x + 1, y - 5, 3, 7);
+    ctx.fillStyle = '#ff6a72'; ctx.fillRect(x + 1, y - 5, 1, 3);
+    ctx.fillStyle = '#8a2030'; ctx.fillRect(x + 7, y + 3, 4, 7);
+    ctx.fillStyle = '#c03050'; ctx.fillRect(x + 8, y - 1, 2, 5);
+  }
+  // 血洼地面
+  ctx.fillStyle = '#2c1016'; ctx.fillRect(0, 196, 480, 74);
+  ctx.fillStyle = '#3a141c'; ctx.fillRect(0, 196, 480, 6);
+  for (let i = 0; i < 60; i++) {
+    ctx.fillStyle = rnd() > 0.5 ? '#4a1a22' : '#341016';
+    ctx.fillRect((rnd() * 478) | 0, 206 + ((rnd() * 60) | 0), 5, 2);
+  }
+  for (let i = 0; i < 6; i++) {
+    const x = rnd() * 440, y = 216 + rnd() * 44;
+    ctx.fillStyle = 'rgba(138,32,48,0.5)'; ctx.fillRect(x, y, 24 + rnd() * 20, 4);
+    ctx.fillStyle = 'rgba(224,72,88,0.35)'; ctx.fillRect(x + 4, y + 1, 10, 1);
+  }
+  return c;
+}
+
 function bgSnow() {
   const [c, ctx] = makeCanvas(480, 270);
   const g = ctx.createLinearGradient(0, 0, 0, 270);
@@ -1553,6 +1802,14 @@ export default {
     V('snowpath', v => tile(32, c => tileSnowPath(c, 131 + v * 5)));
     V('ice', v => tile(32, c => tileIce(c, 109 + v * 5)));
     V('floor', v => tile(32, c => tileFloor(c, 141 + v * 7)));
+    // 轮回古塔 / 赤煞窟专属瓦组（墙面也参与变体混铺，打破大面积砖墙的重复感）
+    V('towerwall', v => tile(32, c => tileTowerwall(c, 171 + v * 5, v)));
+    V('towerfloor', v => tile(32, c => tileTowerfloor(c, 177 + v * 5, v)));
+    V('bloodwall', v => tile(32, c => tileBloodwall(c, 191 + v * 5, v)));
+    V('bloodfloor', v => tile(32, c => tileBloodfloor(c, 197 + v * 5, v)));
+    assets.put('towerstairs', tile(32, tileTowerstairs));
+    assets.put('towerpillar', tile(32, tileTowerpillar));
+    assets.put('bloodrock', tile(32, tileBloodrock));
     assets.put('carpet', tile(32, tileCarpet));
     assets.put('table', tile(32, tileTable));
     assets.put('counter', tile(32, tileCounter));
@@ -1659,6 +1916,8 @@ export default {
     assets.put('bg_cave', bgCave());
     assets.put('bg_snow', bgSnow());
     assets.put('bg_blood', bgBlood());
+    assets.put('bg_tower', bgTower());
+    assets.put('bg_bloodcave', bgBloodcave());
     assets.put('bg_title', bgTitle());
   },
 };

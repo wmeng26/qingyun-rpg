@@ -6,9 +6,14 @@ const TILE = 32;
 const VARYING = new Set([
   'grass', 'flower', 'tallgrass', 'tallgrass2', 'path', 'water',
   'cavefloor', 'snow', 'snowgrass', 'snowdeep', 'snowpath', 'ice', 'floor',
+  'towerwall', 'towerfloor', 'bloodwall', 'bloodfloor',
 ]);
 // 会向正下方邻格投影的立体制瓦片
-const CASTS_SHADOW = new Set(['tree', 'rock', 'pine', 'wall', 'roof', 'door', 'table', 'counter', 'shelf']);
+const CASTS_SHADOW = new Set(['tree', 'rock', 'pine', 'wall', 'roof', 'door', 'table', 'counter', 'shelf', 'towerpillar', 'bloodrock']);
+// 洞窟系岩壁/地面：接触阴影（地面朝岩壁一侧压暗）按这些名字判定，
+// 轮回古塔与赤煞窟的专属贴图与通用洞窟瓦片同样参与纵深表现
+const CAVE_WALLS = new Set(['cavewall', 'towerwall', 'bloodwall']);
+const CAVE_FLOORS = new Set(['cavefloor', 'stairs', 'towerfloor', 'towerstairs', 'bloodfloor']);
 
 // (x,y) -> 0..255 确定性哈希：变体选择与波光相位共用，保证每次启动画面一致
 function hash2(x, y) {
@@ -64,7 +69,7 @@ export default class TileMap {
     const g = c.getContext('2d');
     g.imageSmoothingEnabled = false;
     const nameAt = (x, y) => this.tileName(x, y);
-    const isCaveWall = (x, y) => nameAt(x, y) === 'cavewall';
+    const isCaveWall = (x, y) => CAVE_WALLS.has(nameAt(x, y));
     this._water = [];
 
     // 1) 底图：按坐标混铺变体贴图
@@ -104,7 +109,7 @@ export default class TileMap {
     for (let y = 0; y < height; y++) {
       for (let x = 0; x < width; x++) {
         const name = nameAt(x, y);
-        if (name !== 'cavefloor' && name !== 'stairs') continue;
+        if (!CAVE_FLOORS.has(name)) continue;
         const px = x * TILE, py = y * TILE;
         const grad = (x0, y0, x1, y1, a) => {
           const gr = g.createLinearGradient(x0, y0, x1, y1);
