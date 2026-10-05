@@ -2,6 +2,7 @@
 import MAPS from '../data/maps.js';
 import MONSTERS from '../data/monsters.js';
 import TileMap from '../map/TileMap.js';
+import Ambience from '../map/Ambience.js';
 import Player from '../map/Player.js';
 import NPC from '../map/NPC.js';
 import Follower from '../map/Follower.js';
@@ -21,6 +22,7 @@ export default class MapScene {
     const g = this.game;
     this.def = MAPS[this.mapId];
     this.tileMap = new TileMap(this.def, g.assets);
+    this.ambience = new Ambience(this.def.ambience);
     this.player = new Player(g);
     this.player.place(this.startPos.x, this.startPos.y, this.startPos.dir);
     this.player.onArrive = (x, y) => this._onArrive(x, y);
@@ -102,6 +104,9 @@ export default class MapScene {
     } else if (this.fade >= 1 && this.fadeDir > 0) {
       this.fade = 1; this.fadeDir = 0;
     }
+
+    // 氛围层不受弹窗/对话阻断：粒子与云影持续流动，画面保持生机
+    if (this.ambience) this.ambience.update(dt);
 
     const blocked = this.game.ui.hasModal() || this.game.dialog.active || this.pendingPortal;
     this.player.update(dt, !blocked, this.moveBlocker);
@@ -350,6 +355,8 @@ export default class MapScene {
     this.camX = camX; this.camY = camY;
 
     this.tileMap.draw(ctx, camX, camY, VIEW_W, VIEW_H);
+    // 氛围层·地面：云影 + 风过草浪（画在瓦片之上、角色之下）
+    if (this.ambience) this.ambience.drawUnder(ctx, camX, camY, this.tileMap);
 
     // 宝箱
     for (const ev of this.def.events || []) {
@@ -461,6 +468,9 @@ export default class MapScene {
       ctx.fillText('!', cx, top - 24 + bob);
       ctx.textAlign = 'left';
     }
+
+    // 氛围层·空气：色调/晕影/雾团/粒子（最上层，黑场过渡之前）
+    if (this.ambience) this.ambience.drawOver(ctx, this.player.px() + 16 - camX, this.player.py() + 16 - camY);
 
     // 黑场过渡
     if (this.fade > 0) {

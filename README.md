@@ -49,7 +49,7 @@ WebAudio 程序化合成，全部代码生成、零素材：
 
 ## 玩法内容（第一章 ~ 第五章 · 全剧情终·真结局）
 
-- **15 张地图**：青云山下 → **落霞林 → 惊鸿涧（前期练级去处，筑基前开放）** → 青云门 → 幽冥洞 → 荒古道 → 黑风寨 → 血煞谷 → 血煞祭坛 → 寒霜渡（北境枢纽）→ 寒渊冰原 → 魔渊封印 → **赤煞窟 → 煞天幻境（后传终章）**，另有**轮回古塔（九层试炼）**与渡口雪景/冰原/血窟专用 tile 组；全图带坐标变体混铺、水岸/洞窟边缘过渡、树石建筑投影与水面波光
+- **23 张地图（含 8 张室内场景）**：青云山下 → **落霞林 → 惊鸿涧（前期练级去处，筑基前开放）** → 青云门 → 幽冥洞 → 荒古道 → 黑风寨 → 血煞谷 → 血煞祭坛 → 寒霜渡（北境枢纽）→ 寒渊冰原 → 魔渊封印 → **赤煞窟 → 煞天幻境（后传终章）**，另有**轮回古塔（九层试炼）**与渡口雪景/冰原/血窟专用 tile 组；全图带坐标变体混铺、水岸/洞窟边缘过渡、树石建筑投影与水面波光；**场景氛围层**按地图主题渲染天气粒子（落叶/花瓣/流萤/风沙/细雪/风雪/血色余烬/幽雾/浮尘）、云影、风过草浪与环境色调晕影（洞窟随身光圈/室内暖光），由各图的 `ambience` 字段数据驱动
 - **回合制战斗**：速度决定行动顺序，普攻/功法/丹药/防御/逃跑；伤害飘字、会心、五行克制、灼烧/中毒/眩晕等状态；队伍上限 4 人（各自独立站位）
 - **42 种敌人 + 4 章节 Boss + 4 精英/小 Boss + 塔层守卫**（含真最终 Boss「血煞之上·赤渊」150000 HP），四种 AI 行为模式；筑基前新增落霞林（妖猴/竹蜂/野猪/黑熊/树妖）与惊鸿涧（山魈/苍雕/岩甲兽/水鬼）共 9 种前期妖物
 - **境界体系（全六境贯通）**：炼气一~九层（自动）→ 筑基（筑基丹·80%）→ 金丹（金元丹·60%）→ 元婴（剧情契机）→ 化神（破境丹·50%）→ **炼虚（炼虚丹·45%）**，每境解锁本命功法
@@ -81,7 +81,7 @@ WebAudio 程序化合成，全部代码生成、零素材：
 │   │   └── PlaceholderArt.js  # 程序化像素占位美术（全部资源代码生成）
 │   ├── data/             # 纯数据：balance/realms/characters/items/skills/monsters/maps/quests/dialogs/shops
 │   ├── systems/          # Character/Cultivation/Inventory/Equipment/QuestManager/DialogEngine
-│   ├── map/              # TileMap/Player/NPC/Encounter（暗雷）
+│   ├── map/              # TileMap/Player/NPC/Encounter（暗雷）/Ambience（氛围层）
 │   ├── battle/           # BattleEngine(状态机)/Unit/Skill/StatusEffect/DamageFormula/BattleUI
 │   └── scenes/           # Boot/Title/Map/Battle/UIScene(HUD/商店/确认/章节)/MainMenu
 └── assets/               # 预留：AI 素材目录（当前全部为程序化占位美术）
@@ -94,7 +94,7 @@ WebAudio 程序化合成，全部代码生成、零素材：
 - `js/data/balance.js`：遇敌率、命中/会心/逃跑、伤害方差与软上限、经验曲线、初始状态、复活点
 - `js/data/realms.js`：境界表（等级门槛/属性系数/突破丹/成功率）
 - `js/data/items.js` / `skills.js` / `monsters.js`：全部内容数值（武器按门类 `wtype` 绑定角色：剑=萧逸 / 刀=洛清霜 / 琴=沈孤鸿 / 笔=柳如烟，防具饰品通用）
-- `js/data/maps.js`：字符画地图 + 传送门/NPC/宝箱/Boss 触发 + 遇敌表 + `music` BGM 选曲（缺省 `map`）
+- `js/data/maps.js`：字符画地图 + 传送门/NPC/宝箱/Boss 触发 + 遇敌表 + `music` BGM 选曲（缺省 `map`）+ `ambience` 氛围预设（取值见 `js/map/Ambience.js` 的 `PRESETS`）
 - `js/data/shops.js`：商店表（货单按商人区分）；对话动作 `{ do: 'openShop', id }` 打开对应商店，出售一律按半价回收（任务品不可卖）
 
 改完可运行 `node tools/validate.mjs` 校验引用完整性（含地图 `music` 字段与 BGM 曲库完整性）；NPC 会阻挡行走，校验器同时会以 NPC 为障碍做连通性 BFS，防止新 NPC 堵死传送门/事件/对话通路。

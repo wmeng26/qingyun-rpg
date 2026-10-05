@@ -8,13 +8,16 @@ import { fileURLToPath, pathToFileURL } from 'node:url';
 const root = path.dirname(path.dirname(fileURLToPath(import.meta.url)));
 const data = (f) => import(pathToFileURL(path.join(root, 'js', 'data', f)).href);
 const core = (f) => import(pathToFileURL(path.join(root, 'js', 'core', f)).href);
+const mapMod = (f) => import(pathToFileURL(path.join(root, 'js', 'map', f)).href);
 
-const [maps, quests, dialogs, items, skills, monsters, realms, characters, audioMod, balance, shops] =
+const [maps, quests, dialogs, items, skills, monsters, realms, characters, audioMod, balance, shops, ambienceMod] =
   await Promise.all([
     data('maps.js'), data('quests.js'), data('dialogs.js'), data('items.js'),
     data('skills.js'), data('monsters.js'), data('realms.js'), data('characters.js'),
     core('Audio.js'), data('balance.js'), data('shops.js'),
+    mapMod('Ambience.js'),
   ]).then(arrs => arrs.map(m => m.default !== undefined ? m.default : m));
+const { AMBIENCE_NAMES } = ambienceMod; // 导入映射折叠为 default（Ambience 类），名单挂在其静态成员上
 const { SONG_NAMES } = audioMod;
 // 头像白名单动态扫描美术模块源码，新增 face_* 后无需再改本文件
 const FACE_NAMES = [...readFileSync(path.join(root, 'js', 'core', 'PlaceholderArt.js'), 'utf8')
@@ -66,6 +69,7 @@ for (const map of Object.values(maps)) {
     for (const row of zone) for (const m of row.mobs) if (!monsters[m]) err(`${id}: 遇敌怪物不存在 ${m}`);
   }
   if (map.music && !SONG_NAMES.includes(map.music)) err(`${id}: BGM 曲目不存在 ${map.music}`);
+  if (map.ambience && !AMBIENCE_NAMES.includes(map.ambience)) err(`${id}: ambience 氛围预设不存在 ${map.ambience}`);
 }
 
 // 任务引用

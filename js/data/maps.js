@@ -1,5 +1,6 @@
 // 地图表：瓦片用字符画（每行等宽），事件/传送门/NPC 坐标全部数据驱动
 // legend: solid 碰撞 / enc 遇敌区(null|'low'|'high'|'cave')
+// ambience: 氛围预设（js/map/Ambience.js）——天气粒子/云影/色调晕影按主题渲染
 
 // 对话脚本 startBattle 动作引用的固定战斗
 export const BATTLES = {
@@ -49,7 +50,7 @@ function buildTowerMap() {
   });
 
   return {
-    id: 'map_lunhui', name: '轮回古塔', width: 18, height: rows.length, bg: 'bg_cave', music: 'cave',
+    id: 'map_lunhui', name: '轮回古塔', width: 18, height: rows.length, bg: 'bg_cave', music: 'cave', ambience: 'cave',
     legend: {
       'C': { tile: 'cavewall', solid: true, enc: null },
       'j': { tile: 'cavefloor', solid: false, enc: null },
@@ -122,7 +123,7 @@ function buildTowerMap() {
 
 export default {
   map_shanxia: {
-    id: 'map_shanxia', name: '青云山下', width: 30, height: 22, bg: 'bg_outdoor',
+    id: 'map_shanxia', name: '青云山下', width: 30, height: 22, bg: 'bg_outdoor', ambience: 'leaves',
     legend: {
       '.': { tile: 'grass', solid: false, enc: null },
       ',': { tile: 'flower', solid: false, enc: null },
@@ -208,7 +209,7 @@ export default {
   },
 
   map_qingyunmen: {
-    id: 'map_qingyunmen', name: '青云门', width: 26, height: 20, bg: 'bg_outdoor',
+    id: 'map_qingyunmen', name: '青云门', width: 26, height: 20, bg: 'bg_outdoor', ambience: 'petals',
     legend: {
       '.': { tile: 'grass', solid: false, enc: null },
       ',': { tile: 'flower', solid: false, enc: null },
@@ -265,7 +266,7 @@ export default {
 
   // ---- 前期拓展：落霞林（Lv5~9） ----
   map_luoxia: {
-    id: 'map_luoxia', name: '落霞林', width: 26, height: 20, bg: 'bg_outdoor',
+    id: 'map_luoxia', name: '落霞林', width: 26, height: 20, bg: 'bg_outdoor', ambience: 'sunset',
     legend: {
       '.': { tile: 'grass', solid: false, enc: null },
       ',': { tile: 'flower', solid: false, enc: null },
@@ -339,7 +340,7 @@ export default {
 
   // ---- 前期拓展：惊鸿涧（Lv11~14，筑基前练级） ----
   map_jinghong: {
-    id: 'map_jinghong', name: '惊鸿涧', width: 26, height: 20, bg: 'bg_outdoor',
+    id: 'map_jinghong', name: '惊鸿涧', width: 26, height: 20, bg: 'bg_outdoor', ambience: 'fireflies',
     legend: {
       '.': { tile: 'grass', solid: false, enc: null },
       ',': { tile: 'flower', solid: false, enc: null },
@@ -406,7 +407,7 @@ export default {
   },
 
   map_youming: {
-    id: 'map_youming', name: '幽冥洞', width: 24, height: 18, bg: 'bg_cave', music: 'cave',
+    id: 'map_youming', name: '幽冥洞', width: 24, height: 18, bg: 'bg_cave', music: 'cave', ambience: 'mist',
     legend: {
       'C': { tile: 'cavewall', solid: true, enc: null },
       'f': { tile: 'cavefloor', solid: false, enc: 'cave' },
@@ -454,7 +455,7 @@ export default {
   },
 
   map_huanggu: {
-    id: 'map_huanggu', name: '荒古道', width: 30, height: 20, bg: 'bg_outdoor',
+    id: 'map_huanggu', name: '荒古道', width: 30, height: 20, bg: 'bg_outdoor', ambience: 'dust',
     legend: {
       '.': { tile: 'grass', solid: false, enc: null },
       ',': { tile: 'flower', solid: false, enc: null },
@@ -530,7 +531,7 @@ export default {
   },
 
   map_heifengzhai: {
-    id: 'map_heifengzhai', name: '黑风寨', width: 26, height: 20, bg: 'bg_outdoor',
+    id: 'map_heifengzhai', name: '黑风寨', width: 26, height: 20, bg: 'bg_outdoor', ambience: 'dust',
     legend: {
       '.': { tile: 'grass', solid: false, enc: null },
       't': { tile: 'tallgrass', solid: false, enc: 'low' },
@@ -597,7 +598,7 @@ export default {
   },
 
   map_xueshagu: {
-    id: 'map_xueshagu', name: '血煞谷', width: 30, height: 20, bg: 'bg_outdoor',
+    id: 'map_xueshagu', name: '血煞谷', width: 30, height: 20, bg: 'bg_outdoor', ambience: 'embers',
     legend: {
       '.': { tile: 'grass', solid: false, enc: null },
       't': { tile: 'tallgrass', solid: false, enc: 'low' },
@@ -674,7 +675,7 @@ export default {
   },
 
   map_jitan: {
-    id: 'map_jitan', name: '血煞祭坛', width: 26, height: 20, bg: 'bg_cave', music: 'cave',
+    id: 'map_jitan', name: '血煞祭坛', width: 26, height: 20, bg: 'bg_cave', music: 'cave', ambience: 'embers',
     legend: {
       'C': { tile: 'cavewall', solid: true, enc: null },
       'f': { tile: 'cavefloor', solid: false, enc: 'cave' },
@@ -729,7 +730,7 @@ export default {
   },
 
   map_hanshidu: {
-    id: 'map_hanshidu', name: '寒霜渡', width: 26, height: 18, bg: 'bg_outdoor', music: 'ice',
+    id: 'map_hanshidu', name: '寒霜渡', width: 26, height: 18, bg: 'bg_outdoor', music: 'ice', ambience: 'snow',
     legend: {
       '.': { tile: 'snow', solid: false, enc: null },
       'i': { tile: 'ice', solid: false, enc: null },
@@ -798,7 +799,7 @@ export default {
   },
 
   map_bingyuan: {
-    id: 'map_bingyuan', name: '寒渊冰原', width: 30, height: 22, bg: 'bg_snow', music: 'ice',
+    id: 'map_bingyuan', name: '寒渊冰原', width: 30, height: 22, bg: 'bg_snow', music: 'ice', ambience: 'blizzard',
     legend: {
       '.': { tile: 'snow', solid: false, enc: null },
       't': { tile: 'snowgrass', solid: false, enc: 'low' },
@@ -869,7 +870,7 @@ export default {
   },
 
   map_moyuan: {
-    id: 'map_moyuan', name: '魔渊封印', width: 26, height: 20, bg: 'bg_cave', music: 'cave',
+    id: 'map_moyuan', name: '魔渊封印', width: 26, height: 20, bg: 'bg_cave', music: 'cave', ambience: 'mist',
     legend: {
       'C': { tile: 'cavewall', solid: true, enc: null },
       'f': { tile: 'cavefloor', solid: false, enc: 'cave' },
@@ -925,7 +926,7 @@ export default {
 
   // ---- 第五章：血煞之上 ----
   map_chishaku: {
-    id: 'map_chishaku', name: '赤煞窟', width: 26, height: 20, bg: 'bg_cave', music: 'cult',
+    id: 'map_chishaku', name: '赤煞窟', width: 26, height: 20, bg: 'bg_cave', music: 'cult', ambience: 'embers',
     legend: {
       'C': { tile: 'cavewall', solid: true, enc: null },
       'f': { tile: 'cavefloor', solid: false, enc: 'cult' },
@@ -980,7 +981,7 @@ export default {
   },
 
   map_shatian: {
-    id: 'map_shatian', name: '煞天幻境', width: 24, height: 18, bg: 'bg_blood', music: 'apex',
+    id: 'map_shatian', name: '煞天幻境', width: 24, height: 18, bg: 'bg_blood', music: 'apex', ambience: 'embers',
     legend: {
       'C': { tile: 'cavewall', solid: true, enc: null },
       'f': { tile: 'cavefloor', solid: false, enc: 'cult' },
@@ -1030,7 +1031,7 @@ export default {
   // ---- 室内地图（建筑互动）：单门进出，出门格 useReturn 按来路送回门外 ----
   // legend：W 墙 / D 门 / f 木地板 / c 地毯 / g 石地 / t 桌案 / k 柜台 / s 货架（t/k/s 为实体家具）
   map_dadian: {
-    id: 'map_dadian', name: '青云大殿', interior: true, width: 15, height: 9, bg: 'bg_outdoor',
+    id: 'map_dadian', name: '青云大殿', interior: true, width: 15, height: 9, bg: 'bg_outdoor', ambience: 'warm',
     legend: {
       'W': { tile: 'wall', solid: true, enc: null },
       'D': { tile: 'door', solid: true, enc: null },
@@ -1063,7 +1064,7 @@ export default {
   },
 
   map_cangjingge: {
-    id: 'map_cangjingge', name: '藏经阁', interior: true, width: 15, height: 9, bg: 'bg_outdoor',
+    id: 'map_cangjingge', name: '藏经阁', interior: true, width: 15, height: 9, bg: 'bg_outdoor', ambience: 'warm',
     legend: {
       'W': { tile: 'wall', solid: true, enc: null },
       'D': { tile: 'door', solid: true, enc: null },
@@ -1098,7 +1099,7 @@ export default {
   },
 
   map_hut_liehu: {
-    id: 'map_hut_liehu', name: '猎户小屋', interior: true, width: 15, height: 9, bg: 'bg_outdoor',
+    id: 'map_hut_liehu', name: '猎户小屋', interior: true, width: 15, height: 9, bg: 'bg_outdoor', ambience: 'warm',
     legend: {
       'W': { tile: 'wall', solid: true, enc: null },
       'D': { tile: 'door', solid: true, enc: null },
@@ -1132,7 +1133,7 @@ export default {
   },
 
   map_minju_shanxia: {
-    id: 'map_minju_shanxia', name: '山下民居', interior: true, width: 15, height: 9, bg: 'bg_outdoor',
+    id: 'map_minju_shanxia', name: '山下民居', interior: true, width: 15, height: 9, bg: 'bg_outdoor', ambience: 'warm',
     legend: {
       'W': { tile: 'wall', solid: true, enc: null },
       'D': { tile: 'door', solid: true, enc: null },
@@ -1165,7 +1166,7 @@ export default {
   },
 
   map_yaolu: {
-    id: 'map_yaolu', name: '采药庐', interior: true, width: 15, height: 9, bg: 'bg_outdoor',
+    id: 'map_yaolu', name: '采药庐', interior: true, width: 15, height: 9, bg: 'bg_outdoor', ambience: 'warm',
     legend: {
       'W': { tile: 'wall', solid: true, enc: null },
       'D': { tile: 'door', solid: true, enc: null },
@@ -1199,7 +1200,7 @@ export default {
   },
 
   map_yizhan: {
-    id: 'map_yizhan', name: '渡口客栈', interior: true, width: 15, height: 9, bg: 'bg_outdoor', music: 'ice',
+    id: 'map_yizhan', name: '渡口客栈', interior: true, width: 15, height: 9, bg: 'bg_outdoor', music: 'ice', ambience: 'warm',
     legend: {
       'W': { tile: 'wall', solid: true, enc: null },
       'D': { tile: 'door', solid: true, enc: null },
@@ -1233,7 +1234,7 @@ export default {
   },
 
   map_zahuopu: {
-    id: 'map_zahuopu', name: '渡口杂货铺', interior: true, width: 15, height: 9, bg: 'bg_outdoor', music: 'ice',
+    id: 'map_zahuopu', name: '渡口杂货铺', interior: true, width: 15, height: 9, bg: 'bg_outdoor', music: 'ice', ambience: 'warm',
     legend: {
       'W': { tile: 'wall', solid: true, enc: null },
       'D': { tile: 'door', solid: true, enc: null },
@@ -1265,7 +1266,7 @@ export default {
   },
 
   map_juyiting: {
-    id: 'map_juyiting', name: '聚义厅', interior: true, width: 15, height: 9, bg: 'bg_cave',
+    id: 'map_juyiting', name: '聚义厅', interior: true, width: 15, height: 9, bg: 'bg_cave', ambience: 'warm',
     legend: {
       'W': { tile: 'wall', solid: true, enc: null },
       'D': { tile: 'door', solid: true, enc: null },
