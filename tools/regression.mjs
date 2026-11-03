@@ -10,10 +10,15 @@ const [
   { default: EventBus }, { default: Inventory }, { default: Equipment },
   { Character }, { default: Cultivation }, { default: QuestManager }, { default: BattleEngine },
   { default: QUESTS }, { default: ITEMS }, { default: SKILLS }, { default: MAPS },
+  { default: Unit }, { default: SHOPS },
+  Forge, { buildMirrors, needsTrial }, { default: SaveManager }, { default: BALANCE },
 ] = await Promise.all([
   mod('core/EventBus.js'), mod('systems/Inventory.js'), mod('systems/Equipment.js'),
   mod('systems/Character.js'), mod('systems/Cultivation.js'), mod('systems/QuestManager.js'), mod('battle/BattleEngine.js'),
   mod('data/quests.js'), mod('data/items.js'), mod('data/skills.js'), mod('data/maps.js'),
+  mod('battle/Unit.js'), mod('data/shops.js'),
+  mod('systems/Forge.js'), mod('systems/HeartDemon.js'), mod('core/SaveManager.js'),
+  mod('data/balance.js'),
 ]);
 
 let passed = 0, failed = 0;
@@ -837,6 +842,268 @@ section('赤渊终战 300 局（炼虚四人）');
     } catch (e) { tErrs++; }
   }
   ok(tErrs === 0 && tWins >= 48, `守塔傀儡抽查 50 局无异常且基本全胜（胜 ${tWins}，异常 ${tErrs}）`);
+}
+
+// ============ 19. 楚红缨入队与枪系数据 ============
+section('楚红缨入队与枪系数据');
+{
+  const g = makeGame();
+  const hero = g.party[0];
+  const chu = new Character('chu');
+  chu.level = hero.level; chu.exp = hero.exp; chu.realmId = hero.realmId;
+  const learned = chu.syncSkills();
+  ok(chu.id === 'chu' && chu.name === '楚红缨' && chu.def.wtype === 'spear', '角色定义正确（枪系）');
+  ok(['skill_huimaqiang', 'skill_zhuifeng', 'skill_hengsao', 'skill_qisha'].every(s => chu.skills.includes(s)),
+    `筑基期回填全部枪法（实际 ${chu.skills.join(',')}）`);
+  ok(learned.length >= 3, `syncSkills 返回新学列表（回马枪为初始技能，新学 ${learned.length} 个）`);
+  const st = chu.stats();
+  ok(Object.values(st).every(v => Number.isFinite(v) && v > 0), `属性链有限（atk=${st.atk} spd=${st.spd}）`);
+  // 武器门类绑定：枪只有楚红缨能装备
+  g.obtainItem('spear_huoying', 1, true);
+  ok(g.equipment.canEquip(chu, ITEMS.spear_huoying).ok, '楚红缨可装备火缨枪');
+  ok(!g.equipment.canEquip(hero, ITEMS.spear_huoying).ok, '萧逸不可装备枪（门类不符）');
+  // 商店/任务奖励覆盖枪系获取路径（与 validate 同源的防呆断言）
+  const qiangInShop = Object.values(SHOPS).some(s => s.goods.includes('spear_tie'));
+  const qiangInReward = Object.values(QUESTS).some(q => (q.rewards.items || []).some(it => it.id === 'spear_bawang'));
+  ok(qiangInShop && qiangInReward, '铁脊枪入商店、霸王枪入任务奖励');
+  // 支线链：q1 击杀→q2 收集→q3 旗标
+  const q = g.quests;
+  ok(q.get('quest_side_chu_1').state === 'available' && q.get('quest_side_chu_2').state === 'locked', '支线枪1 可接、支线枪2 锁定');
+  q.accept('quest_side_chu_1');
+  for (let i = 0; i < 4; i++) q.notifyKill('mob_xueshatu');
+  ok(q.get('quest_side_chu_1').state === 'ready', '清剿教众×4 后可交付');
+  q.complete('quest_side_chu_1');
+  ok(q.get('quest_side_chu_2').state === 'available' && g.inventory.count('spear_tie') === 1, '支线枪2 解锁、铁脊枪奖励到账');
+  q.accept('quest_side_chu_2');
+  g.obtainItem('xue_zhu', 3, true);
+  ok(q.get('quest_side_chu_2').state === 'ready', '血煞珠×3 集齐可交付');
+  q.complete('quest_side_chu_2');
+  ok(q.get('quest_side_chu_3').state === 'available' && g.inventory.count('xue_zhu') === 0, '支线枪3 解锁、交付扣珠');
+  q.accept('quest_side_chu_3');
+  ok(q.get('quest_side_chu_3').state !== 'ready', '未击败牟沧不可交付');
+  g.setFlag('boss_qiangmo_defeated');
+  ok(q.get('quest_side_chu_3').state === 'ready', '击败牟沧后可交付');
+  q.complete('quest_side_chu_3');
+  ok(g.inventory.count('spear_bawang') === 1, '霸王枪奖励到账');
+}
+
+// ============ 20. 元素连携 ============
+section('元素连携');
+{
+  // 同回合 冰→水 相生衔接：后技伤害 ×1.3，并产出 combo 事件
+  const g = makeGame();
+  const hero = g.party[0];
+  hero.level = 30; hero.realmId = 'jindan'; hero.syncSkills();
+  const luo = new Character('luo'); luo.level = 30; luo.realmId = 'jindan'; luo.syncSkills();
+  g.party.push(luo);
+  for (const c of g.party) c.fullHeal();
+  // 用高血量 Boss 确保双方都能出手（弱怪会被先手秒掉导致链断裂）
+  const eng = new BattleEngine({ game: g, mobs: ['boss_xueshazhu'], boss: true, canFlee: false });
+  // 雷→火：沈孤鸿雷技先手，楚红缨火技后手（cycle.thunder === 'fire'）
+  const shen = new Character('shen'); shen.level = 30; shen.realmId = 'jindan'; shen.syncSkills();
+  const chu = new Character('chu'); chu.level = 30; chu.realmId = 'jindan'; chu.syncSkills();
+  g.party.push(shen, chu);
+  eng.partyUnits = g.party.map(c => new Unit(c));
+  eng.beginTurn();
+  const uShen = eng.partyUnits.find(u => u.source.id === 'shen');
+  const uChu = eng.partyUnits.find(u => u.source.id === 'chu');
+  const uHero = eng.partyUnits.find(u => u.source.id === 'hero');
+  const uLuo = eng.partyUnits.find(u => u.source.id === 'luo');
+  const foe = eng.aliveEnemies()[0];
+  eng.setCommand(uShen, { kind: 'skill', skillId: 'skill_xianyin', targets: [foe] });   // 雷
+  eng.setCommand(uChu, { kind: 'skill', skillId: 'skill_liaoyuan', targets: [foe] });    // 火（连携）
+  eng.setCommand(uHero, { kind: 'defend' });
+  eng.setCommand(uLuo, { kind: 'defend' });
+  // 抬高沈孤鸿速度，确保 沈→楚 的行动序确定
+  const origSpd = uShen.effStat.bind(uShen);
+  Object.defineProperty(uShen, 'effStat', { value: (k) => k === 'spd' ? 999 : origSpd(k) });
+  const r1 = eng.resolveTurn();
+  const comboEv = r1.events.find(e => e.type === 'combo');
+  ok(!!comboEv && comboEv.text.includes('雷火焚天'), `雷→火触发连携事件（实际：${comboEv ? comboEv.text : '无'}）`);
+  // 无衔接对照组：火→雷 不触发
+  const g2 = makeGame();
+  const h2 = g2.party[0]; h2.level = 30; h2.realmId = 'jindan'; h2.syncSkills();
+  const chu2 = new Character('chu'); chu2.level = 30; chu2.realmId = 'jindan'; chu2.syncSkills();
+  const shen2 = new Character('shen'); shen2.level = 30; shen2.realmId = 'jindan'; shen2.syncSkills();
+  g2.party.push(chu2, shen2);
+  const eng2 = new BattleEngine({ game: g2, mobs: ['boss_xueshazhu'], boss: true, canFlee: false });
+  eng2.beginTurn();
+  const foe2 = eng2.aliveEnemies()[0];
+  const uChu2 = eng2.partyUnits.find(u => u.source.id === 'chu');
+  const uShen2 = eng2.partyUnits.find(u => u.source.id === 'shen');
+  const spd2 = uChu2.effStat.bind(uChu2);
+  Object.defineProperty(uChu2, 'effStat', { value: (k) => k === 'spd' ? 999 : spd2(k) });
+  eng2.setCommand(uChu2, { kind: 'skill', skillId: 'skill_liaoyuan', targets: [foe2] });  // 火
+  eng2.setCommand(uShen2, { kind: 'skill', skillId: 'skill_xianyin', targets: [foe2] });   // 雷（逆序不连携）
+  const r2 = eng2.resolveTurn();
+  ok(!r2.events.some(e => e.type === 'combo'), '火→雷（逆序）不触发连携');
+  // 普攻不打断衔接链：雷→普攻→火 仍触发
+  const g3 = makeGame();
+  const h3 = g3.party[0]; h3.level = 30; h3.realmId = 'jindan'; h3.syncSkills();
+  const shen3 = new Character('shen'); shen3.level = 30; shen3.realmId = 'jindan'; shen3.syncSkills();
+  const chu3 = new Character('chu'); chu3.level = 30; chu3.realmId = 'jindan'; chu3.syncSkills();
+  g3.party.push(shen3, chu3);
+  const eng3 = new BattleEngine({ game: g3, mobs: ['boss_xueshazhu'], boss: true, canFlee: false });
+  eng3.beginTurn();
+  const foe3 = eng3.aliveEnemies()[0];
+  const uShen3 = eng3.partyUnits.find(u => u.source.id === 'shen');
+  const uChu3 = eng3.partyUnits.find(u => u.source.id === 'chu');
+  const uHero3 = eng3.partyUnits.find(u => u.source.id === 'hero');
+  const spd3 = uShen3.effStat.bind(uShen3);
+  Object.defineProperty(uShen3, 'effStat', { value: (k) => k === 'spd' ? 999 : spd3(k) });
+  const spd4 = uHero3.effStat.bind(uHero3);
+  Object.defineProperty(uHero3, 'effStat', { value: (k) => k === 'spd' ? 998 : spd4(k) });
+  eng3.setCommand(uShen3, { kind: 'skill', skillId: 'skill_xianyin', targets: [foe3] });   // 雷
+  eng3.setCommand(uHero3, { kind: 'attack', targets: [foe3] });                              // 普攻（不打断）
+  eng3.setCommand(uChu3, { kind: 'skill', skillId: 'skill_liaoyuan', targets: [foe3] });    // 火（仍连携）
+  const r3 = eng3.resolveTurn();
+  ok(r3.events.some(e => e.type === 'combo'), '雷→普攻→火：普攻不断链，仍触发连携');
+  // 回合重置：下一回合无前置元素技，不再连携
+  ok(eng3._comboElem === 'fire', '回合内连携链记录正确');
+}
+
+// ============ 21. 血衣枪魔 Boss 战（金丹三人+楚红缨，无头 200 局） ============
+section('血衣枪魔 Boss 战 200 局');
+{
+  let wins = 0, losses = 0, totalTurns = 0, errs = 0, comboRuns = 0;
+  for (let run = 0; run < 200; run++) {
+    try {
+      const g = makeGame();
+      const hero = g.party[0];
+      hero.level = 29; hero.realmId = 'jindan'; hero.syncSkills();
+      hero.equipment.weapon = 'sword_zhanlu'; hero.equipment.armor = 'armor_longlin';
+      const liu = new Character('liu'); liu.level = 29; liu.realmId = 'jindan'; liu.syncSkills();
+      const luo = new Character('luo'); luo.level = 29; luo.realmId = 'jindan'; luo.syncSkills();
+      luo.equipment.weapon = 'dao_duanjiang';
+      const chu = new Character('chu'); chu.level = 29; chu.realmId = 'jindan'; chu.syncSkills();
+      chu.equipment.weapon = 'spear_huoying';
+      g.party.push(liu, luo, chu);
+      for (const c of g.party) c.fullHeal();
+      const eng = new BattleEngine({ game: g, mobs: ['boss_qiangmo'], boss: true, canFlee: false, winFlag: 'boss_qiangmo_defeated' });
+      let outcome = null, guard = 0, sawCombo = false;
+      while (!outcome && guard++ < 200) {
+        eng.beginTurn();
+        while (eng.currentCommander()) {
+          const u = eng.currentCommander();
+          eng.setCommand(u, partyCommand(u, eng));
+          eng.popCommander();
+        }
+        const r = eng.resolveTurn();
+        if (r.events.some(e => e.type === 'combo')) sawCombo = true;
+        outcome = r.outcome;
+      }
+      if (sawCombo) comboRuns++;
+      totalTurns += eng.turn - 1;
+      if (outcome === 'victory') wins++; else losses++;
+    } catch (e) { errs++; console.error('  异常:', e.message); }
+  }
+  ok(errs === 0, `无异常（异常 ${errs} 局）`);
+  ok(losses === 0, `200 局全胜（胜 ${wins} / 负 ${losses}）`);
+  console.log(`  平均回合数: ${(totalTurns / 200).toFixed(1)}，连携出现局数 ${comboRuns}/200（策略AI不刻意凑连携，仅作观察）`);
+  ok(totalTurns / 200 < 40, '平均回合数 < 40');
+}
+
+// ============ 22. 装备精炼 ============
+section('装备精炼');
+{
+  Forge.reset();
+  const g = makeGame();
+  const hero = g.party[0];
+  hero.equipment.weapon = 'sword_iron';
+  const atk0 = hero.stats().atk;
+  g.gold = 100000;
+  g.obtainItem('xuan_jing', 20, true);
+  const cost0 = Forge.costOf(0);
+  ok(cost0 && cost0.gold > 0 && cost0.count > 0, `+1 代价已定义（金${cost0.gold} 玄晶${cost0.count}）`);
+  const r1 = Forge.refine(g, 'sword_iron');
+  ok(r1.ok && r1.plus === 1, '首次精炼成功至 +1');
+  ok(g.gold === 100000 - cost0.gold && g.inventory.count('xuan_jing') === 20 - cost0.count, '扣金扣材料');
+  const atk1 = hero.stats().atk;
+  ok(atk1 > atk0, `精炼后攻击提升（${atk0} → ${atk1}，签名缓存已失效）`);
+  ok(Forge.displayName(ITEMS.sword_iron) === '铁剑 +1', '展示名带 +1');
+  // 直冲上限，验证满级拦截（过程中补足资源，避免资源耗尽导致精炼失败）
+  const maxPlus = BALANCE.forge.maxPlus;
+  let guard = 0;
+  while (Forge.getPlus('sword_iron') < maxPlus && guard++ < 30) {
+    g.gold = 100000;
+    g.obtainItem('xuan_jing', 10, true);
+    Forge.refine(g, 'sword_iron');
+  }
+  ok(Forge.getPlus('sword_iron') === maxPlus, `精炼上限 +${maxPlus}`);
+  ok(Forge.costOf(maxPlus) === null, '满级后无代价可算');
+  ok(Forge.refine(g, 'sword_iron').ok === false, '满级后拒绝继续精炼');
+  // 存档往返：等级表可序列化/恢复
+  const snapshot = Forge.getLevels();
+  Forge.reset();
+  ok(Forge.getPlus('sword_iron') === 0, 'reset 清空等级');
+  Forge.setLevels(snapshot);
+  ok(Forge.getPlus('sword_iron') === maxPlus, 'setLevels 恢复等级');
+  // 越界/脏数据归一化
+  Forge.setLevels({ sword_iron: 99, junk: -3, bad: 'x' });
+  ok(Forge.getPlus('sword_iron') === maxPlus && Forge.getPlus('junk') === 0, '越界等级归一化');
+  Forge.reset();
+}
+
+// ============ 23. 心魔试炼 ============
+section('心魔试炼');
+{
+  Forge.reset();
+  const g = makeGame();
+  const hero = g.party[0];
+  hero.level = 16; hero.realmId = 'lianqi_9'; hero.syncSkills(); hero.fullHeal();
+  const liu = new Character('liu'); liu.level = 16; liu.realmId = 'lianqi_9'; liu.syncSkills();
+  const luo = new Character('luo'); luo.level = 16; luo.realmId = 'lianqi_9'; luo.syncSkills();
+  g.party.push(liu, luo);
+  const mirrors = buildMirrors(g.party);
+  ok(mirrors.length === g.party.length && mirrors.every(m => m.mirror && m.id.startsWith('demon_')), '镜像数量与队伍一致且带 mirror 标记');
+  ok(mirrors.every(m => m.skills.every(id => { const s = SKILLS[id]; return !s || (!s.heal && !s.cure && !s.buff); })), '镜像只带伤害类功法（不会自疗拖延）');
+  ok(needsTrial({ pill: 'pill_zhuji', auto: false }) && !needsTrial({ pill: null }), '大境界需试炼、元婴（无丹药）不需要');
+
+  // 无头模拟 100 局：镜像敌群（对象形式 mobs）可正常结算
+  let wins = 0, losses = 0, errs = 0, turns = 0;
+  for (let run = 0; run < 100; run++) {
+    try {
+      const gg = makeGame();
+      const h = gg.party[0];
+      h.level = 16; h.realmId = 'lianqi_9'; h.syncSkills();
+      h.equipment.weapon = 'sword_iron'; h.equipment.armor = 'armor_leather';
+      const l1 = new Character('liu'); l1.level = 16; l1.realmId = 'lianqi_9'; l1.syncSkills();
+      const l2 = new Character('luo'); l2.level = 16; l2.realmId = 'lianqi_9'; l2.syncSkills();
+      gg.party.push(l1, l2);
+      for (const c of gg.party) c.fullHeal();
+      const eng = new BattleEngine({ game: gg, mobs: buildMirrors(gg.party), boss: true, canFlee: false });
+      let outcome = null, guard = 0;
+      while (!outcome && guard++ < 200) {
+        eng.beginTurn();
+        while (eng.currentCommander()) {
+          const u = eng.currentCommander();
+          eng.setCommand(u, partyCommand(u, eng));
+          eng.popCommander();
+        }
+        outcome = eng.resolveTurn().outcome;
+      }
+      turns += eng.turn - 1;
+      if (outcome === 'victory') wins++; else losses++;
+    } catch (e) { errs++; console.error('  异常:', e.message); }
+  }
+  ok(errs === 0, `镜像战无异常（异常 ${errs} 局）`);
+  ok(wins >= 50, `镜像战胜率合理（胜 ${wins} / 负 ${losses}）`);
+  console.log(`  平均回合数: ${(turns / 100).toFixed(1)}`);
+  // 胜后落地境界
+  const next = Cultivation.nextRealmDef(hero);
+  Cultivation.applyAdvance(hero, next, g.bus);
+  ok(hero.realmId === 'zhuji' && hero.skills.length > 0, '胜利后境界晋升并补学功法');
+}
+
+// ============ 24. 存档 v1→v2 迁移 ============
+section('存档版本迁移');
+{
+  const sm = new SaveManager({ BALANCE: { saveVersion: 2 } });
+  const v1 = { version: 1, party: [{ id: 'hero' }], gold: 100 };
+  const m = sm._migrate(v1);
+  ok(m && m.version === 2 && m.forge && Object.keys(m.forge).length === 0, 'v1 档补空 forge 表并升版');
+  ok(m.gold === 100, '迁移保留原有字段');
+  ok(sm._migrate({ version: 99 }) === null, '未来版本仍判为不兼容');
 }
 
 console.log(`\n========== 结果: ${passed} 通过 / ${failed} 失败 ==========`);

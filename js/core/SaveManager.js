@@ -21,13 +21,26 @@ export default class SaveManager {
     }
   }
 
+  // 旧档迁移：v1（无装备精炼）→ 当前版本，补空 forge 表即可，其余字段完全兼容
+  _migrate(data) {
+    const cur = this.game.BALANCE.saveVersion;
+    if (data.version === cur) return data;
+    if (data.version === 1 && cur >= 2) {
+      data.forge = data.forge && typeof data.forge === 'object' ? data.forge : {};
+      data.version = cur;
+      return data;
+    }
+    return null;
+  }
+
   load(slot) {
     try {
       const raw = localStorage.getItem(PREFIX + slot);
       if (!raw) return null;
       const data = JSON.parse(raw);
-      if (data.version !== this.game.BALANCE.saveVersion) return { incompatible: true, data };
-      return data;
+      const migrated = this._migrate(data);
+      if (!migrated) return { incompatible: true, data };
+      return migrated;
     } catch (e) {
       console.error('读档失败', e);
       return null;

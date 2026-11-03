@@ -3,6 +3,8 @@ import CHARACTERS from '../data/characters.js';
 import REALMS from '../data/realms.js';
 import BALANCE from '../data/balance.js';
 import SKILLS from '../data/skills.js';
+import ITEMS from '../data/items.js';
+import { getPlus, bonusMult } from './Forge.js';
 
 const STAT_KEYS = ['maxHp', 'maxMp', 'atk', 'def', 'matk', 'mdef', 'spd'];
 
@@ -37,27 +39,41 @@ export class Character {
     for (const slot of Object.keys(this.equipment)) {
       const itemId = this.equipment[slot];
       if (!itemId) continue;
-      // 延迟引入避免循环依赖：items 是纯数据
+      // items 是纯数据叶子，直接查找
       const def = this._itemDef(itemId);
       if (!def || !def.bonus) continue;
-      for (const [k, v] of Object.entries(def.bonus)) bonus[k] = (bonus[k] || 0) + v;
+      // 精炼加成：每 +1 放大 8% 该件装备的固定加成（四舍五入，至少 +1 以免小数抹平）
+      const mult = bonusMult(getPlus(itemId));
+      for (const [k, v] of Object.entries(def.bonus)) {
+        // 向上取整：小数值装备也能从精炼拿到可见收益
+        const scaled = mult === 1 ? v : (v > 0 ? Math.ceil(v * mult) : v);
+        bonus[k] = (bonus[k] || 0) + scaled;
+      }
     }
     return bonus;
   }
 
   _itemDef(itemId) {
-    // 纯数据查找（data 之间无依赖问题）
-    return itemsTable()[itemId];
+    return ITEMS[itemId];
   }
 
   // 实际属性 = 基础 × 境界系数 + 装备固定值
+  // 按 (等级, 境界, 三件装备) 签名缓存：HUD/菜单每次刷新都重算 7 项属性的开销归零，
+  // 任何影响属性的字段变化都会自动换签名，无需手工置脏
   stats() {
+    const sig = `${this.level}|${this.realmId}|`
+      + `${this.equipment.weapon || ''}+${getPlus(this.equipment.weapon)}|`
+      + `${this.equipment.armor || ''}+${getPlus(this.equipment.armor)}|`
+      + `${this.equipment.accessory || ''}+${getPlus(this.equipment.accessory)}`;
+    if (this._statsSig === sig && this._statsCache) return this._statsCache;
     const f = this.realmDef().factor;
     const eq = this.equipBonus();
     const out = {};
     for (const k of STAT_KEYS) {
       out[k] = Math.floor(this.baseStat(k) * f) + (eq[k] || 0);
     }
+    this._statsSig = sig;
+    this._statsCache = out;
     return out;
   }
 
@@ -144,7 +160,3 @@ export class Character {
     return c;
   }
 }
-
-// 延迟加载道具表（避免 systems 与 data 的循环依赖顾虑——data 本就是叶子）
-import ITEMS from '../data/items.js';
-function itemsTable() { return ITEMS; }

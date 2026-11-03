@@ -192,6 +192,50 @@ export default {
     desc: '刀出霜天裂，一斩万籁绝。',
   },
 
+  // ============ 楚红缨（枪豪·雷火） ============
+  skill_huimaqiang: {
+    id: 'skill_huimaqiang', owner: 'chu', name: '回马枪', kind: 'active', mpCost: 4,
+    target: 'one_enemy', phys: true, power: 1.45, accuracy: 0.95,
+    learnRealm: 'lianqi_1',
+    desc: '佯退实进，回马一枪，快如闪电。',
+  },
+  skill_zhuifeng: {
+    id: 'skill_zhuifeng', owner: 'chu', name: '追风掣电', kind: 'active', mpCost: 9,
+    target: 'one_enemy', power: 1.35, accuracy: 0.95, element: 'thunder',
+    learnRealm: 'lianqi_4',
+    desc: '枪尖裹挟雷光，追风逐电。',
+  },
+  skill_hengsao: {
+    id: 'skill_hengsao', owner: 'chu', name: '横扫千军', kind: 'active', mpCost: 16,
+    target: 'all_enemies', phys: true, power: 1.25, accuracy: 0.9,
+    learnRealm: 'lianqi_6',
+    desc: '长枪横扫，如卷席残云，波及所有敌人。',
+  },
+  skill_qisha: {
+    id: 'skill_qisha', owner: 'chu', name: '破军七杀', kind: 'active', mpCost: 22,
+    target: 'one_enemy', phys: true, power: 2.0, accuracy: 0.9,
+    learnRealm: 'zhuji',
+    desc: '楚家破军七式，一枪重过一枪。',
+  },
+  skill_liaoyuan: {
+    id: 'skill_liaoyuan', owner: 'chu', name: '燎原百击', kind: 'active', mpCost: 40,
+    target: 'all_enemies', power: 1.6, accuracy: 0.95, element: 'fire',
+    learnRealm: 'jindan',
+    desc: '枪影如火燎原，百击齐落，焚尽敌军。',
+  },
+  skill_leihuo: {
+    id: 'skill_leihuo', owner: 'chu', name: '雷火枪魂', kind: 'active', mpCost: 50,
+    target: 'one_enemy', power: 2.3, accuracy: 0.95, element: 'thunder',
+    learnRealm: 'yuanying',
+    desc: '枪魂觉醒，雷火交煎，一击断魂。',
+  },
+  skill_tianpeng: {
+    id: 'skill_tianpeng', owner: 'chu', name: '天崩一枪', kind: 'active', mpCost: 66,
+    target: 'one_enemy', phys: true, power: 2.6, accuracy: 0.9, element: 'thunder',
+    learnRealm: 'lianxu',
+    desc: '人枪合一，枪落之处，天崩地裂。',
+  },
+
   // ============ 沈孤鸿（琴师·雷/增益） ============
   skill_xianyin: {
     id: 'skill_xianyin', owner: 'shen', name: '弦音斩', kind: 'active', mpCost: 4,

@@ -1,5 +1,5 @@
 // 可入队角色定义（growth 为纯成长函数，n = 等级）
-// wtype = 武器门类（sword 剑/blade 刀/qin 琴/brush 笔），与 items.js 武器的 wtype 对应
+// wtype = 武器门类（sword 剑/blade 刀/qin 琴/brush 笔/spear 枪），与 items.js 武器的 wtype 对应
 export default {
   hero: {
     id: 'hero',
@@ -82,6 +82,27 @@ export default {
       matk:  n => 7 + 2.6 * n,
       mdef:  n => 5 + 1.9 * n,
       spd:   n => 9 + n,
+    },
+  },
+
+  chu: {
+    id: 'chu',
+    name: '楚红缨',
+    title: '破阵枪传人',
+    wtype: 'spear',
+    sprite: 'char_chu',
+    battleSprite: 'bchar_chu',
+    portrait: 'face_chu',
+    desc: '戍边楚家最后的血脉，一杆红缨枪挑遍邪祟，誓向血煞教讨还血债。',
+    initialSkills: ['skill_huimaqiang'],
+    growth: {
+      maxHp: n => 42 + 17 * n + 0.58 * n * n,
+      maxMp: n => 15 + 4.5 * n,
+      atk:   n => 7 + 2.4 * n,
+      def:   n => 5 + 1.7 * n,
+      matk:  n => 4 + 1.4 * n,
+      mdef:  n => 4 + 1.4 * n,
+      spd:   n => 11 + 1.3 * n,
     },
   },
 };

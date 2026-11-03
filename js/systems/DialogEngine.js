@@ -2,6 +2,7 @@
 import DIALOGS from '../data/dialogs.js';
 import { BATTLES } from '../data/maps.js';
 import { sfx } from '../core/Audio.js';
+import { esc } from '../core/dom.js';
 
 const TYPE_SPEED = 34; // 字/秒
 
@@ -228,7 +229,6 @@ export default class DialogEngine {
     this._logOpen = true;
     const root = document.createElement('div');
     root.id = 'dlg-log';
-    const esc = (s) => s.replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
     const rows = this._log.slice(-40).map(e => e.speaker
       ? `<div class="log-entry"><span class="lg-name">${esc(e.speaker)}：</span>${esc(e.text)}</div>`
       : `<div class="log-entry narration">${esc(e.text)}</div>`).join('');

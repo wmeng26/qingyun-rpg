@@ -15,6 +15,7 @@ import Inventory from '../systems/Inventory.js';
 import Equipment from '../systems/Equipment.js';
 import QuestManager from '../systems/QuestManager.js';
 import DialogEngine from '../systems/DialogEngine.js';
+import * as Forge from '../systems/Forge.js';
 
 export default class Game {
   constructor(canvas) {
@@ -72,6 +73,7 @@ export default class Game {
     this.playSec = 0;
     this.seenMobs = new Set();
     this.killsByMob = {};
+    Forge.reset();
     this.inventory.deserialize({});
     for (const it of BALANCE.start.items) this.inventory.add(it.id, it.count);
     this.doorReturn = null;
@@ -94,6 +96,7 @@ export default class Game {
     this.playSec = d.playSec || 0;
     this.seenMobs = new Set(d.seen || []);
     this.killsByMob = d.killsByMob || {};
+    Forge.setLevels(d.forge);
     this.doorReturn = d.doorReturn || null;
     const pos = d.pos || BALANCE.start.pos;
     this.enterMap(d.mapId || BALANCE.start.mapId, pos.x, pos.y, pos.dir || 'down');
@@ -115,6 +118,7 @@ export default class Game {
       quests: this.quests ? this.quests.serialize() : {},
       seen: [...this.seenMobs],
       killsByMob: this.killsByMob,
+      forge: Forge.getLevels(),
     };
   }
 
@@ -127,7 +131,9 @@ export default class Game {
   startBattle(cfg) {
     if (this.inBattle) return;
     this.inBattle = true;
-    for (const id of cfg.mobs) this.seenMobs.add(id); // 图鉴：遭遇记录
+    for (const id of cfg.mobs) {
+      if (typeof id === 'string') this.seenMobs.add(id); // 图鉴：遭遇记录（心魔镜像不入图鉴）
+    }
     this.ui.showHUD(false);
     const mapDef = this.mapId ? MAPS[this.mapId] : null;
     const scene = this.makeBattleScene({

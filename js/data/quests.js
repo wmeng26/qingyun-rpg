@@ -285,4 +285,38 @@ export default {
     ],
     rewards: { exp: 300, gold: 280, items: [{ id: 'pill_lingli', count: 2 }, { id: 'pill_huixue', count: 3 }] },
   },
+
+  // ---- 楚红缨支线链（血煞谷） ----
+  quest_side_chu_1: {
+    id: 'quest_side_chu_1', name: '红缨追凶', type: 'side', giver: 'npc_chu',
+    requires: null, next: 'quest_side_chu_2',
+    intro: '楚红缨追杀血衣枪魔至血煞谷，助她清剿谷中教众，探得仇人下落。',
+    objectives: [
+      { type: 'kill', target: 'mob_xueshatu', count: 4, text: '击杀血煞教徒' },
+      { type: 'talk', target: 'npc_chu', text: '回禀楚红缨', final: true },
+    ],
+    rewards: { exp: 800, gold: 500, items: [{ id: 'spear_tie', count: 1 }] },
+  },
+
+  quest_side_chu_2: {
+    id: 'quest_side_chu_2', name: '枪谱下落', type: 'side', giver: 'npc_chu',
+    requires: 'quest_side_chu_1', next: 'quest_side_chu_3',
+    intro: '从血煞教徒身上收集血煞珠，逼问出《破阵枪谱》与牟沧的藏身之处。',
+    objectives: [
+      { type: 'item', target: 'xue_zhu', count: 3, text: '收集血煞珠' },
+      { type: 'talk', target: 'npc_chu', text: '交给楚红缨', final: true },
+    ],
+    rewards: { exp: 1200, gold: 800, items: [{ id: 'pill_jindan', count: 1 }] },
+  },
+
+  quest_side_chu_3: {
+    id: 'quest_side_chu_3', name: '破阵雪恨', type: 'side', giver: 'npc_chu',
+    requires: 'quest_side_chu_2', next: null,
+    intro: '血衣枪魔·牟沧就在谷北。与楚红缨一同讨回血海深仇与《破阵枪谱》。',
+    objectives: [
+      { type: 'flag', flag: 'boss_qiangmo_defeated', text: '击败血衣枪魔·牟沧' },
+      { type: 'talk', target: 'npc_chu', text: '回禀楚红缨', final: true },
+    ],
+    rewards: { exp: 2600, gold: 1500, items: [{ id: 'spear_bawang', count: 1 }] },
+  },
 };

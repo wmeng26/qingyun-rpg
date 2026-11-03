@@ -5,6 +5,7 @@ import MainMenu from './MainMenu.js';
 import { weaponTypeName, weaponTypeUsers } from '../systems/Equipment.js';
 import { PanelNav } from '../core/UIPanel.js';
 import { sfx } from '../core/Audio.js';
+import { esc } from '../core/dom.js';
 
 // 出售回收价：统一按商店价折半（任务品 price=0 不可卖）
 const SELL_RATE = 0.5;
@@ -102,29 +103,76 @@ export default class UIScene {
     while (this.elToasts.children.length > 5) this.elToasts.removeChild(this.elToasts.firstChild);
   }
 
+  // 队伍卡片按成员构成建一次 DOM 并缓存节点引用，之后只改文本/宽度
+  // （旧实现每 0.3s 重建整块 innerHTML，会丢焦点态并触发不必要的重排）
+  _syncHudCards() {
+    const g = this.game;
+    const sig = g.party.map(c => c.id).join(',');
+    if (this._hudSig === sig && this._hudCards) return this._hudCards;
+    this.elHud.innerHTML = g.party.map(c => `
+      <div class="hud-card">
+        <div class="name-row"><span class="name">${esc(c.name)}</span><span class="lv"></span></div>
+        <div class="bars">
+          <div class="bar hp"><div class="fill"></div></div>
+          <div class="bar mp"><div class="fill"></div></div>
+        </div>
+        <div class="bar-nums"></div>
+      </div>`).join('');
+    this._hudCards = [...this.elHud.querySelectorAll('.hud-card')].map(card => ({
+      card,
+      lv: card.querySelector('.lv'),
+      hpBar: card.querySelector('.bar.hp'),
+      hpFill: card.querySelector('.bar.hp .fill'),
+      mpFill: card.querySelector('.bar.mp .fill'),
+      nums: card.querySelector('.bar-nums'),
+      last: {},
+    }));
+    this._hudSig = sig;
+    return this._hudCards;
+  }
+
   tick(dt) {
     this._hudT -= dt;
     if (this._hudT > 0) return;
     this._hudT = 0.3;
     if (this.elHud.classList.contains('hidden')) return;
     const g = this.game;
-    // 队伍状态
-    this.elHud.innerHTML = g.party.map(c => {
+    // 队伍状态（增量更新：只写变化的值）
+    const cards = this._syncHudCards();
+    g.party.forEach((c, i) => {
+      const card = cards[i];
+      if (!card) return;
       const st = c.stats();
-      return `<div class="hud-card">
-        <div class="name-row"><span class="name">${c.name}</span><span class="lv">${c.realmDef().name} Lv${c.level}</span></div>
-        <div class="bars">
-          <div class="bar hp ${c.hp / st.maxHp < 0.3 ? 'low' : ''}"><div class="fill" style="width:${(c.hp / st.maxHp) * 100}%"></div></div>
-          <div class="bar mp"><div class="fill" style="width:${(c.mp / Math.max(1, st.maxMp)) * 100}%"></div></div>
-        </div>
-        <div class="bar-nums">${c.hp}/${st.maxHp} · 灵${c.mp}/${st.maxMp}</div>
-      </div>`;
-    }).join('');
+      const lvText = `${c.realmDef().name} Lv${c.level}`;
+      if (card.last.lv !== lvText) { card.lv.textContent = lvText; card.last.lv = lvText; }
+      const hpPct = Math.max(0, Math.min(100, (c.hp / st.maxHp) * 100));
+      const mpPct = Math.max(0, Math.min(100, (c.mp / Math.max(1, st.maxMp)) * 100));
+      const low = c.hp / st.maxHp < 0.3;
+      if (card.last.hpPct !== hpPct) {
+        card.hpFill.style.width = `${hpPct}%`;
+        card.last.hpPct = hpPct;
+      }
+      if (card.last.low !== low) {
+        card.hpBar.classList.toggle('low', low);
+        card.last.low = low;
+      }
+      if (card.last.mpPct !== mpPct) {
+        card.mpFill.style.width = `${mpPct}%`;
+        card.last.mpPct = mpPct;
+      }
+      const nums = `${c.hp}/${st.maxHp} · 灵${c.mp}/${st.maxMp}`;
+      if (card.last.nums !== nums) { card.nums.textContent = nums; card.last.nums = nums; }
+    });
     this.elRight.querySelector('#hud-gold').textContent = `金钱 ${g.gold} 文`;
+    // 任务追踪：内容不变则跳过 DOM 重建
     const lines = g.quests ? g.quests.trackerLines() : [];
-    this.elTracker.innerHTML = lines.map(l =>
-      `<div><span class="q-name">【${l.qname}】</span><div class="q-obj">${l.text}</div></div>`).join('')
-      || '<div class="q-obj">（暂无进行中的任务）</div>';
+    const trackerSig = lines.map(l => `${l.qname}|${l.text}`).join('\n');
+    if (this._trackerSig !== trackerSig) {
+      this._trackerSig = trackerSig;
+      this.elTracker.innerHTML = lines.map(l =>
+        `<div><span class="q-name">【${esc(l.qname)}】</span><div class="q-obj">${esc(l.text)}</div></div>`).join('')
+        || '<div class="q-obj">（暂无进行中的任务）</div>';
+    }
   }
 
   // ===== 商店 =====
@@ -188,9 +236,9 @@ export default class UIScene {
           addIcon(row, def.icon);
           const owned = g.inventory.count(id);
           row.insertAdjacentHTML('beforeend', `
-            <span class="i-name">${def.name}</span>
+            <span class="i-name">${esc(def.name)}</span>
             <span class="i-count">${def.price}文</span>
-            <span class="i-desc">${def.desc || ''}${bonusText(def)}${owned ? ` <span class="i-bonus">（持有×${owned}）</span>` : ''}</span>`);
+            <span class="i-desc">${esc(def.desc || '')}${bonusText(def)}${owned ? ` <span class="i-bonus">（持有×${owned}）</span>` : ''}</span>`);
           const b = document.createElement('button');
           b.className = 'btn' + (g.gold < def.price ? ' disabled' : '');
           b.textContent = '购买';
@@ -216,7 +264,7 @@ export default class UIScene {
           row.className = 'inv-row';
           addIcon(row, e.def.icon);
           row.insertAdjacentHTML('beforeend', `
-            <span class="i-name">${e.def.name}</span>
+            <span class="i-name">${esc(e.def.name)}</span>
             <span class="i-count">×${e.count}</span>
             <span class="i-desc">${sellPrice(e.def)}文/件${bonusText(e.def)}</span>`);
           const b = document.createElement('button');

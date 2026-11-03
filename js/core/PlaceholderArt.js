@@ -1122,6 +1122,50 @@ function battleHeroFighter() {
   return c;
 }
 
+// ---- 楚红缨：红衣枪豪，长枪前指，红缨灼灼 ----
+function battleChuFighter() {
+  const [c, ctx] = makeCanvas(48, 48);
+  const P = grid2(ctx, 0, 0);
+  const H = '#2e2424', R = '#8a2e2e', RD = '#6a2020', T = '#e0b84c';
+  P(9, 2, 6, 2, H); P(14, 1, 4, 3, H);                       // 束发高马尾
+  P(9, 3, 6, 2, '#c03030');                                  // 红抹额
+  P(10, 4, 5, 4, '#eec39a');                                 // 脸（朝左）
+  P(10, 5, 1, 1, '#1a1a1a');
+  P(15, 4, 1, 5, H);                                         // 马尾垂落
+  P(8, 8, 8, 9, R); P(8, 8, 8, 2, RD);
+  P(8, 12, 8, 1, T);                                         // 金绦
+  P(6, 9, 2, 6, RD);                                         // 持枪臂
+  P(4, 11, 2, 2, '#eec39a');
+  P(0, 11, 7, 1, '#6a4a32');                                 // 枪杆前指
+  P(0, 10, 1, 3, '#d8dde4');                                 // 枪锋
+  P(1, 9, 1, 2, '#c03030'); P(2, 10, 1, 1, '#c03030');       // 红缨
+  P(9, 17, 2, 6, '#3a2a26'); P(12, 17, 2, 5, '#3a2a26');
+  P(5, 21, 15, 1, 'rgba(0,0,0,0.35)');
+  return c;
+}
+
+// ---- 血衣枪魔·牟沧：血袍逆徒，邪枪拖地 ----
+function battleQiangmo() {
+  const [c, ctx] = makeCanvas(48, 48);
+  const P = grid2(ctx, 0, 0);
+  const H = '#1e1a1a', R = '#5a1620', RD = '#3e0e16';
+  P(8, 2, 8, 3, H); P(7, 4, 1, 7, H); P(16, 4, 1, 7, H);     // 散发
+  P(10, 4, 5, 4, '#c8a080');                                 // 脸（朝左）
+  P(10, 5, 1, 1, '#c03030');                                 // 赤目
+  P(12, 4, 1, 3, '#8a4040');                                 // 枪疤
+  P(7, 8, 10, 11, R); P(7, 8, 10, 2, RD);
+  P(8, 13, 8, 1, '#2a0a0e');                                 // 血纹腰带
+  P(6, 9, 2, 6, RD);                                         // 持枪臂
+  P(4, 12, 2, 2, '#c8a080');
+  P(0, 12, 7, 1, '#3a2a2a');                                 // 邪枪杆
+  P(0, 11, 1, 3, '#8a3040');                                 // 血淬枪锋
+  P(1, 10, 1, 2, '#5a1620');                                 // 黑缨
+  P(6, 19, 12, 3, RD);                                       // 血袍下摆
+  P(9, 19, 2, 5, '#2a1a1a'); P(13, 19, 2, 5, '#2a1a1a');
+  P(5, 24, 15, 1, 'rgba(0,0,0,0.35)');
+  return c;
+}
+
 function battleLiuFighter() {
   const [c, ctx] = makeCanvas(48, 48);
   const P = grid2(ctx, 0, 0);
@@ -1264,6 +1308,25 @@ const PORTRAITS = {
     P(11, 12, 3, 1, '#5a5264'); P(18, 12, 3, 1, '#5a5264');
     P(14, 18, 4, 1, '#a06a4a');
     P(8, 8, 2, 10, '#4a4258');                              // 垂发
+  },
+  face_chu: (P) => {
+    P(10, 26, 12, 6, '#8a2e2e');                              // 红衣领口
+    P(8, 4, 16, 5, '#2e2424'); P(7, 8, 2, 12, '#2e2424'); P(23, 8, 2, 12, '#2e2424'); // 鬓发
+    P(13, 1, 6, 3, '#2e2424');                                // 高马尾
+    P(9, 6, 14, 2, '#c03030');                                // 红抹额
+    P(10, 8, 12, 12, '#eec39a');
+    P(12, 12, 2, 2, '#2a2a2a'); P(18, 12, 2, 2, '#2a2a2a');   // 丹凤眼
+    P(11, 11, 3, 1, '#4a3230'); P(18, 11, 3, 1, '#4a3230');   // 斜飞眉
+    P(14, 18, 4, 1, '#b0503c');
+  },
+  face_qiangmo: (P) => {
+    P(8, 26, 16, 6, '#4a1018');                               // 血衣
+    P(7, 3, 18, 6, '#1e1a1a'); P(6, 8, 2, 12, '#1e1a1a'); P(24, 8, 2, 12, '#1e1a1a'); // 散发
+    P(10, 8, 12, 13, '#c8a080');
+    P(12, 13, 2, 2, '#c03030'); P(18, 13, 2, 2, '#c03030');   // 赤目
+    P(11, 12, 4, 1, '#3a2a2a'); P(17, 12, 4, 1, '#3a2a2a');
+    P(15, 9, 1, 6, '#8a4040');                                // 面中枪疤
+    P(13, 18, 6, 1, '#5a3030');
   },
   face_cunzhang: (P) => {
     P(10, 26, 12, 6, '#6a5a4a');
@@ -1428,6 +1491,18 @@ const ICONS = {
     P(11, 2, 2, 12, '#d8c8a0'); P(11, 3, 1, 10, '#ecdfbe');   // 竹杆
     P(9, 13, 6, 3, '#8a6a42'); P(10, 13, 4, 1, '#a8865a');    // 笔斗
     P(10, 16, 4, 4, '#3a3a46'); P(11, 19, 2, 2, '#1c1c26');   // 笔锋蘸墨
+  }),
+  icon_qiang: () => makeIcon(P => {
+    P(11, 7, 2, 13, '#6a4a32'); P(11, 8, 1, 11, '#7d5a3e');   // 枪杆
+    P(11, 2, 2, 5, '#d8dde4'); P(12, 1, 1, 6, '#f0f4f8');     // 枪锋
+    P(9, 6, 2, 3, '#c03030'); P(14, 6, 2, 3, '#c03030');      // 红缨
+    P(10, 19, 4, 2, '#4a3222');                               // 枪攥
+  }),
+  icon_qiang2: () => makeIcon(P => {
+    P(11, 7, 2, 13, '#3a2a3a'); P(11, 8, 1, 11, '#4c3a4c');   // 玄铁枪杆
+    P(11, 2, 2, 5, '#e8c060'); P(12, 1, 1, 6, '#f8e8a0');     // 金淬枪锋
+    P(9, 6, 2, 3, '#e05030'); P(14, 6, 2, 3, '#e05030');      // 火缨
+    P(10, 19, 4, 2, '#2a1a2a');                               // 枪攥
   }),
   icon_sword4: () => makeIcon(P => {
     P(5, 16, 3, 3, '#3a3a52'); P(8, 13, 3, 3, '#d4af37'); P(10, 11, 2, 2, '#d4af37');
@@ -1840,6 +1915,8 @@ export default {
     assets.put('npc_yaonong', charSheet({ hair: '#c8c4bc', skin: '#c8a078', robe: '#6a6a5a', robeDark: '#545446', trim: '#8a9a6a', pants: '#4a4a3a' }));
     assets.put('char_shen', charSheet({ hair: '#4a4258', skin: '#e8c0a0', robe: '#e4e0d0', robeDark: '#c2bca8', trim: '#7a8ac0', pants: '#3a3244' }));
     assets.put('npc_shen', assets.get('char_shen'));
+    assets.put('char_chu', charSheet({ hair: '#2e2424', skin: '#eec39a', robe: '#8a2e2e', robeDark: '#6a2020', trim: '#e0b84c', pants: '#3a2a26' }));
+    assets.put('npc_chu', assets.get('char_chu'));
     assets.put('npc_cunzhang', charSheet({ hair: '#c8c4bc', skin: '#c8a078', robe: '#7a6a52', robeDark: '#64553e', trim: '#a89a7a', pants: '#54483a' }));
     assets.put('npc_laoban', charSheet({ hair: '#6a4a2a', skin: '#d8a878', robe: '#9a7a3a', robeDark: '#7c612c', trim: '#d4af37', pants: '#5a4a28' }));
 
@@ -1878,6 +1955,8 @@ export default {
     assets.put('mob_zuoshi', battleZuoshi());
     assets.put('boss_xueshazhu', battleBossXueshazhu());
     assets.put('bchar_shen', battleShenFighter());
+    assets.put('bchar_chu', battleChuFighter());
+    assets.put('mob_qiangmo', battleQiangmo());
     assets.put('mob_xuejiao', battleXuejiao());
     assets.put('mob_bingkui', battleBingkui());
     assets.put('mob_yuanmo', battleYuanmo());

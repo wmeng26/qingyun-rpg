@@ -9,6 +9,10 @@ export const BATTLES = {
     introDialog: 'dlg_boss_intro',
     winFlag: 'boss_youming_defeated',
   },
+  boss_qiangmo: {
+    mobs: ['boss_qiangmo'], boss: true, canFlee: false,
+    winFlag: 'boss_qiangmo_defeated',
+  },
 };
 
 // ---- 轮回古塔（9 层试炼，程序化生成层块） ----
@@ -664,6 +668,7 @@ export default {
     ],
     npcs: [
       { id: 'npc_yaonong', name: '采药人', x: 5, y: 3, dir: 'down', sprite: 'npc_yaonong', dialog: 'dlg_yaonong' },
+      { id: 'npc_chu', name: '楚红缨', x: 16, y: 17, dir: 'left', sprite: 'npc_chu', dialog: 'dlg_chu' },
     ],
     events: [
       { type: 'chest', x: 26, y: 3, gold: 800 },

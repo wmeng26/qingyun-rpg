@@ -1,7 +1,7 @@
 // 商店表：id -> { id, name, goods: [itemId...] }
 // 对话动作 { do: 'openShop', id: 'shop_xxx' } 打开对应商店；缺省 id 打开第一间。
 // 卖出规则：可卖物品（price>0 且非任务品）统一按半价回收，见 UIScene.openShop。
-// 武器按门类绑定角色（sword 剑=萧逸 / blade 刀=洛清霜 / qin 琴=沈孤鸿 / brush 笔=柳如烟）
+// 武器按门类绑定角色（sword 剑=萧逸 / blade 刀=洛清霜 / qin 琴=沈孤鸿 / brush 笔=柳如烟 / spear 枪=楚红缨）
 export default {
   // 青云门杂货摊：南方（一~三章）唯一商店，保障突破链（筑基/金丹/化神）与四系武器中低档
   shop_qingyun: {
@@ -16,6 +16,7 @@ export default {
       'dao_liuye', 'dao_pozhen', 'dao_duanjiang', 'dao_hanyue',
       'qin_wutong', 'qin_liuquan', 'qin_hanquan',
       'bi_qingzhu', 'bi_zhusha', 'bi_zixiao',
+      'spear_tie', 'spear_zhuying', 'spear_huoying',
     ],
   },
   // 寒霜渡渡口摊位：北地行商，主攻丹药与四系兵器高档货
@@ -24,7 +25,7 @@ export default {
     goods: [
       'pill_jiuzhuan', 'pill_guyuan', 'pill_tianyuan', 'pill_xuling',
       'dao_nujiang', 'dao_tunxiao', 'sword_zhanxing', 'sword_tianwen',
-      'qin_jiaowei', 'qin_tianlai', 'bi_chunqiu',
+      'qin_jiaowei', 'qin_tianlai', 'bi_chunqiu', 'spear_pozhen',
       'yu_longhun',
     ],
   },

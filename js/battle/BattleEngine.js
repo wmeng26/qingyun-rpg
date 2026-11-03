@@ -2,6 +2,7 @@
 import MONSTERS from '../data/monsters.js';
 import SKILLS from '../data/skills.js';
 import ITEMS from '../data/items.js';
+import BALANCE from '../data/balance.js';
 import Unit from './Unit.js';
 import { executeSkill } from './Skill.js';
 import * as F from './DamageFormula.js';
@@ -19,12 +20,15 @@ export default class BattleEngine {
     this.commands = new Map();
 
     // 敌人（同类多只加「甲乙丙」后缀）
+    // mobs 元素可以是怪物 id，也可以是完整定义对象（心魔镜像走这条路径）
     const seen = {};
-    this.enemyUnits = mobs.map(id => {
-      const def = MONSTERS[id];
-      seen[id] = (seen[id] || 0) + 1;
-      const dup = mobs.filter(m => m === id).length > 1;
-      return new Unit(def, dup ? ('甲乙丙丁'[seen[id] - 1] || '?') : '');
+    const defOf = m => (typeof m === 'string' ? MONSTERS[m] : m);
+    this.enemyUnits = mobs.map(m => {
+      const def = defOf(m);
+      const key = def.id;
+      seen[key] = (seen[key] || 0) + 1;
+      const dup = mobs.filter(x => defOf(x).id === key).length > 1;
+      return new Unit(def, dup ? ('甲乙丙丁'[seen[key] - 1] || '?') : '');
     });
     this.partyUnits = game.party.map(c => new Unit(c));
   }
@@ -60,6 +64,7 @@ export default class BattleEngine {
   // ===== 回合结算 =====
   resolveTurn() {
     this.phase = 'resolving';
+    this._comboElem = null; // 元素连携链：每回合重新起算
     const events = [{ type: 'turn', turn: this.turn }];
     const order = this.allUnits().filter(u => u.alive).map(u => ({
       u, s: u.effStat('spd') * (0.95 + Math.random() * 0.1),
@@ -96,7 +101,7 @@ export default class BattleEngine {
         const skill = SKILLS[cmd.skillId];
         actor.mp = Math.max(0, actor.mp - (skill.mpCost || 0));
         events.push({ type: 'msg', text: `${actor.displayName} 施展「${skill.name}」！` });
-        events.push(...executeSkill(actor, skill, cmd.targets));
+        events.push(...this._executeWithCombo(actor, skill, cmd.targets));
         return false;
       }
       case 'item': {
@@ -135,6 +140,28 @@ export default class BattleEngine {
       }
     }
     return false;
+  }
+
+  // 元素连携：我方单位的元素伤害技能与上一记（同回合、同侧）元素技能满足
+  // 相生衔接（balance.combo.cycle[上技元素] === 本技元素）时，伤害 ×combo.mult。
+  // 无元素技能、非伤害技能、普攻均不推进也不打断衔接链；敌方不参与连携。
+  _executeWithCombo(actor, skill, targets) {
+    const elem = skill.element;
+    const isElemAttack = actor.isChar && skill.power != null && elem && elem !== 'none';
+    let mult = 1;
+    let comboName = null;
+    if (isElemAttack) {
+      const prev = this._comboElem;
+      if (prev && BALANCE.combo.cycle[prev] === elem) {
+        mult = BALANCE.combo.mult;
+        comboName = BALANCE.combo.names[`${prev}>${elem}`] || '连携';
+      }
+      this._comboElem = elem;
+    }
+    const events = [];
+    if (comboName) events.push({ type: 'combo', actor, text: `元素连携·${comboName}！` });
+    events.push(...executeSkill(actor, skill, targets, { dmgMult: mult }));
+    return events;
   }
 
   // 指令阶段锁定的目标，在按速度结算时可能已被队友抢先击杀。
@@ -223,8 +250,9 @@ export default class BattleEngine {
     let exp = 0, gold = 0;
     const drops = [];
     for (const u of this.enemyUnits) {
-      exp += F.expFor(u.source.exp, u.source.level, avgLv);
-      gold += Math.floor(u.source.gold * (0.9 + Math.random() * 0.2));
+      // 心魔镜像等动态敌群没有 exp/gold 字段，按 0 记
+      exp += F.expFor(u.source.exp || 0, u.source.level, avgLv);
+      gold += Math.floor((u.source.gold || 0) * (0.9 + Math.random() * 0.2));
       for (const d of u.source.drops || []) {
         if (Math.random() < d.chance) drops.push(d.id);
       }
@@ -242,7 +270,8 @@ export default class BattleEngine {
     gold = Math.floor(gold);
     game.addGold(gold);
     for (const id of drops) game.obtainItem(id, 1, true);
-    for (const u of this.enemyUnits) game.bus.emit('enemyKilled', { mobId: u.source.id });
+    // 心魔镜像不计入图鉴/除妖数
+    for (const u of this.enemyUnits) if (!u.source.mirror) game.bus.emit('enemyKilled', { mobId: u.source.id });
     if (this.winFlag) game.setFlag(this.winFlag);
     return { exp, gold, drops, levelUps };
   }

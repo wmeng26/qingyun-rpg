@@ -151,6 +151,14 @@ export default class TileMap {
     }
 
     this.cache = c;
+
+    // 水格按行分桶：draw 只遍历视口覆盖的行，避免每帧扫全图水格
+    this._waterRows = new Map();
+    for (const [x, y] of this._water) {
+      let row = this._waterRows.get(y);
+      if (!row) this._waterRows.set(y, row = []);
+      row.push(x);
+    }
   }
 
   draw(ctx, camX, camY, viewW, viewH) {
@@ -160,17 +168,26 @@ export default class TileMap {
     const sh = Math.min(viewH, this.worldH - sy);
     ctx.drawImage(this.cache, sx, sy, sw, sh, sx - camX, sy - camY, sw, sh);
 
-    // 水面波光：视口内水面格按坐标相位淡入淡出的短高光
+    // 水面波光：仅遍历视口覆盖行内的水格，按坐标相位淡入淡出的短高光
     const t = performance.now() / 1000;
-    for (const [wx, wy] of this._water) {
-      const px = wx * TILE - camX, py = wy * TILE - camY;
-      if (px < -TILE || py < -TILE || px > viewW || py > viewH) continue;
-      const phase = ((hash2(wx, wy) & 7) * 0.42 + (hash2(wy + 31, wx) & 3) * 0.13);
-      const s = (t * 0.6 + phase) % 3;
-      if (s > 1.2) continue;
-      ctx.globalAlpha = 0.45 * Math.sin((s / 1.2) * Math.PI);
-      ctx.fillStyle = 'rgba(230,246,252,1)';
-      ctx.fillRect(px + 3 + (hash2(wx * 3 + 1, wy) & 15), py + 5 + (hash2(wx, wy * 5 + 7) & 19), 5, 2);
+    const y0 = Math.max(0, Math.floor(camY / TILE) - 1);
+    const y1 = Math.min(this.def.height - 1, Math.ceil((camY + viewH) / TILE));
+    const x0 = Math.floor(camX / TILE) - 1;
+    const x1 = Math.ceil((camX + viewW) / TILE);
+    for (let wy = y0; wy <= y1; wy++) {
+      const row = this._waterRows.get(wy);
+      if (!row) continue;
+      const py = wy * TILE - camY;
+      for (const wx of row) {
+        if (wx < x0 || wx > x1) continue;
+        const px = wx * TILE - camX;
+        const phase = ((hash2(wx, wy) & 7) * 0.42 + (hash2(wy + 31, wx) & 3) * 0.13);
+        const s = (t * 0.6 + phase) % 3;
+        if (s > 1.2) continue;
+        ctx.globalAlpha = 0.45 * Math.sin((s / 1.2) * Math.PI);
+        ctx.fillStyle = 'rgba(230,246,252,1)';
+        ctx.fillRect(px + 3 + (hash2(wx * 3 + 1, wy) & 15), py + 5 + (hash2(wx, wy * 5 + 7) & 19), 5, 2);
+      }
     }
     ctx.globalAlpha = 1;
   }

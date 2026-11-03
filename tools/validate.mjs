@@ -101,6 +101,51 @@ for (const [sid, script] of Object.entries(dialogs)) {
     }
     if (node.portrait && !FACE_NAMES.includes(node.portrait))
       warnings.push(`${sid}.${nid}: 头像未注册 ${node.portrait}`);
+
+    // branch 条件链"顺序即语义"校验（DialogEngine 取第一条 cond 为真的分支）：
+    // ① 无条件分支（恒真）不在链尾 → 其后分支全部不可达（错误）
+    // ② 与之前分支条件完全相同 → 不可达（错误）
+    // ③ 之前分支的条件是本分之条件的子集（之前成真本分之必被抢先）→ 不可达（警告，
+    //    含 any 的复合条件无法静态判定，跳过）
+    const chain = node.branch || [];
+    if (chain.length > 1) {
+      const factsOf = (cond) => {
+        if (!cond) return new Set(); // 恒真 = 空事实集，是任何集的子集
+        if (cond.any) return null;   // any 无法静态判定蕴含关系
+        const cs = cond.all || [cond];
+        const facts = new Set();
+        for (const c of cs) {
+          if (!c || c.any || c.all) return null;
+          if (c.flag !== undefined) facts.add(`flag:${c.flag}`);
+          else if (c.flagAbsent !== undefined) facts.add(`!flag:${c.flagAbsent}`);
+          else if (c.quest) facts.add(`quest:${c.quest.id}=${c.quest.state}`);
+          else if (c.ally) facts.add(`ally:${c.ally}`);
+          else if (c.item) facts.add(`item:${c.item.id}`);
+          else if (c.realm) facts.add(`realm:${c.realm}`);
+        }
+        return facts;
+      };
+      const key = (f) => [...f].sort().join('&');
+      const prev = []; // {facts, idx}
+      chain.forEach((b, i) => {
+        const facts = factsOf(b.cond);
+        const label = `${sid}.${nid}: branch[${i}]`;
+        if (facts === null) { prev.push(null); return; } // 含 any：只参与恒真遮蔽判定
+        if (facts.size === 0 && i < chain.length - 1)
+          err(`${label}: 无条件分支不在链尾，其后 ${chain.length - 1 - i} 条分支不可达`);
+        for (const p of prev) {
+          if (p === null) continue;
+          const subset = [...p.facts].every(f => facts.has(f));
+          if (!subset) continue;
+          if (key(p.facts) === key(facts))
+            err(`${label}: 与 branch[${p.idx}] 条件完全相同，不可达`);
+          else
+            warnings.push(`${label}: 条件被 branch[${p.idx}]（更宽松，先匹配）遮蔽，可能不可达`);
+          break;
+        }
+        prev.push({ facts, idx: i });
+      });
+    }
   }
 }
 
@@ -117,7 +162,7 @@ for (const sid of Object.keys(shops)) {
 }
 
 // 武器门类：weapon 必须带合法 wtype；角色 wtype 合法；每名角色至少可获得一把本门类武器
-const WEAPON_TYPE_KEYS = ['sword', 'blade', 'qin', 'brush'];
+const WEAPON_TYPE_KEYS = ['sword', 'blade', 'qin', 'brush', 'spear'];
 for (const it of Object.values(items)) {
   if (it.type === 'equipment' && it.slot === 'weapon' && !WEAPON_TYPE_KEYS.includes(it.wtype))
     err(`武器 ${it.id}: wtype 非法 ${it.wtype}`);

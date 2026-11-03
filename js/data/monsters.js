@@ -267,6 +267,15 @@ export default {
     drops: [{ id: 'xue_zhu', chance: 1.0 }],
     desc: '血煞教主的左膀右臂，血祭之术出神入化。',
   },
+  boss_qiangmo: {
+    id: 'boss_qiangmo', name: '血衣枪魔·牟沧', level: 29, element: 'dark',
+    sprite: 'mob_qiangmo', scale: 1.4, boss: true,
+    stats: { maxHp: 8000, maxMp: 99, atk: 108, def: 50, matk: 60, mdef: 46, spd: 18 },
+    exp: 3200, gold: 1500,
+    skills: ['e_pozhen', 'e_xueren', 'e_weiya'], ai: 'boss',
+    drops: [],
+    desc: '叛出楚家的逆徒，弑师夺谱，以血养枪，枪下亡魂无数。',
+  },
   boss_xueshazhu: {
     id: 'boss_xueshazhu', name: '血煞教主', level: 30, element: 'dark',
     sprite: 'boss_xueshazhu', scale: 1.6, boss: true,

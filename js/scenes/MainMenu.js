@@ -1,13 +1,18 @@
-// 主菜单：角色 / 背包 / 任务 / 图鉴 / 存档 / 系统
+// 主菜单骨架：页签路由 + 公共 DOM/子面板/按钮设施
+// 各页签的具体渲染在 js/scenes/menu/*.js，新增页签只需加一个模块并登记进 RENDERERS
 import ITEMS from '../data/items.js';
-import SKILLS from '../data/skills.js';
-import MONSTERS from '../data/monsters.js';
-import MAPS from '../data/maps.js';
-import Cultivation from '../systems/Cultivation.js';
 import { weaponTypeName, weaponTypeUsers } from '../systems/Equipment.js';
 import { PanelNav } from '../core/UIPanel.js';
 import { sfx } from '../core/Audio.js';
-import TitleScene from './TitleScene.js';
+import { esc } from '../core/dom.js';
+import { getPlus, costOf, displayName as forgeName, refine as forgeRefine } from '../systems/Forge.js';
+import { SLOT_NAMES } from './menu/shared.js';
+import { renderChar } from './menu/charTab.js';
+import { renderItems } from './menu/itemTab.js';
+import { renderQuests } from './menu/questTab.js';
+import { renderBook } from './menu/bookTab.js';
+import { renderSave } from './menu/saveTab.js';
+import { renderSys } from './menu/sysTab.js';
 
 const TABS = [
   { id: 'char', name: '角色' },
@@ -18,7 +23,10 @@ const TABS = [
   { id: 'sys', name: '系统' },
 ];
 
-const SLOT_NAMES = { weapon: '武器', armor: '防具', accessory: '饰品' };
+const RENDERERS = {
+  char: renderChar, item: renderItems, quest: renderQuests,
+  book: renderBook, save: renderSave, sys: renderSys,
+};
 
 export default class MainMenu {
   constructor(game) {
@@ -97,13 +105,9 @@ export default class MainMenu {
     }
     this.elGold.textContent = `金钱 ${this.game.gold} 文`;
     this.elContent.innerHTML = '';
+    this._closeSub();
     this.nav = new PanelNav();
-    if (this.tab === 'char') this._renderChar();
-    else if (this.tab === 'item') this._renderItems();
-    else if (this.tab === 'quest') this._renderQuests();
-    else if (this.tab === 'book') this._renderBook();
-    else if (this.tab === 'save') this._renderSave();
-    else this._renderSys();
+    RENDERERS[this.tab](this);
     this.nav.attachHover();
     this.nav.refresh();
   }
@@ -116,94 +120,46 @@ export default class MainMenu {
     return b;
   }
 
-  // ---- 角色 ----
-  _renderChar() {
-    const g = this.game;
-    for (const c of g.party) {
-      const box = document.createElement('div');
-      box.style.marginBottom = '14px';
-      const st = c.stats();
-      const rd = c.realmDef();
-      const expNeed = c.expToNext();
-      const bt = Cultivation.status(c, g.inventory);
-
-      const skillRows = c.skills.map(id => {
-        const s = SKILLS[id];
-        if (!s) return '';
-        return `<div class="skill-row"><div class="s-top"><span>${s.name}</span><span class="s-cost">${s.mpCost ? s.mpCost + ' 灵力' : '—'}</span></div><div class="s-desc">${s.desc || ''}</div></div>`;
-      }).join('');
-
-      const slots = ['weapon', 'armor', 'accessory'].map(slot => {
-        const itemId = c.equipment[slot];
-        const def = itemId ? ITEMS[itemId] : null;
-        return `<div class="slot-row"><span>${SLOT_NAMES[slot]}：${def ? def.name : '——'}</span></div>`;
-      }).join('');
-
-      box.innerHTML = `
-        <div class="char-head">
-          <img src="${this._portrait(c.portraitKey)}" alt="">
-          <div>
-            <div class="c-name">${c.name}</div>
-            <div class="c-realm">${rd.name} · Lv${c.level}</div>
-            <div class="c-lv">经验 ${c.exp}/${expNeed}</div>
-          </div>
-        </div>
-        <div class="bar exp"><div class="fill" style="width:${Math.min(100, (c.exp / expNeed) * 100)}%"></div></div>
-        <div class="stat-grid">
-          <span class="sk">气血</span><span class="sv">${c.hp}/${st.maxHp}</span>
-          <span class="sk">灵力</span><span class="sv">${c.mp}/${st.maxMp}</span>
-          <span class="sk">速度</span><span class="sv">${st.spd}</span>
-          <span class="sk">攻击</span><span class="sv">${st.atk}</span>
-          <span class="sk">防御</span><span class="sv">${st.def}</span>
-          <span class="sk"></span><span class="sv"></span>
-          <span class="sk">灵攻</span><span class="sv">${st.matk}</span>
-          <span class="sk">灵防</span><span class="sv">${st.mdef}</span>
-          <span class="sk"></span><span class="sv"></span>
-        </div>
-        <div class="sec-title">功法</div>${skillRows}
-        <div class="sec-title">装备</div>${slots}`;
-      const btnRow = document.createElement('div');
-      btnRow.style.cssText = 'display:flex;gap:6px;flex-wrap:wrap;margin-top:6px;';
-      for (const slot of ['weapon', 'armor', 'accessory']) {
-        const b = this._btn(`换${SLOT_NAMES[slot]}`, () => this._openEquipSub(c, slot));
-        btnRow.appendChild(b);
-      }
-      if (bt.next) {
-        const label = bt.ok
-          ? `尝试突破 → ${bt.next.name}（${Math.round(bt.next.rate * 100)}%）`
-          : bt.reason === 'level'
-            ? `突破 ${bt.next.name}（需 Lv${bt.next.levelReq}）`
-            : `突破 ${bt.next.name}（需${this.game.itemName(bt.next.pill)}）`;
-        const b = this._btn(label, () => {
-          if (!bt.ok) { this.game.ui.toast(bt.reason === 'level' ? '等级不足，无法突破' : `缺少${this.game.itemName(bt.next.pill)}`); return; }
-          this.game.ui.confirm(
-            `消耗 ${this.game.itemName(bt.next.pill)}×1，冲击${bt.next.name}？\n成功率 ${Math.round(bt.next.rate * 100)}%，失败丹药不返。`,
-            () => {
-              const r = Cultivation.attempt(c, g.inventory, g.bus);
-              if (r.success) {
-                g.ui.toast(`${c.name} 突破成功！境界提升至「${r.realm.name}」`);
-              } else {
-                g.ui.toast(`${c.name} 突破失败……灵气反噬，丹药已耗。`);
-              }
-              this.render();
-            });
-        });
-        btnRow.appendChild(b);
-      }
-      box.appendChild(btnRow);
-      this.elContent.appendChild(box);
-      const hr = document.createElement('div');
-      hr.style.cssText = 'border-top:1px dashed rgba(212,175,55,0.25);margin:4px 0 10px;';
-      this.elContent.appendChild(hr);
-    }
-    this.nav.setItems(this.nav.items);
-  }
-
+  // ===== 公共设施（供各页签模块调用） =====
   _portrait(key) {
     const cv = this.game.assets.get(key);
     return cv ? cv.toDataURL() : '';
   }
 
+  _bonusText(def) {
+    if (!def.bonus) return '';
+    const names = { maxHp: '气血', maxMp: '灵力', atk: '攻', def: '防', matk: '灵攻', mdef: '灵防', spd: '速' };
+    return Object.entries(def.bonus).map(([k, v]) => `${names[k] || k}+${v}`).join(' ');
+  }
+
+  // 武器门类的适用角色名（未入队的也算，提示「这把刀归洛清霜」）
+  _wtypeUserNames(wtype) { return weaponTypeUsers(wtype); }
+
+  _subWrap(title) {
+    const wrap = document.createElement('div');
+    wrap.style.cssText = 'position:absolute;inset:0;background:rgba(8,6,4,0.96);padding:10px 14px;overflow-y:auto;';
+    const t = document.createElement('div');
+    t.className = 'sec-title';
+    t.textContent = title;
+    wrap.appendChild(t);
+    this.elContent.parentElement.style.position = 'relative';
+    return wrap;
+  }
+
+  _finishSub(wrap, nav) {
+    this.elContent.parentElement.appendChild(wrap);
+    nav.refresh();
+    nav.attachHover();
+    this.subNav = nav;
+    this.subEl = wrap;
+  }
+
+  _closeSub() {
+    if (this.subEl) { this.subEl.remove(); this.subEl = null; }
+    this.subNav = null;
+  }
+
+  // ---- 子面板：换装（角色页） ----
   _openEquipSub(char, slot) {
     const g = this.game;
     // 武器按门类绑定角色：只列出该角色能用的装备
@@ -228,7 +184,7 @@ export default class MainMenu {
       wrap.appendChild(b);
     };
     for (const e of candidates) {
-      addBtn(`${e.def.name} ×${e.count}（${this._bonusText(e.def)}）`, () => {
+      addBtn(`${esc(e.def.name)} ×${e.count}（${esc(this._bonusText(e.def))}）`, () => {
         const r = g.equipment.equip(char, e.id, g.inventory);
         g.ui.toast(r.ok ? `${char.name} 装备了 ${e.def.name}` : r.msg);
         this._closeSub();
@@ -236,7 +192,7 @@ export default class MainMenu {
       });
     }
     if (current) {
-      addBtn(`卸下「${ITEMS[current].name}」`, () => {
+      addBtn(`卸下「${esc(ITEMS[current].name)}」`, () => {
         const r = g.equipment.unequip(char, slot, g.inventory);
         g.ui.toast(r.ok ? '已卸下装备' : r.msg);
         this._closeSub();
@@ -252,69 +208,44 @@ export default class MainMenu {
     this.subEl = wrap;
   }
 
-  _bonusText(def) {
-    if (!def.bonus) return '';
-    const names = { maxHp: '气血', maxMp: '灵力', atk: '攻', def: '防', matk: '灵攻', mdef: '灵防', spd: '速' };
-    return Object.entries(def.bonus).map(([k, v]) => `${names[k] || k}+${v}`).join(' ');
-  }
-
-  // 武器门类的适用角色名（未入队的也算，提示「这把刀归洛清霜」）
-  _wtypeUserNames(wtype) {
-    return weaponTypeUsers(wtype);
-  }
-
-  _closeSub() {
-    if (this.subEl) { this.subEl.remove(); this.subEl = null; }
-    this.subNav = null;
-  }
-
-  // ---- 背包 ----
-  _renderItems() {
+  // ---- 子面板：装备淬炼（角色页） ----
+  _openForgeSub(char) {
     const g = this.game;
-    const entries = g.inventory.entries();
-    if (!entries.length) {
-      this.elContent.innerHTML = '<div class="inv-empty">行囊空空如也……</div>';
-      return;
+    const wrap = this._subWrap(`淬炼装备（${char.name}）`);
+    const nav = new PanelNav({ onCancel: () => this._closeSub() });
+    const addBtn = (label, fn) => {
+      const b = document.createElement('button');
+      b.className = 'btn';
+      b.style.cssText = 'display:flex;justify-content:space-between;width:100%;margin-bottom:4px;';
+      b.innerHTML = `<span>${label}</span>`;
+      b.addEventListener('mouseenter', () => { nav.items.forEach((it, i) => it.el === b && (nav.idx = i)); nav.refresh(); });
+      nav.items.push({ el: b, onSelect: fn });
+      wrap.appendChild(b);
+    };
+    for (const slot of ['weapon', 'armor', 'accessory']) {
+      const id = char.equipment[slot];
+      const def = id ? ITEMS[id] : null;
+      if (!def) { addBtn(`${SLOT_NAMES[slot]}：未装备`, () => g.ui.toast('该部位没有装备')); continue; }
+      const plus = getPlus(id);
+      const cost = costOf(plus);
+      const label = cost
+        ? `${SLOT_NAMES[slot]}：${esc(forgeName(def))} → +${plus + 1}（金${cost.gold} · 玄晶${cost.count}）`
+        : `${SLOT_NAMES[slot]}：${esc(forgeName(def))}（已至极限 +${plus}）`;
+      addBtn(label, () => {
+        if (!cost) { g.ui.toast('已至极限，无可再淬'); return; }
+        const r = forgeRefine(g, id);
+        if (!r.ok) { g.ui.toast(r.msg); return; }
+        sfx.play('confirm');
+        g.ui.toast(`${def.name} 淬炼至 +${r.plus}`);
+        this._closeSub();
+        this._openForgeSub(char);
+      });
     }
-    const grid = document.createElement('div');
-    grid.className = 'inv-grid';
-    for (const e of entries) {
-      const row = document.createElement('div');
-      row.className = 'inv-row';
-      const icon = g.assets.get(e.def.icon);
-      if (icon) {
-        const img = document.createElement('canvas');
-        img.width = 24; img.height = 24;
-        img.style.cssText = 'width:24px;height:24px;image-rendering:pixelated;';
-        img.getContext('2d').drawImage(icon, 0, 0);
-        row.appendChild(img);
-      }
-      const bonus = e.def.type === 'equipment' ? this._bonusText(e.def) : '';
-      // 武器显示门类与适用者，一眼看清归谁用
-      const wtTag = e.def.slot === 'weapon'
-        ? ` <span class="i-bonus">（${weaponTypeName(e.def.wtype)} · ${this._wtypeUserNames(e.def.wtype)}）</span>`
-        : '';
-      row.insertAdjacentHTML('beforeend', `
-        <span class="i-name">${e.def.name}</span>
-        <span class="i-count">×${e.count}</span>
-        <span class="i-desc">${e.def.desc || ''}${bonus ? ` <span class="i-bonus">（${bonus}）</span>` : ''}${wtTag}</span>`);
-      if (e.def.type === 'consumable') {
-        const b = this._btn('使用', () => this._openUseSub(e));
-        row.appendChild(b);
-      } else if (e.def.type === 'equipment') {
-        // 武器无人能用（门类角色未入队）时不出「装备」按钮，避免空列表
-        const usable = e.def.slot !== 'weapon' || g.party.some(c => g.equipment.canEquip(c, e.def).ok);
-        if (usable) {
-          const b = this._btn('装备', () => this._openEquipMemberSub(e));
-          row.appendChild(b);
-        }
-      }
-      grid.appendChild(row);
-    }
-    this.elContent.appendChild(grid);
-    this.nav.setItems(this.nav.items);
+    addBtn('返回', () => this._closeSub());
+    this._finishSub(wrap, nav);
   }
 
+  // ---- 子面板：使用道具（背包页） ----
   _openUseSub(entry) {
     const g = this.game;
     const wrap = this._subWrap('使用（选择对象）');
@@ -323,7 +254,7 @@ export default class MainMenu {
       const b = document.createElement('button');
       b.className = 'btn';
       b.style.cssText = 'display:flex;justify-content:space-between;width:100%;margin-bottom:4px;';
-      b.innerHTML = `<span>${c.name}</span><span>${c.hp}/${c.stats().maxHp}</span>`;
+      b.innerHTML = `<span>${esc(c.name)}</span><span>${c.hp}/${c.stats().maxHp}</span>`;
       b.addEventListener('mouseenter', () => { nav.items.forEach((it, i) => it.el === b && (nav.idx = i)); nav.refresh(); });
       nav.items.push({
         el: b,
@@ -339,6 +270,7 @@ export default class MainMenu {
     this._finishSub(wrap, nav);
   }
 
+  // ---- 子面板：指定成员装备（背包页） ----
   _openEquipMemberSub(entry) {
     const g = this.game;
     // 只列出能装备该武器的成员（门类不符的成员不出现）
@@ -349,7 +281,7 @@ export default class MainMenu {
       const b = document.createElement('button');
       b.className = 'btn';
       b.style.cssText = 'display:flex;justify-content:space-between;width:100%;margin-bottom:4px;';
-      b.innerHTML = `<span>${c.name}</span><span>当前${SLOT_NAMES[entry.def.slot]}：${c.equipment[entry.def.slot] ? ITEMS[c.equipment[entry.def.slot]].name : '无'}</span>`;
+      b.innerHTML = `<span>${esc(c.name)}</span><span>当前${SLOT_NAMES[entry.def.slot]}：${c.equipment[entry.def.slot] ? esc(ITEMS[c.equipment[entry.def.slot]].name) : '无'}</span>`;
       b.addEventListener('mouseenter', () => { nav.items.forEach((it, i) => it.el === b && (nav.idx = i)); nav.refresh(); });
       nav.items.push({
         el: b,
@@ -363,191 +295,5 @@ export default class MainMenu {
       wrap.appendChild(b);
     }
     this._finishSub(wrap, nav);
-  }
-
-  _subWrap(title) {
-    const wrap = document.createElement('div');
-    wrap.style.cssText = 'position:absolute;inset:0;background:rgba(8,6,4,0.96);padding:10px 14px;overflow-y:auto;';
-    const t = document.createElement('div');
-    t.className = 'sec-title';
-    t.textContent = title;
-    wrap.appendChild(t);
-    this.elContent.parentElement.style.position = 'relative';
-    return wrap;
-  }
-
-  _finishSub(wrap, nav) {
-    this.elContent.parentElement.appendChild(wrap);
-    nav.refresh();
-    nav.attachHover();
-    this.subNav = nav;
-    this.subEl = wrap;
-  }
-
-  // ---- 任务 ----
-  // NPC 索引：id -> { name, map }（跨图同名 NPC 取首次出现），供任务指引定位
-  _npcLookup() {
-    const idx = {};
-    for (const def of Object.values(MAPS)) {
-      for (const n of def.npcs || []) {
-        if (!idx[n.id]) idx[n.id] = { name: n.name, map: def.name };
-      }
-    }
-    return idx;
-  }
-
-  _renderQuests() {
-    const g = this.game;
-    const stateNames = { available: '可接取', active: '进行中', ready: '可交付', completed: '已完成' };
-    const npcs = this._npcLookup();
-    let any = false;
-    const quests = g.quests.all();
-    for (const q of quests) {
-      const st = g.quests.get(q.id);
-      if (st.state === 'locked') continue;
-      any = true;
-      const box = document.createElement('div');
-      box.className = 'quest-item';
-      const objs = q.objectives.map(o => {
-        const os = g.quests.objectiveState(q.id, o);
-        const mark = os.done && !o.final ? '✔ ' : o.final && st.state === 'completed' ? '✔ ' : '';
-        const prog = os.need > 1 ? ` ${os.cur}/${os.need}` : '';
-        return `<div class="q-obj ${os.done && !o.final ? 'done' : ''}">${mark}${o.text}${prog}</div>`;
-      }).join('');
-      // 接取/交付指引：任务面板本身只读，「去哪里交互」必须写明，
-      // 否则触屏玩家点条目无反馈，会当成「任务无法交互」的故障
-      const turnInId = (q.objectives.find(o => o.type === 'talk' && o.final) || {}).target || q.giver;
-      let go = '';
-      if (st.state === 'available' && npcs[q.giver]) {
-        go = `<div class="q-go">▸ 前往接取：${npcs[q.giver].map} · ${npcs[q.giver].name}</div>`;
-      } else if (st.state === 'ready' && npcs[turnInId]) {
-        go = `<div class="q-go">▸ 前往交付：${npcs[turnInId].map} · ${npcs[turnInId].name}</div>`;
-      }
-      const rewards = [];
-      if (q.rewards.exp) rewards.push(`经验+${q.rewards.exp}`);
-      if (q.rewards.gold) rewards.push(`金钱+${q.rewards.gold}`);
-      for (const it of q.rewards.items || []) rewards.push(`${g.itemName(it.id)}×${it.count}`);
-      box.innerHTML = `
-        <div class="q-title"><span>【${q.type === 'main' ? '主线' : '支线'}】${q.name}</span><span class="q-state">${stateNames[st.state] || ''}</span></div>
-        <div class="q-obj" style="color:#a89878;">${q.intro || ''}</div>
-        ${objs}
-        ${go}
-        <div class="q-obj" style="color:#8a7a52;">奖励：${rewards.join('　')}</div>`;
-      this.elContent.appendChild(box);
-    }
-    if (!any) this.elContent.innerHTML = '<div class="inv-empty">暂无任务……去青云门找掌门吧。</div>';
-    this.nav.setItems([]);
-  }
-
-  // ---- 图鉴 ----
-  _renderBook() {
-    const g = this.game;
-    const ELEMENT_CN = { fire: '火', water: '水', ice: '冰', thunder: '雷', dark: '阴', holy: '阳', none: '' };
-    const all = Object.values(MONSTERS).filter(m => m && m.id).sort((a, b) => a.level - b.level);
-    const seenCount = all.filter(m => g.seenMobs.has(m.id) || g.killsByMob[m.id]).length;
-    const head = document.createElement('div');
-    head.className = 'sec-title';
-    head.style.marginBottom = '8px';
-    head.textContent = `妖物图鉴 · 已遭遇 ${seenCount}/${all.length} · 累计除妖 ${g.kills}`;
-    this.elContent.appendChild(head);
-    for (const m of all) {
-      const kills = g.killsByMob[m.id] || 0;
-      const seen = g.seenMobs.has(m.id) || kills > 0;
-      const box = document.createElement('div');
-      box.className = 'quest-item';
-      const el = m.element && m.element !== 'none' ? ` · ${ELEMENT_CN[m.element] || m.element}系` : '';
-      if (!seen) {
-        box.innerHTML = `
-          <div class="q-title"><span>？？？</span><span class="q-state">未遭遇</span></div>
-          <div class="q-obj" style="color:#5a5040;">Lv?? · 尚未照面的妖物。</div>`;
-      } else {
-        const bossTag = m.boss ? '<span class="q-state">首领</span>' : '';
-        const stats = m.stats || {};
-        const skillNames = (m.skills || []).map(id => (SKILLS[id] || {}).name).filter(Boolean).join('、');
-        const dropNames = (m.drops || []).map(d => {
-          const it = ITEMS[d.id];
-          return it ? `${it.name} ${Math.round(d.chance * 100)}%` : null;
-        }).filter(Boolean).join('、');
-        box.innerHTML = `
-          <div class="q-title"><span>Lv${m.level} ${m.name}${el}</span><span class="q-state">${kills ? `击杀 ×${kills}` : '已遭遇'}</span>${bossTag}</div>
-          <div class="q-obj m-stats">气血 ${stats.maxHp} · 攻 ${stats.atk} · 防 ${stats.def} · 灵攻 ${stats.matk} · 灵防 ${stats.mdef} · 速 ${stats.spd}</div>
-          <div class="q-obj" style="color:#a89878;">${m.desc || ''}</div>
-          ${skillNames ? `<div class="q-obj">功法：${skillNames}</div>` : ''}
-          ${dropNames ? `<div class="q-obj m-drops">掉落：${dropNames}</div>` : ''}`;
-      }
-      this.elContent.appendChild(box);
-    }
-    this.nav.setItems([]);
-  }
-
-  // ---- 存档 ----
-  _renderSave() {
-    const g = this.game;
-    for (const slot of g.save.slots()) {
-      const m = g.save.meta(slot);
-      const row = document.createElement('div');
-      row.className = 'slot-row-big';
-      const info = !m ? '—— 空 ——'
-        : m.incompatible ? `【旧版本存档】· ${new Date(m.savedAt).toLocaleString('zh-CN')}（版本不符，无法读取）`
-        : `${m.name} Lv${m.level} · ${m.realm} · ${m.mapName} · ${new Date(m.savedAt).toLocaleString('zh-CN')}`;
-      row.innerHTML = `
-        <div class="s-info">
-          <div class="s-title">存档 ${slot}</div>
-          <div>${info}</div>
-        </div>`;
-      const bSave = this._btn('存档', () => {
-        const doSave = () => {
-          const ok = g.save.save(slot, g.serialize());
-          g.ui.toast(ok ? `已存入档位 ${slot}` : '存档失败');
-          this.render();
-        };
-        // 档位上已有存档（含不兼容旧档）时先确认再覆盖
-        if (m) g.ui.confirm(`档位 ${slot} 已有存档，覆盖？`, doSave);
-        else doSave();
-      });
-      const bLoad = this._btn('读档', () => {
-        if (!m) { g.ui.toast('该档位为空'); return; }
-        if (m.incompatible) { g.ui.toast('存档版本不兼容，无法读取'); return; }
-        g.ui.confirm(`读取档位 ${slot}？当前进度将丢失。`, () => {
-          const data = g.save.load(slot);
-          if (!data) { g.ui.toast('读取存档失败'); return; }
-          this.close();
-          g.applySave(data);
-        });
-      });
-      const bDel = this._btn('删除', () => {
-        if (!m) { g.ui.toast('该档位为空'); return; }
-        g.ui.confirm(`删除档位 ${slot} 的存档？此操作不可恢复。`, () => {
-          g.save.delete(slot);
-          g.ui.toast(`已删除档位 ${slot}`);
-          this.render();
-        });
-      });
-      row.appendChild(bSave);
-      row.appendChild(bLoad);
-      row.appendChild(bDel);
-      this.elContent.appendChild(row);
-    }
-    this.nav.setItems(this.nav.items);
-  }
-
-  // ---- 系统 ----
-  _renderSys() {
-    const box = document.createElement('div');
-    box.style.cssText = 'display:flex;flex-direction:column;gap:8px;max-width:260px;margin:10px auto;';
-    // 音量档位（关/低/中/高），独立于存档持久化在 localStorage
-    box.appendChild(this._btn(`音乐音量：${sfx.musicVolName()}`, () => { sfx.cycleMusicVol(); sfx.play('confirm'); this.render(); }));
-    box.appendChild(this._btn(`音效音量：${sfx.sfxVolName()}`, () => { sfx.cycleSfxVol(); sfx.play('confirm'); this.render(); }));
-    const b1 = this._btn('操作说明', () => this.game.ui.openHelp());
-    const b2 = this._btn('返回标题画面', () => {
-      this.game.ui.confirm('返回标题？（未存档的进度将丢失）', () => {
-        this.close();
-        this.game.scenes.replace(new TitleScene());
-      });
-    });
-    const b3 = this._btn('关闭菜单', () => this.close());
-    box.appendChild(b1); box.appendChild(b2); box.appendChild(b3);
-    this.elContent.appendChild(box);
-    this.nav.setItems(this.nav.items);
   }
 }

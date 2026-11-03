@@ -2,10 +2,11 @@
 import SKILLS from '../data/skills.js';
 import { PanelNav } from '../core/UIPanel.js';
 import { sfx } from '../core/Audio.js';
+import { esc } from '../core/dom.js';
 
 const EVENT_WAIT = {
   turn: 0.3, msg: 0.5, dmg: 0.55, miss: 0.5, heal: 0.6, mpheal: 0.5,
-  cure: 0.5, status: 0.55, dot: 0.5, die: 0.6, end: 0.15,
+  cure: 0.5, status: 0.55, dot: 0.5, die: 0.6, end: 0.15, combo: 0.65,
 };
 
 const ELEMENT_CN = { fire: '火', water: '水', ice: '冰', thunder: '雷', dark: '阴', holy: '阳', poison: '毒' };
@@ -133,6 +134,12 @@ export default class BattleUI {
         break;
       case 'msg':
         this.log(e.text);
+        break;
+      case 'combo':
+        sfx.play('crit');
+        this.game.renderer.shakeFor(0.15);
+        this._floater(e.actor, e.text, '#ffd94c', 13);
+        this.log(`${e.text} 伤害提升！`);
         break;
       case 'dmg': {
         this.startLunge(e.actor);
@@ -289,7 +296,7 @@ export default class BattleUI {
       const disabled = (s.mpCost || 0) > u.mp;
       const b = document.createElement('button');
       b.className = 'btn' + (disabled ? ' disabled' : '');
-      b.innerHTML = `<span>${s.name}</span><span class="cost${disabled ? ' no' : ''}">${s.mpCost ? s.mpCost + ' 灵力' : '—'}</span>`;
+      b.innerHTML = `<span>${esc(s.name)}</span><span class="cost${disabled ? ' no' : ''}">${s.mpCost ? s.mpCost + ' 灵力' : '—'}</span>`;
       return { el: b, disabled, desc: this._skillDesc(s), onSelect: () => this._skillTarget(u, s) };
     });
     this._showMenu('选择功法', items, { onCancel: () => this.showCommandRoot() });
@@ -332,7 +339,7 @@ export default class BattleUI {
     const items = entries.map(e => {
       const b = document.createElement('button');
       b.className = 'btn';
-      b.innerHTML = `<span>${e.def.name}</span><span class="cost">×${e.count}</span>`;
+      b.innerHTML = `<span>${esc(e.def.name)}</span><span class="cost">×${e.count}</span>`;
       return { el: b, desc: e.def.desc || '', onSelect: () => {
         this._pickTarget('ally', (tg) => this._commit({ kind: 'item', itemId: e.id, targets: [tg] }), e.def.name, () => this._showItemMenu(u));
       } };
@@ -345,7 +352,7 @@ export default class BattleUI {
     const items = list.map(u => {
       const b = document.createElement('button');
       b.className = 'btn';
-      b.innerHTML = `<span>${u.displayName}</span><span class="cost">${u.hp}/${u.maxHp()}</span>`;
+      b.innerHTML = `<span>${esc(u.displayName)}</span><span class="cost">${u.hp}/${u.maxHp()}</span>`;
       // 选敌方目标时顺带展示图鉴描述（u.source 即怪物定义）
       const desc = side === 'enemy' ? (u.source.desc || '') : '';
       return { el: b, desc, onSelect: () => cb(u) };

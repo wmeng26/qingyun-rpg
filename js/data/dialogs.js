@@ -1618,4 +1618,122 @@ export default {
       },
     },
   },
+
+  // ---- 楚红缨支线链（血煞谷） ----
+  dlg_chu: {
+    entry: 'root',
+    nodes: {
+      root: {
+        speaker: '楚红缨', portrait: 'face_chu', text: '',
+        branch: [
+          { cond: { quest: { id: 'quest_side_chu_3', state: 'ready' } }, next: 'turnin_c3' },
+          { cond: { quest: { id: 'quest_side_chu_3', state: 'active' } }, next: 'progress_c3' },
+          { cond: { quest: { id: 'quest_side_chu_2', state: 'ready' } }, next: 'turnin_c2' },
+          { cond: { quest: { id: 'quest_side_chu_2', state: 'active' } }, next: 'progress_c2' },
+          { cond: { quest: { id: 'quest_side_chu_2', state: 'available' } }, next: 'offer_c2' },
+          { cond: { quest: { id: 'quest_side_chu_1', state: 'ready' } }, next: 'turnin_c1' },
+          { cond: { quest: { id: 'quest_side_chu_1', state: 'active' } }, next: 'progress_c1' },
+          { cond: { flag: 'chu_joined' }, next: 'joined' },
+        ],
+        next: 'first',
+      },
+      first: {
+        speaker: '楚红缨', portrait: 'face_chu',
+        text: '（红衣女子按枪而立，枪尖斜指谷深处，红缨被血雾浸得发亮）\n站住。这谷里都是血煞教的妖人，闲杂人等速退。',
+        next: 'first2',
+      },
+      first2: {
+        speaker: '楚红缨', portrait: 'face_chu',
+        text: '我姓楚，楚红缨。戍边楚家军——如今只剩我一人了。\n教中逆贼牟沧弑师夺谱，叛入血煞教，我追了他三千里，就断送在这谷口。',
+        choices: [
+          { text: '楚家军忠烈满门，这仇，我陪你一起讨！', next: 'offer_c1_yes' },
+          { text: '谷中凶险，姑娘多加小心。', next: 'decline' },
+        ],
+      },
+      decline: {
+        speaker: '楚红缨', portrait: 'face_chu',
+        text: '（她收回目光，不再看你）……好意心领了。我的仇，我自己也能报。',
+        next: null,
+      },
+      offer_c1_yes: {
+        speaker: '楚红缨', portrait: 'face_chu',
+        text: '好！那就先替我清掉谷里巡哨的教众——四个，一个不留。\n让他们知道，楚家的枪，还没断。',
+        actions: [{ do: 'startQuest', id: 'quest_side_chu_1' }],
+        next: null,
+      },
+      progress_c1: {
+        speaker: '楚红缨', portrait: 'face_chu',
+        text: '巡哨的教众还没清完？他们红衣蒙面，惯使血刃，出手别留情。',
+        next: null,
+      },
+      turnin_c1: {
+        speaker: '楚红缨', portrait: 'face_chu',
+        text: '四颗人头，干净利落……你的身手，配得上我的枪。\n楚红缨这条命，今日起与你同行——直到牟沧伏诛！',
+        actions: [
+          { do: 'completeQuest', id: 'quest_side_chu_1' },
+          { do: 'joinAlly', id: 'chu' },
+          { do: 'setFlag', flag: 'chu_joined' },
+        ],
+        next: 'turnin_c1b',
+      },
+      turnin_c1b: {
+        speaker: '楚红缨', portrait: 'face_chu',
+        text: '（楚红缨加入了队伍！）\n这杆铁脊枪你先替我收着——等我寻回牟沧手里那杆家枪，再与你换。',
+        next: null,
+      },
+      offer_c2: {
+        speaker: '楚红缨', portrait: 'face_chu',
+        text: '教徒身上凝的「血煞珠」是以活人血气祭出来的——珠子里有祭坛的方位烙印。\n替我收三颗来，我能循着血气，找出牟沧的藏身之处。',
+        choices: [
+          { text: '三颗血煞珠，包在我身上。', next: null, actions: [{ do: 'startQuest', id: 'quest_side_chu_2' }] },
+          { text: '容我准备一二。', next: null },
+        ],
+      },
+      progress_c2: {
+        speaker: '楚红缨', portrait: 'face_chu',
+        text: '血煞珠还不够。杀教徒便有几率夺得——他们欠楚家的，一颗一颗都得还。',
+        next: null,
+      },
+      turnin_c2: {
+        speaker: '楚红缨', portrait: 'face_chu',
+        text: '（三颗血珠在她掌心共鸣，血气凝成一线，直指谷北）\n找到了……牟沧，你躲不掉。这一战，我要亲手讨回《破阵枪谱》！',
+        actions: [
+          { do: 'completeQuest', id: 'quest_side_chu_2' },
+          { do: 'startQuest', id: 'quest_side_chu_3' },
+        ],
+        next: null,
+      },
+      progress_c3: {
+        speaker: '楚红缨', portrait: 'face_chu',
+        text: '牟沧就在左近，血气浓得化不开。\n——准备好了就开口，我这一枪，等了三千里了。',
+        choices: [
+          { text: '楚红缨，挺枪！讨回血衣枪魔！', next: 'challenge' },
+          { text: '再作准备。', next: null },
+        ],
+      },
+      challenge: {
+        speaker: '血衣枪魔·牟沧', portrait: 'face_qiangmo',
+        text: '呵呵……楚家的小丫头，命倒是硬，还寻了帮手。\n也好，省得本座再去寻你——今日便让楚家枪，彻底绝了后！',
+        actions: [{ do: 'startBattle', id: 'boss_qiangmo' }],
+        next: null,
+      },
+      turnin_c3: {
+        speaker: '楚红缨', portrait: 'face_chu',
+        text: '（她摩挲着失而复得的枪谱，指节发白，良久，向北方遥遥一拜）\n爹，娘，诸位叔伯……楚家的枪，回来了。',
+        actions: [{ do: 'completeQuest', id: 'quest_side_chu_3' }],
+        next: 'turnin_c3b',
+      },
+      turnin_c3b: {
+        speaker: '楚红缨', portrait: 'face_chu',
+        text: '这杆「霸王枪」是楚家祖传——我如今用它为楚家雪了恨，往后就让它随你闯荡。\n你的仇家，就是我楚红缨的仇人。这一条枪，永不后退。',
+        next: null,
+      },
+      joined: {
+        speaker: '楚红缨', portrait: 'face_chu',
+        text: '枪出无悔。打架的事，只管喊我。',
+        next: null,
+      },
+    },
+  },
+
 };

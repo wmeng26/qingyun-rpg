@@ -4,7 +4,8 @@ import * as F from './DamageFormula.js';
 import * as SE from './StatusEffect.js';
 
 // 返回事件数组（dmg/heal/miss/status/msg/die）
-export function executeSkill(actor, skill, targets) {
+// opts.dmgMult：外部伤害乘区（元素连携等），只放大攻击类技能
+export function executeSkill(actor, skill, targets, opts = null) {
   const events = [];
   for (const target of targets) {
     if (!target.alive && !skill.heal) continue;
@@ -49,10 +50,11 @@ export function executeSkill(actor, skill, targets) {
       continue;
     }
     const defendMul = target.defending ? 0.5 : 1;
+    const dmgMult = opts && opts.dmgMult ? opts.dmgMult : 1;
     const roll = F.rollDamage({
       atk: skill.phys ? actor.effStat('atk') : actor.effStat('matk'),
       def: skill.phys ? target.effStat('def') : target.effStat('mdef'),
-      power: skill.power || 1,
+      power: (skill.power || 1) * dmgMult,
       element: skill.element || 'none',
       defElement: target.elementOf(),
       maxHp: target.maxHp(),

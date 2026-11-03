@@ -1,7 +1,7 @@
 // 道具表：consumable 消耗品 / equipment 装备 / material 材料 / quest 任务品
 // price = 商店售价（0 = 商店不出售且不可变卖）；向商人出售一律按半价回收，任务品除外
-// 武器门类 wtype（sword 剑/blade 刀/qin 琴/brush 笔）与角色绑定，见 characters.js
-export const WEAPON_TYPES = { sword: '剑', blade: '刀', qin: '琴', brush: '笔' };
+// 武器门类 wtype（sword 剑/blade 刀/qin 琴/brush 笔/spear 枪）与角色绑定，见 characters.js
+export const WEAPON_TYPES = { sword: '剑', blade: '刀', qin: '琴', brush: '笔', spear: '枪' };
 export default {
   // ---- 丹药 ----
   pill_huixue: {
@@ -222,6 +222,27 @@ export default {
   bi_chunqiu: {
     id: 'bi_chunqiu', name: '春秋笔', type: 'equipment', slot: 'weapon', wtype: 'brush', price: 13000, icon: 'icon_brush',
     desc: '一笔写尽春秋，一字可定生死。', bonus: { matk: 40, maxMp: 50, mdef: 4 },
+  },
+  // ---- 装备：枪（楚红缨专用） ----
+  spear_tie: {
+    id: 'spear_tie', name: '铁脊枪', type: 'equipment', slot: 'weapon', wtype: 'spear', price: 130, icon: 'icon_qiang',
+    desc: '军中制式长枪，脊骨沉稳。', bonus: { atk: 5 },
+  },
+  spear_zhuying: {
+    id: 'spear_zhuying', name: '竹影枪', type: 'equipment', slot: 'weapon', wtype: 'spear', price: 460, icon: 'icon_qiang',
+    desc: '枪出如竹影婆娑，虚实难辨。', bonus: { atk: 11, spd: 1 },
+  },
+  spear_huoying: {
+    id: 'spear_huoying', name: '火缨枪', type: 'equipment', slot: 'weapon', wtype: 'spear', price: 1500, icon: 'icon_qiang2',
+    desc: '枪缨浸过火油，挥动间赤光灼灼。', bonus: { atk: 17, spd: 2 },
+  },
+  spear_pozhen: {
+    id: 'spear_pozhen', name: '破阵枪', type: 'equipment', slot: 'weapon', wtype: 'spear', price: 4200, icon: 'icon_qiang2',
+    desc: '楚家军破阵之枪，枪锋所指，阵脚皆溃。', bonus: { atk: 26, spd: 3 },
+  },
+  spear_bawang: {
+    id: 'spear_bawang', name: '霸王枪', type: 'equipment', slot: 'weapon', wtype: 'spear', price: 0, icon: 'icon_qiang2',
+    desc: '楚家祖传的霸王枪，枪出无悔，有去无回。', bonus: { atk: 38, spd: 5 },
   },
   // ---- 装备：饰品 ----
   amulet_pingan: {
